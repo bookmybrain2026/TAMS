@@ -3,7 +3,13 @@ var builder = WebApplication.CreateBuilder(args);
 
 //configure ASP.NET Core's session support.
 builder.Services.AddDistributedMemoryCache();
-builder.Services.AddSession();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+    options.Cookie.MaxAge = TimeSpan.FromDays(30);
+});
 
 //MongoDB 
 builder.Services.AddSingleton<MongoDBContext>();

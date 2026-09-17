@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace TAMS.Models
@@ -11,6 +12,7 @@ namespace TAMS.Models
         public int UserId { get; set; }
 
         [Required]
+        [BsonRepresentation(BsonType.String)]
         public UserRole Role { get; set; }
 
         [Required]
@@ -29,6 +31,7 @@ namespace TAMS.Models
 
         public bool isActive { get; set; } = true;
     }
+
     public enum UserRole
     {
         Student,

@@ -13,77 +13,33 @@
 
                     <h2 class="text-center mb-4">TAMS Login</h2>
 
-                    <form asp-controller="Login"
-                          asp-action="Login"
-                          method="post">
+                    <form asp-controller="Login" asp-action="Login" method="post">
 
-                        <div asp-validation-summary="ModelOnly"
-                             class="text-danger mb-3">
+                        <div asp-validation-summary="ModelOnly"class="text-danger mb-3"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="Username" class="form-label">Username</label>
+                            <input asp-for="Username" class="form-control" placeholder="Enter your username" />
+                            <span asp-validation-for="Username" class="text-danger"></span>
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="Username"
-                                   class="form-label">
-                                Username
-                            </label>
-
-                            <input asp-for="Username"
-                                   class="form-control"
-                                   placeholder="Enter your username" />
-
-                            <span asp-validation-for="Username"
-                                  class="text-danger">
-                            </span>
+                            <label asp-for="Password" class="form-label">Password</label>
+                            <input asp-for="Password" type="password" class="form-control" placeholder="Enter your password" />
+                            <span asp-validation-for="Password" class="text-danger"></span>
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="Password"
-                                   class="form-label">
-                                Password
+                            <label asp-for="Role" class="form-label"> Login As
                             </label>
-
-                            <input asp-for="Password"
-                                   type="password"
-                                   class="form-control"
-                                   placeholder="Enter your password" />
-
-                            <span asp-validation-for="Password"
-                                  class="text-danger">
-                            </span>
-                        </div>
-
-                        <div class="mb-3">
-                            <label asp-for="Role"
-                                   class="form-label">
-                                Login As
-                            </label>
-
-                            <select asp-for="Role"
-                                    class="form-select">
-                                <option value="">
-                                    Select your role
-                                </option>
-                                <option value="Student">
-                                    Student
-                                </option>
-                                <option value="Tutor">
-                                    Tutor
-                                </option>
-                                <option value="Administrator">
-                                    Administrator
-                                </option>
+                            <select asp-for="Role" asp-items="Html.GetEnumSelectList<UserRole>()" class="form-select">
+                                <option value="">Please Select Your Role</option>
                             </select>
-
-                            <span asp-validation-for="Role"
-                                  class="text-danger">
-                            </span>
+                            <span asp-validation-for="Role" class="text-danger"></span>
                         </div>
 
                         <div class="d-grid">
-                            <button type="submit"
-                                    class="btn btn-primary">
-                                Login
-                            </button>
+                            <button type="submit" class="btn btn-primary">Login</button>
                         </div>
 
                     </form>
