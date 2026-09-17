@@ -18,7 +18,7 @@ namespace TAMS.Controllers
                 return RedirectToAction("Login", "Login");
             }
 
-            return View("Index");
+            return View("TutorDashboard");
         }
     }
 }
