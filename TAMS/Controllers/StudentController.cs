@@ -11,6 +11,11 @@ namespace TAMS.Controllers
 
         public IActionResult Dashboard(int id)
         {
+            var studentId = HttpContext.Session.GetInt32("StudentId");
+            if (studentId == null)
+            {
+                return RedirectToAction("Login", "Login");
+            }
             return View("StudentDashboard");
         }
     }
