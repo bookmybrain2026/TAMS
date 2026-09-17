@@ -1,8 +1,9 @@
 using TAMS.Data;
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddControllersWithViews();
+//configure ASP.NET Core's session support.
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession();
 
 //MongoDB 
 builder.Services.AddSingleton<MongoDBContext>();
