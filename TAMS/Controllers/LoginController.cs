@@ -34,8 +34,9 @@ namespace TAMS.Controllers
             }
 
             //Searches MongoDB for an active user matching the submitted username, password, and role
-            var user = dBContext.Login
-                .Find(u => u.Username == model.Username &&
+            var user = 
+                dBContext.Login.Find(u => 
+                    u.Username == model.Username &&
                     u.Password == model.Password &&
                     u.Role == model.Role &&
                     u.isActive == true).FirstOrDefault();
