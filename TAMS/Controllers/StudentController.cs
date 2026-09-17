@@ -8,5 +8,10 @@ namespace TAMS.Controllers
         {
             return View();
         }
+
+        public IActionResult Dashboard(int id)
+        {
+            return View("StudentDashboard");
+        }
     }
 }
