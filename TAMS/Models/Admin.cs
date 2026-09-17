@@ -7,6 +7,8 @@ namespace TAMS.Models
     [BsonIgnoreExtraElements]
     public class Admin
     {
+        [Key]
+        [ForeignKey("Login")]
         public int AdminId { get; set; }
 
         [Required]
