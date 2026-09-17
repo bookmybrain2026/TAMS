@@ -27,8 +27,9 @@ namespace TAMS.Models
         [MaxLength(13)]
         public string PhoneNumber { get; set; }
 
-        [DataType(DataType.EmailAddress)]
         [MaxLength(100)]
+        [DataType(DataType.EmailAddress)]
+        [EmailAddress]
         public string Email { get; set; }
 
         public virtual Login Login { get; set; }
