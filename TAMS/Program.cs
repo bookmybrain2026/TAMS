@@ -1,7 +1,11 @@
+using TAMS.Data;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+//MongoDB 
+builder.Services.AddSingleton<MongoDBContext>();
 
 var app = builder.Build();
 
