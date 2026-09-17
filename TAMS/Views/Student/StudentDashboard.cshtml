@@ -1,8 +1,24 @@
-﻿@{
+﻿@* @{
     ViewData["Title"] = "Student Dashboard";
 }
 
 <div class="container mt-5">
     <h1>Student Dashboard</h1>
     <p>Welcome to the TAMS Student Dashboard.</p>
+</div> *@
+
+@model TAMS.Models.Student
+
+@{
+    ViewData["Title"] = "Student Dashboard";
+}
+
+<div class="container mt-5">
+    <h1>Student Dashboard</h1>
+
+    <h3>Welcome, @Model.FName @Model.LName!</h3>
+
+    <p><strong>Student ID:</strong> @Model.StudentId</p>
+    <p><strong>Email:</strong> @Model.Email</p>
+    <p><strong>Phone:</strong> @Model.PhoneNumber</p>
 </div>

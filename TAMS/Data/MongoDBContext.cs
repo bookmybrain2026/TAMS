@@ -28,5 +28,10 @@ namespace TAMS.Data
         //Provides access to the MongoDB database instance
         public IMongoDatabase Database => _database;
         public IMongoCollection<Login> Login => _database.GetCollection<Login>("Login");
+        public IMongoCollection<Student> Student => _database.GetCollection<Student>("Student");
+
+        public IMongoCollection<Tutor> Tutor => _database.GetCollection<Tutor>("Tutor");
+
+        public IMongoCollection<Admin> Admin => _database.GetCollection<Admin>("Admin");
     }
 }
