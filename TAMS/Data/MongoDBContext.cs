@@ -1,4 +1,5 @@
 ﻿using MongoDB.Driver;
+using TAMS.Models;
 
 namespace TAMS.Data
 {
@@ -26,5 +27,6 @@ namespace TAMS.Data
 
         //Provides access to the MongoDB database instance
         public IMongoDatabase Database => _database;
+        public IMongoCollection<Login> Login => _database.GetCollection<Login>("Login");
     }
 }
