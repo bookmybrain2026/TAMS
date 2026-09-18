@@ -18,6 +18,13 @@ namespace TAMS.Controllers
         // Displays all courses
         public IActionResult Index()
         {
+            var adminId = HttpContext.Session.GetInt32("AdminId");
+
+            if (adminId == null)
+            {
+                return RedirectToAction("Login", "Login");
+            }
+
             var courses = 
                 dBContext.Course.Find(_ => true)
                 .SortBy(c => c.CourseCode).ToList();
@@ -40,6 +47,13 @@ namespace TAMS.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Create(Course model)
         {
+            var adminId = HttpContext.Session.GetInt32("AdminId");
+
+            if (adminId == null)
+            {
+                return RedirectToAction("Login", "Login");
+            }
+
             if (!ModelState.IsValid)
             {
                 LoadSubjects();
@@ -84,6 +98,13 @@ namespace TAMS.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Edit(string id, Course model)
         {
+            var adminId = HttpContext.Session.GetInt32("AdminId");
+
+            if (adminId == null)
+            {
+                return RedirectToAction("Login", "Login");
+            }
+
             if (!ModelState.IsValid)
             {
                 TempData["ErrorMessage"] = "Please enter valid course information.";
@@ -139,6 +160,12 @@ namespace TAMS.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Delete(string id)
         {
+            var adminId = HttpContext.Session.GetInt32("AdminId");
+
+            if (adminId == null)
+            {
+                return RedirectToAction("Login", "Login");
+            }
             var course = 
                 dBContext.Course
                 .Find(c => c.CourseId == id).FirstOrDefault();

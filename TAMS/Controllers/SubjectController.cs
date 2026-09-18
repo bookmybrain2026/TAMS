@@ -14,9 +14,25 @@ namespace TAMS.Controllers
             dBContext = context;
         }
 
-        // Displays all subjects
+        //// Displays all subjects
+        //public IActionResult Index()
+        //{
+        //    var subjects = dBContext.Subject
+        //        .Find(_ => true)
+        //        .SortBy(s => s.Name)
+        //        .ToList();
+
+        //    return View(subjects);
+        //}
         public IActionResult Index()
         {
+            var adminId = HttpContext.Session.GetInt32("AdminId");
+
+            if (adminId == null)
+            {
+                return RedirectToAction("Login", "Login");
+            }
+
             var subjects = dBContext.Subject
                 .Find(_ => true)
                 .SortBy(s => s.Name)
@@ -30,6 +46,13 @@ namespace TAMS.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Create(Subject model)
         {
+            var adminId = HttpContext.Session.GetInt32("AdminId");
+
+            if (adminId == null)
+            {
+                return RedirectToAction("Login", "Login");
+            }
+
             if (!ModelState.IsValid)
             {
                 ViewBag.Action = "Create";
@@ -64,6 +87,12 @@ namespace TAMS.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Edit(string id, Subject model)
         {
+            var adminId = HttpContext.Session.GetInt32("AdminId");
+
+            if (adminId == null)
+            {
+                return RedirectToAction("Login", "Login");
+            }
             if (!ModelState.IsValid)
             {
                 TempData["ErrorMessage"] =
@@ -106,6 +135,13 @@ namespace TAMS.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Delete(string id)
         {
+            var adminId = HttpContext.Session.GetInt32("AdminId");
+
+            if (adminId == null)
+            {
+                return RedirectToAction("Login", "Login");
+            }
+
             var subject = dBContext.Subject
                 .Find(s => s.SubjectId == id)
                 .FirstOrDefault();
