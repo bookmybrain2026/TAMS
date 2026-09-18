@@ -26,8 +26,18 @@
                             </div>
                         </div>
 
-                        <div class="mb-3"><label asp-for="Subject" class="form-label">Subject</label>
-                            <input asp-for="Subject" class="form-control" placeholder="Enter tutoring subject" />
+                        <div class="mb-3">
+                            <label asp-for="Subject" class="form-label">Subject / Specialty</label>
+                            <select asp-for="Subject" class="form-control">
+                                <option value="">-- Select a Subject --</option>
+                                @if (ViewBag.Subjects != null)
+                                {
+                                    foreach (var subject in ViewBag.Subjects)
+                                    {
+                                        <option value="@subject.Code">@subject.Code - @subject.Name</option>
+                                    }
+                                }
+                            </select>
                             <span asp-validation-for="Subject" class="text-danger"></span>
                         </div>
 

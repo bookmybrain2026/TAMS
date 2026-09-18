@@ -29,9 +29,9 @@ namespace TAMS.Data
         public IMongoDatabase Database => _database;
         public IMongoCollection<Login> Login => _database.GetCollection<Login>("Login");
         public IMongoCollection<Student> Student => _database.GetCollection<Student>("Student");
-
         public IMongoCollection<Tutor> Tutor => _database.GetCollection<Tutor>("Tutor");
-
         public IMongoCollection<Admin> Admin => _database.GetCollection<Admin>("Admin");
+        public IMongoCollection<Subject> Subject => _database.GetCollection<Subject>("Subject");
+        public IMongoCollection<Course> Course => _database.GetCollection<Course>("Course");
     }
 }

@@ -32,9 +32,20 @@ namespace TAMS.Controllers
             var adminId = HttpContext.Session.GetInt32("AdminId");
             if (adminId == null)
             {
+                LoadSubjects();
                 return RedirectToAction("Login", "Login");
             }
+            LoadSubjects();
             return View();
+        }
+
+        // Loads subjects from MongoDB for the tutor subject dropdown
+        private void LoadSubjects()
+        {
+            ViewBag.Subjects = dBContext.Subject
+                .Find(_ => true)
+                .SortBy(s => s.Name)
+                .ToList();
         }
 
         // Creates the Tutor and Login accounts
@@ -50,6 +61,7 @@ namespace TAMS.Controllers
 
             if (!ModelState.IsValid)
             {
+                LoadSubjects();
                 return View(model);
             }
 
@@ -61,17 +73,20 @@ namespace TAMS.Controllers
             if (existingUsername != null)
             {
                 ModelState.AddModelError("Username", "This username is already in use.");
+                LoadSubjects();
                 return View(model);
             }
 
             // Check whether the email already exists
-            var existingEmail = 
+            var existingEmail =
                 dBContext.Tutor
-                .Find(t => t.Email == model.Email).FirstOrDefault();
+                .Find(t => t.Email == model.Email)
+                .FirstOrDefault();
 
             if (existingEmail != null)
             {
                 ModelState.AddModelError("Email", "A tutor with this email already exists.");
+                LoadSubjects();
                 return View(model);
             }
 

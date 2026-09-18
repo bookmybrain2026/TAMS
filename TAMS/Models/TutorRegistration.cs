@@ -12,8 +12,7 @@ namespace TAMS.Models
         [MaxLength(50)]
         public string LName { get; set; }
 
-        [Required]
-        [MaxLength(100)]
+        [Required(ErrorMessage = "Please select a subject.")]
         public string Subject { get; set; }
 
         [Required]
