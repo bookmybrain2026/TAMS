@@ -7,6 +7,10 @@
 }
 
 <h1>Manage Courses</h1>
+<div class="mb-3">
+    <label for="courseSearch" class="form-label">Search Courses</label>
+    <input type="text" id="courseSearch" class="form-control" placeholder="Search by subject, course code, or course name..." onkeyup="searchCourses()" />
+</div>
 
 @if (TempData["SuccessMessage"] != null)
 {
@@ -22,7 +26,7 @@
     </div>
 }
 
-<table class="table table-bordered">
+<table class="table table-bordered" id="courseTable">
     <thead>
         <tr>
             <th>Subject</th>
@@ -31,7 +35,7 @@
             <th>Actions</th>
         </tr>
     </thead>
-    <tbody>
+    <tbody id="courseTableBody">
 
         @foreach (var course in Model)
         {
@@ -158,33 +162,3 @@
         <button type="button" class="btn btn-secondary" onclick="hideForms()">Cancel</button>
     </form>
 </div>
-
-
-@section Scripts {
-
-    <script>
-        // Show Add Course form
-        function showAddForm()
-        {
-            hideForms();
-
-            document.getElementById("addForm").style.display = "block";
-        }
-        // Show Edit Course form
-        function showEditForm(courseId, subjectCode, courseCode, courseName)
-        {
-            hideForms();
-            document.getElementById("EditCourseId").value = courseId;
-            document.getElementById("EditSubjectCode").value = subjectCode;
-            document.getElementById("EditCourseCode").value = courseCode;
-            document.getElementById("EditCourseName").value = courseName;
-            document.getElementById("editForm").style.display = "block";
-        }
-        // Hide all forms
-        function hideForms()
-        {
-            document.getElementById("addForm").style.display = "none";
-            document.getElementById("editForm").style.display = "none";
-        }
-    </script>
-}

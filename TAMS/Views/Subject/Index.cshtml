@@ -6,6 +6,11 @@
 
 <h1>Manage Subjects</h1>
 
+<div class="mb-3">
+    <label for="subjectSearch" class="form-label">Search Subjects</label>
+    <input type="text" id="subjectSearch" class="form-control" placeholder="Search by subject code or subject name..." onkeyup="searchSubjects()" />
+</div>
+
 @if (TempData["SuccessMessage"] != null)
 {
     <div class="alert alert-success">
@@ -20,7 +25,7 @@
     </div>
 }
 
-<table class="table table-bordered">
+<table class="table table-bordered" id="subjectTable">
 
     <thead>
         <tr>
@@ -29,7 +34,7 @@
             <th>Actions</th>
         </tr>
     </thead>
-    <tbody>
+    <tbody id="subjectTableBody">
 
         @foreach (var subject in Model)
         {
@@ -95,31 +100,3 @@
         <button type="button" class="btn btn-secondary" onclick="hideForms()"> Cancel </button>
     </form>
 </div>
-
-
-@section Scripts {
-
-    <script>
-        // Show Add Subject form
-        function showAddForm()
-        {
-            hideForms();
-            document.getElementById("addForm").style.display = "block";
-        }
-        // Show Edit Subject form
-        function showEditForm(subjectId, code, name)
-        {
-            hideForms();
-            document.getElementById("EditSubjectId").value = subjectId;
-            document.getElementById("EditCode").value = code;
-            document.getElementById("EditName").value = name;
-            document.getElementById("editForm").style.display = "block";
-        }
-        // Hide all forms
-        function hideForms()
-        {
-            document.getElementById("addForm").style.display = "none";
-            document.getElementById("editForm").style.display = "none";
-        }
-    </script>
-}
