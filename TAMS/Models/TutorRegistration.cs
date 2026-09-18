@@ -29,7 +29,7 @@ namespace TAMS.Models
         public string Username { get; set; }
 
         [Required]
-        [StringLength(100, MinimumLength = 6)]
+        [StringLength(100, MinimumLength = 4)]
         [DataType(DataType.Password)]
         public string Password { get; set; }
 
