@@ -1,8 +1,125 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Welcome";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="welcome-page">
+    <section class="welcome-section">
+        <div class="welcome-content">
+
+            <div class="welcome-text">
+                <p class="welcome-label">WELCOME TO</p>
+                <h1>BookMyBrain</h1>
+                <h2>Your Tutoring Appointment Management System</h2>
+                <p class="welcome-description">
+                    Connect with tutors, schedule appointments, manage availability,
+                    and keep track of your tutoring sessions all in one place.
+                </p>
+                <a asp-controller="Login" asp-action="Login" class="btn btn-primary btn-lg"> Get Started </a>
+            </div>
+            <div class="welcome-image">
+                <img src="~/images/BookMyBrain-2.png" alt="Tutoring" class="img-fluid" />
+            </div>
+        </div>
+    </section>
+
+    <section class="features-section">
+        <div class="section-heading">
+            <p class="section-label">WHAT BOOKMYBRAIN OFFERS</p>
+            <h2>Everything You Need to Manage Tutoring</h2>
+            <p>
+                BookMyBrain brings students, tutors, and administrators together
+                through one system.
+            </p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">📅</div>
+                <h3>Easy Scheduling</h3>
+                <p>
+                    Students can find available appointment times
+                    and schedule tutoring sessions.
+                </p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">👨‍🏫</div>
+                <h3>Tutor Availability</h3>
+                <p>
+                    Tutors can manage their availability and
+                    keep their schedules organized.
+                </p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔔</div>
+                <h3>Notifications</h3>
+                <p>
+                    Keep users informed about appointment
+                    confirmations and cancellations.
+                </p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔐</div>
+                <h3>Secure Access</h3>
+                <p>
+                    Users access system features based on
+                    their assigned account role.
+                </p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎓</div>
+                <h3>Student Management</h3>
+                <p>
+                    Students can manage their accounts and
+                    access their tutoring appointments.
+                </p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚙️</div>
+                <h3>Administration</h3>
+                <p>
+                    Administrators can manage users, tutors,
+                    appointments, and system information.
+                </p>
+            </div>
+
+        </div>
+    </section>
+
+    <section class="roles-section">
+
+        <div class="section-heading">
+            <p class="section-label">BUILT FOR EVERY USER</p>
+            <h2>One System. Three Roles.</h2>
+        </div>
+        <div class="roles-grid">
+            <div class="role-card">
+                <h3>Students</h3>
+                <p>
+                    Find tutors, view availability, and schedule
+                    tutoring appointments.
+                </p>
+            </div>
+            <div class="role-card">
+                <h3>Tutors</h3>
+                <p>
+                    Manage availability and keep track of
+                    scheduled tutoring appointments.
+                </p>
+            </div>
+            <div class="role-card">
+                <h3>Administrators</h3>
+                <p>
+                    Manage students, tutors, appointments,
+                    and system information.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <section class="login-section">
+        <h2>Ready to get started?</h2>
+        <p>
+            Log in to BookMyBrain and start managing your tutoring appointments.
+        </p>
+        <a asp-controller="Login" asp-action="Login" class="btn btn-light btn-lg"> Login to BookMyBrain </a>
+    </section>
 </div>
