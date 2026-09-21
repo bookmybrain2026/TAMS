@@ -1,25 +1,26 @@
-﻿// Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
-// for details on configuring this project to bundle and minify static web assets.
-
-// Write your JavaScript code.
-// Show Add Subject form
-function showAddForm() {
-    hideForms();
+﻿// Show Add Subject form
+function showSubjectAddForm() {
+    hideSubjectForms();
     document.getElementById("addForm").style.display = "block";
 }
+
 // Show Edit Subject form
-function showEditForm(subjectId, code, name) {
-    hideForms();
+function showSubjectEditForm(subjectId, code, name) {
+    hideSubjectForms();
+
     document.getElementById("EditSubjectId").value = subjectId;
     document.getElementById("EditCode").value = code;
     document.getElementById("EditName").value = name;
+
     document.getElementById("editForm").style.display = "block";
 }
-// Hide all forms
-function hideForms() {
+
+// Hide Subject forms
+function hideSubjectForms() {
     document.getElementById("addForm").style.display = "none";
     document.getElementById("editForm").style.display = "none";
 }
+
 // Search Subjects
 function searchSubjects() {
     var input = document.getElementById("subjectSearch");
@@ -42,25 +43,29 @@ function searchSubjects() {
 }
 
 // Show Add Course form
-function showAddForm() {
-    hideForms();
-
+function showCourseAddForm() {
+    hideCourseForms();
     document.getElementById("addForm").style.display = "block";
 }
+
 // Show Edit Course form
-function showEditForm(courseId, subjectCode, courseCode, courseName) {
-    hideForms();
+function showCourseEditForm(courseId, subjectCode, courseCode, courseName) {
+    hideCourseForms();
+
     document.getElementById("EditCourseId").value = courseId;
     document.getElementById("EditSubjectCode").value = subjectCode;
     document.getElementById("EditCourseCode").value = courseCode;
     document.getElementById("EditCourseName").value = courseName;
+
     document.getElementById("editForm").style.display = "block";
 }
-// Hide all forms
-function hideForms() {
+
+// Hide Course forms
+function hideCourseForms() {
     document.getElementById("addForm").style.display = "none";
     document.getElementById("editForm").style.display = "none";
 }
+
 // Search Courses
 function searchCourses() {
     var input = document.getElementById("courseSearch");

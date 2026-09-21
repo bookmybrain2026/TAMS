@@ -45,7 +45,7 @@
                 <td>@subject.Name</td>
                 <td>
                     <!-- Edit Button -->
-                    <button type="button" class="btn btn-warning" onclick="showEditForm( '@subject.SubjectId', '@subject.Code', '@subject.Name')">Edit</button>
+                    <button type="button" class="btn btn-warning" onclick="showSubjectEditForm( '@subject.SubjectId', '@subject.Code', '@subject.Name')">Edit</button>
                     <!-- Delete Button -->
                     <form asp-action="Delete" method="post" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this subject?');">
                         @Html.AntiForgeryToken()
@@ -61,7 +61,7 @@
 
 <hr />
 
-<button type="button" class="btn btn-primary" onclick="showAddForm()"> Add New Subject </button>
+<button type="button" class="btn btn-primary" onclick="showSubjectAddForm()"> Add New Subject </button>
 
 <!--Create Subject-->
 <div id="addForm" style="display:none; margin-top:20px;">
@@ -78,7 +78,7 @@
             <input type="text" id="CreateName" name="Name" class="form-control" placeholder="Example: Mathematics" required />
         </div>
         <button type="submit" class="btn btn-primary"> Create Subject </button>
-        <button type="button" class="btn btn-secondary" onclick="hideForms()"> Cancel </button>
+        <button type="button" class="btn btn-secondary" onclick="hideSubjectForms()"> Cancel </button>
     </form>
 </div>
 
@@ -99,6 +99,6 @@
             <input type="text" id="EditName" name="Name" class="form-control" required />
         </div>
         <button type="submit" class="btn btn-primary">Save Changes</button>
-        <button type="button" class="btn btn-secondary" onclick="hideForms()"> Cancel </button>
+        <button type="button" class="btn btn-secondary" onclick="hideSubjectForms()"> Cancel </button>
     </form>
 </div>

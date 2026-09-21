@@ -9,7 +9,7 @@ namespace TAMS.Models
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public string SubjectId { get; set; }
+        public string? SubjectId { get; set; }
 
         [Required]
         public string Code { get; set; }
