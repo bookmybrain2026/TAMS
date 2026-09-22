@@ -43,7 +43,6 @@ namespace TAMS.Controllers
             return View("StudentDashboard", student);
         }
 
-        // Displays the student registration page
         [HttpGet]
         public IActionResult StudentRegistration()
         {
@@ -53,59 +52,50 @@ namespace TAMS.Controllers
         [HttpPost]
         public IActionResult StudentRegistration(StudentRegistration model)
         {
-            // Check whether the submitted information is valid
             if (!ModelState.IsValid)
             {
                 return View(model);
             }
 
             // Check whether the username already exists
-            var existingUsername = 
-                dBContext.Login
-                .Find(u => u.Username == model.Username).FirstOrDefault();
-
-            if (existingUsername != null)
-            {
-                ModelState.AddModelError("Username", "This username is already in use.");
-                return View(model);
-            }
+            var existingUsername = dBContext.Login
+                .Find(u => u.Username == model.Username)
+                .FirstOrDefault();
 
             // Check whether the email already exists
             var existingEmail = dBContext.Student
                 .Find(s => s.Email == model.Email)
                 .FirstOrDefault();
 
-            if (existingEmail != null)
+            // If either the username or email is already registered, do not create another account.
+            if (existingUsername != null || existingEmail != null)
             {
-                ModelState.AddModelError("Email", "An account with this email already exists.");
+                ModelState.AddModelError("", "An account with this username or email already exists. Please use the password reset option to recover your account.");
                 return View(model);
             }
 
-            // Find the highest existing UserId
-            var lastUser = 
-                dBContext.Login.Find(_ => true)
-                .SortByDescending(u => u.UserId).FirstOrDefault();
+            // Create a new UserId
+            var lastUser = dBContext.Login
+                .Find(_ => true)
+                .SortByDescending(u => u.UserId)
+                .FirstOrDefault();
 
-            // Generate the next UserId
             int newUserId = lastUser == null ? 1 : lastUser.UserId + 1;
 
-            // Create the student's login account
-            var newLogin = new Login
+            // Create Login account
+            var login = new Login
             {
                 UserId = newUserId,
+                Role = UserRole.Student,
                 Username = model.Username,
                 Password = model.Password,
-                Role = UserRole.Student,
                 CreatedDate = DateTime.Now,
                 LastLogin = DateTime.Now,
                 isActive = true
             };
 
-            // Save the login information to MongoDB
-            dBContext.Login.InsertOne(newLogin);
-
-            // Create the student's profile
-            var newStudent = new Student
+            // Create Student profile
+            var student = new Student
             {
                 StudentId = newUserId,
                 FName = model.FName,
@@ -115,10 +105,10 @@ namespace TAMS.Controllers
                 Email = model.Email
             };
 
-            // Save the student information to MongoDB
-            dBContext.Student.InsertOne(newStudent);
+            // Insert into MongoDB
+            dBContext.Login.InsertOne(login);
+            dBContext.Student.InsertOne(student);
 
-            // Return the student to the login page
             return RedirectToAction("Login", "Login");
         }
     }
