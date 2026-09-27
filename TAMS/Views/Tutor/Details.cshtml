@@ -1,0 +1,141 @@
+﻿@model TAMS.Models.Tutor
+@using TAMS.Models
+
+@{
+    ViewData["Title"] = "Tutor Profile";
+
+    var courses = ViewBag.Courses as List<Course>;
+    var subjectName = ViewBag.SubjectName as string;
+}
+
+<div class="container mt-5">
+
+    <div class="mb-4">
+        <a asp-controller="Tutor"
+           asp-action="Index"
+           class="btn btn-secondary">
+            ← Back to Tutors
+        </a>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <div class="text-center mb-4">
+                <h1> @Model.FName @Model.LName</h1>
+                <p class="text-muted">
+                    Tutor
+                </p>
+            </div>
+
+            <hr />
+
+            <div class="row">
+
+                <div class="col-md-6 mb-3">
+                    <strong>First Name</strong>
+                    <p>@Model.FName</p>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <strong>Last Name</strong>
+                    <p>@Model.LName</p>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <strong>Email</strong>
+                    <p>@Model.Email</p>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <strong>Phone</strong>
+                    <p>@Model.PhoneNumber</p>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <strong>Subject</strong>
+                    <p>
+                        @if (!string.IsNullOrEmpty(subjectName))
+                        {
+                            @subjectName
+                            <span class="text-muted">(@Model.Subject)</span>
+                        }
+                        else
+                        {
+                            @Model.Subject
+                        }
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Courses -->
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-header">
+            <h4 class="mb-0">Courses I Tutor</h4>
+        </div>
+
+        <div class="card-body">
+
+            @if (courses != null && courses.Any())
+            {
+                <div class="d-flex flex-wrap gap-2">
+
+                    @foreach (var course in courses)
+                    {
+                        <div class="course-display-bubble">
+
+                            <strong>@course.CourseCode</strong>
+
+                            <span class="ms-2">
+                                @course.CourseName
+                            </span>
+
+                        </div>
+                    }
+
+                </div>
+            }
+            else
+            {
+                <p class="text-muted mb-0">
+                    This tutor has not selected any courses yet.
+                </p>
+            }
+
+        </div>
+
+    </div>
+
+
+    <!-- Reviews -->
+    <div class="card shadow-sm mb-5">
+
+        <div class="card-header">
+            <h4 class="mb-0">Reviews</h4>
+        </div>
+
+        <div class="card-body">
+
+            <div class="text-center text-muted py-4">
+
+                <h5>No reviews yet</h5>
+
+                <p class="mb-0">
+                    Tutor reviews will appear here once the review feature is available.
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

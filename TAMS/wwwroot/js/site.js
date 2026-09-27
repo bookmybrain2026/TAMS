@@ -90,6 +90,23 @@ function searchCourses() {
     }
 }
 
+function searchTutors() {
+    var input = document.getElementById("tutorSearch");
+    var filter = input.value.toLowerCase();
+
+    var tutors = document.querySelectorAll(".tutor-card");
+
+    tutors.forEach(function (tutor) {
+        var text = tutor.textContent.toLowerCase();
+
+        if (text.includes(filter)) {
+            tutor.style.display = "";
+        } else {
+            tutor.style.display = "none";
+        }
+    });
+}
+
 const subjectSelect = document.getElementById("subjectSelect");
 const courseBubbles = document.querySelectorAll(".course-bubble");
 const noCoursesMessage = document.getElementById("noCoursesMessage");

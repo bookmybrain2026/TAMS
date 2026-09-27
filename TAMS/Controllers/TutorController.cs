@@ -14,6 +14,48 @@ namespace TAMS.Controllers
             this.dBContext = dBContext;
         }
 
+        // Public Tutor Directory
+        [HttpGet]
+        public IActionResult Index()
+        {
+            var tutors = dBContext.Tutor
+                .Find(_ => true)
+                .SortBy(t => t.LName)
+                .ThenBy(t => t.FName)
+                .ToList();
+
+            return View(tutors);
+        }
+
+        // Public Tutor Profile
+        [HttpGet]
+        public IActionResult Details(int id)
+        {
+            var tutor = dBContext.Tutor
+                .Find(t => t.TutorId == id)
+                .FirstOrDefault();
+
+            if (tutor == null) { return NotFound(); }
+
+            // Get the courses this tutor tutors
+            var courseIds = tutor.TutoringCourseIds ?? new List<string>();
+
+            var courses = dBContext.Course
+                .Find(c => c.CourseId != null && courseIds.Contains(c.CourseId))
+                .SortBy(c => c.CourseCode)
+                .ToList();
+
+            // Get the subject name
+            var subject = dBContext.Subject
+                .Find(s => s.Code == tutor.Subject)
+                .FirstOrDefault();
+
+            ViewBag.Courses = courses;
+            ViewBag.SubjectName = subject?.Name ?? tutor.Subject;
+
+            return View(tutor);
+        }
+
         // Tutor Dashboard
         [HttpGet]
         public IActionResult Dashboard()

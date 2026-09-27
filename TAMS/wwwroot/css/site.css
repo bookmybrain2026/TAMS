@@ -289,3 +289,26 @@ body {
     font-size: 0.8rem;
 
 }
+
+.tutor-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 12px;
+}
+
+.tutor-card:hover {
+     transform: translateY(-5px);
+     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.10);
+}
+
+.tutor-card .card-title {
+    font-weight: 700;
+}
+
+.course-display-bubble {
+    display: inline-flex;
+    align-items: center;
+    padding: 12px 18px;
+    border: 2px solid #dee2e6;
+    border-radius: 30px;
+    background-color: #f8f9fa;
+}
