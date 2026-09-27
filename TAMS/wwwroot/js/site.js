@@ -89,3 +89,57 @@ function searchCourses() {
         }
     }
 }
+
+const subjectSelect = document.getElementById("subjectSelect");
+const courseBubbles = document.querySelectorAll(".course-bubble");
+const noCoursesMessage = document.getElementById("noCoursesMessage");
+
+function updateCourses() {
+    const selectedSubject = subjectSelect.value;
+    let visibleCourses = 0;
+    courseBubbles.forEach(function (bubble) {
+        const courseSubject = bubble.getAttribute("data-subject");
+        const checkbox = bubble.querySelector("input");
+
+        if (courseSubject === selectedSubject) {
+            bubble.style.display = "inline-flex";
+            visibleCourses++;
+        }
+        else {
+            bubble.style.display = "none";
+            checkbox.checked = false; // Unselect courses that don't belong to the selected subject.
+            bubble.classList.remove("selected");
+        }
+    });
+
+    if (visibleCourses === 0 && selectedSubject !== "") {
+        noCoursesMessage.style.display = "block";
+    }
+    else {
+        noCoursesMessage.style.display = "none";
+    }
+}
+
+
+// Change bubble appearance when selected.
+courseBubbles.forEach(function (bubble) {
+    const checkbox = bubble.querySelector("input");
+    if (checkbox.checked) {
+        bubble.classList.add("selected");
+    }
+
+    bubble.addEventListener("click", function () {
+        checkbox.checked = !checkbox.checked;
+        if (checkbox.checked) {
+            bubble.classList.add("selected");
+        }
+        else {
+            bubble.classList.remove("selected");
+        }
+    });
+});
+// Update courses when subject changes.
+subjectSelect.addEventListener("change", updateCourses);
+
+// Run when page loads.
+updateCourses();

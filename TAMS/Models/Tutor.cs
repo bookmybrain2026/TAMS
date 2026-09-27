@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using MongoDB.Bson.Serialization.Attributes;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace TAMS.Models
 {
@@ -32,6 +33,11 @@ namespace TAMS.Models
         [EmailAddress]
         public string Email { get; set; }
 
-        public virtual Login Login { get; set; }
+        // Courses this tutor is able to tutor
+        public List<string> TutoringCourseIds { get; set; } = new List<string>();
+
+        [BindNever]
+        public virtual Login? Login { get; set; }
+
     }
 }

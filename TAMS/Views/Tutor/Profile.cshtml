@@ -1,0 +1,144 @@
+﻿@model TAMS.Models.Tutor
+@using TAMS.Models
+
+@{
+    ViewData["Title"] = "Tutor Profile";
+    var subjects = ViewBag.Subjects as List<Subject>;
+    var courses = ViewBag.Courses as List<Course>;
+    var selectedCourses = Model.TutoringCourseIds ?? new List<string>();
+}
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1>Tutor Profile</h1>
+            <p class="text-muted">
+                View and edit your profile information and tutoring courses.
+            </p>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success"> @TempData["SuccessMessage"] </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger"> @TempData["ErrorMessage"] </div>
+    }
+
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+    <form asp-controller="Tutor" asp-action="Profile" method="post">
+
+        @Html.AntiForgeryToken()
+
+        <!-- PROFILE INFORMATION -->
+        <div class="card shadow-sm mb-4">
+
+            <div class="card-header">
+                <h4 class="mb-0">Personal Information</h4>
+            </div>
+
+            <div class="card-body">
+
+                <div class="row">
+                    <!-- First Name -->
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="FName" class="form-label"> First Name </label>
+                        <input asp-for="FName" class="form-control" /> 
+                        <span asp-validation-for="FName" class="text-danger"></span>
+                    </div>
+
+                    <!-- Last Name -->
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="LName" class="form-label"> Last Name </label>
+                        <input asp-for="LName" class="form-control" />
+                        <span asp-validation-for="LName" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Email -->
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Email" class="form-label"> Email </label>
+                        <input asp-for="Email" type="email" class="form-control" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+
+                    <!-- Phone -->
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="PhoneNumber" class="form-label">Phone Number</label>
+                        <input asp-for="PhoneNumber" class="form-control" />
+                        <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <!-- Subject -->
+                <div class="mb-3">
+                    <label asp-for="Subject" class="form-label"> Subject </label>
+                    <select asp-for="Subject" id="subjectSelect" class="form-select">
+                        <option value="">  -- Select a Subject -- </option>
+
+                        @if (subjects != null)
+                        {
+                            foreach (var subject in subjects)
+                            {
+                                <option value="@subject.Code">
+                                    @subject.Code - @subject.Name
+                                </option>
+                            }
+                        }
+                    </select>
+                    <span asp-validation-for="Subject" class="text-danger"></span>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- COURSES -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h4 class="mb-0">Courses I Tutor</h4>
+            </div>
+
+            <div class="card-body">
+                <p class="text-muted">
+                    Select the courses you are available to tutor.
+                    Only courses belonging to your selected subject are shown.
+                </p>
+
+                <div id="courseContainer" class="d-flex flex-wrap gap-2">
+
+                    @if (courses != null && courses.Any())
+                    {
+                        foreach (var course in courses)
+                        {
+                            var isSelected = selectedCourses.Contains(course.CourseId);
+                            <label class="course-bubble" data-subject="@course.SubjectCode">
+                                <input type="checkbox" name="TutoringCourseIds" value="@course.CourseId" @(isSelected ? "checked" : "") />
+                                <span>
+                                    <strong>@course.CourseCode</strong>
+                                    <br />
+                                    <small>@course.CourseName</small>
+                                </span>
+                            </label>
+                        }
+                    }
+                </div>
+
+                <div id="noCoursesMessage" class="alert alert-info mt-3" style="display:none;">
+                    There are currently no courses available for this subject.
+                </div>
+
+            </div>
+        </div>
+        <!-- BUTTONS -->
+        <div class="d-flex gap-2 mb-5">
+            <button type="submit" class="btn btn-primary"> Save Changes </button>
+            <a asp-controller="Tutor" asp-action="Dashboard" class="btn btn-secondary"> Back to Dashboard</a>
+        </div>
+
+    </form>
+
+</div>

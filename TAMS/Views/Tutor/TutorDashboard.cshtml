@@ -1,8 +1,40 @@
-﻿@{
+﻿@model TAMS.Models.Tutor
+
+@{
     ViewData["Title"] = "Tutor Dashboard";
 }
 
 <div class="container mt-5">
-    <h1>Tutor Dashboard</h1>
-    <p>Welcome to the TAMS Tutor Dashboard.</p>
+
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1>Tutor Dashboard</h1>
+            <p class="text-muted"> Welcome back, @Model.FName @Model.LName!</p>
+        </div>
+    </div>
+
+    <hr />
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h4> @Model.FName @Model.LName </h4>
+                    <p>
+                        <strong>Email:</strong>
+                        @Model.Email
+                    </p>
+                    <p>
+                        <strong>Phone:</strong>
+                        @Model.PhoneNumber
+                    </p>
+                    <p>
+                        <strong>Subject:</strong>
+                        @Model.Subject
+                    </p>
+                    <a asp-controller="Tutor" asp-action="Profile" class="btn btn-primary"> View / Edit Profile </a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
