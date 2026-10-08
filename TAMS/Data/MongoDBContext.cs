@@ -38,6 +38,7 @@ namespace TAMS.Data
         public IMongoCollection<Course> Course => _database.GetCollection<Course>("Course");
         public IMongoCollection<PasswordRecovery> PasswordRecoveries => _database.GetCollection<PasswordRecovery>("PasswordRecoveries");
         public IMongoCollection<Appointment> Appointments => _database.GetCollection<Appointment>("Appointments");
+        public IMongoCollection<Schedule> Schedule => _database.GetCollection<Schedule>("Schedule");
 
         private void DeleteUsedRecoveryCodes()
         {

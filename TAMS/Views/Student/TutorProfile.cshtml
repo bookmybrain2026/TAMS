@@ -1,0 +1,102 @@
+﻿@model TAMS.Models.Tutor
+
+@using TAMS.Models
+@using System.Linq
+
+<div class="d-flex justify-content-end">
+
+    <form asp-controller="Login"
+          asp-action="Logout"
+          method="post">
+
+        @Html.AntiForgeryToken()
+
+        <button type="submit"
+                class="btn btn-danger">
+            Logout
+        </button>
+
+    </form>
+
+</div>
+
+<h1>Tutor Profile</h1>
+
+<hr />
+
+<div class="card">
+
+    <div class="card-body">
+
+        <h2>
+            @Model.FName @Model.LName
+        </h2>
+
+        <p>
+            <strong>Subject:</strong>
+            @Model.Subject
+        </p>
+
+        <p>
+            <strong>Email:</strong>
+            @Model.Email
+        </p>
+
+        <p>
+            <strong>Phone:</strong>
+            @Model.PhoneNumber
+        </p>
+
+        <hr />
+
+        <h4>Courses Tutored</h4>
+
+        @{
+            var courses = ViewBag.Courses as List<Course>
+            ?? new List<Course>();
+        }
+
+        @if (courses.Any())
+        {
+            <ul>
+                @foreach (var course in courses)
+                {
+                    <li>
+                        @course.CourseCode
+
+                        @if (!string.IsNullOrWhiteSpace(course.CourseName))
+                        {
+                            @: - @course.CourseName
+                        }
+                    </li>
+                }
+            </ul>
+        }
+        else
+        {
+            <p class="text-muted">
+                No courses listed for this tutor.
+            </p>
+        }
+
+        <hr />
+
+        <a class="btn btn-secondary"
+           href="@Url.Action(
+                          "Dashboard",
+                          "Student",
+                          new { id = ViewBag.StudentId })">
+            ← Back to Dashboard
+        </a>
+
+        <a class="btn btn-success"
+           href="@Url.Action(
+                          "Scheduler",
+                          "Appointment",
+                          new { tutorId = Model.TutorId })">
+            View Schedule
+        </a>
+
+    </div>
+
+</div>

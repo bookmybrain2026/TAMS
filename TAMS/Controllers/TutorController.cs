@@ -60,15 +60,48 @@ namespace TAMS.Controllers
         [HttpGet]
         public IActionResult Dashboard()
         {
+            // Retrieve the TutorId stored in the session during login
             var tutorId = HttpContext.Session.GetInt32("TutorId");
 
-            if (tutorId == null) { return RedirectToAction("Login", "Login"); }
+            if (tutorId == null)
+            {
+                return RedirectToAction("Login", "Login");
+            }
 
+            // Retrieve the tutor
             var tutor = dBContext.Tutor
                 .Find(t => t.TutorId == tutorId.Value)
                 .FirstOrDefault();
 
-            if (tutor == null) { return RedirectToAction("Login", "Login"); }
+            if (tutor == null)
+            {
+                return RedirectToAction("Login", "Login");
+            }
+
+            // Retrieve all appointments belonging to this tutor
+            var appointments = dBContext.Appointments
+                .Find(a => a.TutorId == tutor.TutorId)
+                .SortBy(a => a.AppointmentDate)
+                .ToList();
+
+            // Retrieve the student connected to each appointment
+            foreach (var appointment in appointments)
+            {
+                appointment.Student = dBContext.Student
+                    .Find(s => s.StudentId == appointment.StudentId)
+                    .FirstOrDefault();
+            }
+
+            // Retrieve all schedules belonging to this tutor
+            var schedules = dBContext.Schedule
+                .Find(s => s.TutorId == tutor.TutorId)
+                .SortBy(s => s.Date)
+                .ToList();
+
+            // Attach the information to the tutor object
+            // so the dashboard view can access it.
+            ViewBag.Appointments = appointments;
+            ViewBag.Schedules = schedules;
 
             return View("TutorDashboard", tutor);
         }
@@ -174,5 +207,255 @@ namespace TAMS.Controllers
                 .ToList();
         }
 
+        // Displays the tutor's schedule for a selected month
+        [HttpGet]
+        public IActionResult Schedule(int id, int? month, int? year)
+        {
+            var tutorId = HttpContext.Session.GetInt32("TutorId");
+
+            if (tutorId == null)
+            {
+                return RedirectToAction("Login", "Login");
+            }
+
+            // Prevent a tutor from viewing another tutor's schedule
+            if (tutorId.Value != id)
+            {
+                return Unauthorized();
+            }
+
+            var tutor = dBContext.Tutor
+                .Find(t => t.TutorId == id)
+                .FirstOrDefault();
+
+            if (tutor == null)
+            {
+                return NotFound();
+            }
+
+            int targetMonth = month ?? DateTime.Today.Month;
+            int targetYear = year ?? DateTime.Today.Year;
+
+            var schedules = dBContext.Schedule
+                .Find(s =>
+                    s.TutorId == id &&
+                    s.Date.Month == targetMonth &&
+                    s.Date.Year == targetYear)
+                .ToList();
+
+            ViewBag.TutorId = id;
+            ViewBag.Month = targetMonth;
+            ViewBag.Year = targetYear;
+
+            return View(schedules);
+        }
+
+        // Adds an available time period to the tutor's schedule
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult AddSchedule(
+            int tutorId,
+            DateTime date,
+            TimeSpan startTime,
+            TimeSpan endTime)
+        {
+            var loggedInTutorId = HttpContext.Session.GetInt32("TutorId");
+
+            if (loggedInTutorId == null)
+            {
+                return RedirectToAction("Login", "Login");
+            }
+
+            // Prevent a tutor from modifying another tutor's schedule
+            if (loggedInTutorId.Value != tutorId)
+            {
+                return Unauthorized();
+            }
+
+            if (endTime <= startTime)
+            {
+                TempData["Error"] = "End time must be after start time.";
+
+                return RedirectToAction(
+                    "Schedule",
+                    new
+                    {
+                        id = tutorId,
+                        month = date.Month,
+                        year = date.Year
+                    });
+            }
+
+            var existingSchedules = dBContext.Schedule
+                .Find(s =>
+                    s.TutorId == tutorId &&
+                    s.Date.Date == date.Date)
+                .ToList();
+
+            // Check for overlapping schedules
+            bool overlap = existingSchedules.Any(s =>
+                startTime < s.EndTime &&
+                endTime > s.StartTime);
+
+            if (overlap)
+            {
+                TempData["Error"] =
+                    "This schedule overlaps with an existing schedule.";
+
+                return RedirectToAction(
+                    "Schedule",
+                    new
+                    {
+                        id = tutorId,
+                        month = date.Month,
+                        year = date.Year
+                    });
+            }
+
+            // Generate a new ScheduleId
+            var lastSchedule = dBContext.Schedule
+                .Find(_ => true)
+                .SortByDescending(s => s.ScheduleId)
+                .FirstOrDefault();
+
+            int newScheduleId =
+                lastSchedule == null
+                    ? 1
+                    : lastSchedule.ScheduleId + 1;
+
+            var schedule = new Schedule
+            {
+                ScheduleId = newScheduleId,
+                TutorId = tutorId,
+                Date = date.Date,
+                StartTime = startTime,
+                EndTime = endTime
+            };
+
+            dBContext.Schedule.InsertOne(schedule);
+
+            TempData["Success"] = "Schedule added successfully.";
+
+            return RedirectToAction(
+                "Schedule",
+                new
+                {
+                    id = tutorId,
+                    month = date.Month,
+                    year = date.Year
+                });
+        }
+
+        // Deletes a tutor's available schedule
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult DeleteSchedule(int scheduleId)
+        {
+            var tutorId = HttpContext.Session.GetInt32("TutorId");
+
+            if (tutorId == null)
+            {
+                return RedirectToAction("Login", "Login");
+            }
+
+            var schedule = dBContext.Schedule
+                .Find(s => s.ScheduleId == scheduleId)
+                .FirstOrDefault();
+
+            if (schedule == null)
+            {
+                return NotFound();
+            }
+
+            // Prevent a tutor from deleting another tutor's schedule
+            if (schedule.TutorId != tutorId.Value)
+            {
+                return Unauthorized();
+            }
+
+            dBContext.Schedule.DeleteOne(
+                s => s.ScheduleId == scheduleId);
+
+            TempData["Success"] = "Schedule deleted successfully.";
+
+            return RedirectToAction(
+                "Schedule",
+                new
+                {
+                    id = tutorId.Value,
+                    month = schedule.Date.Month,
+                    year = schedule.Date.Year
+                });
+        }
+        [HttpGet]
+        public IActionResult ScheduleCalendar(
+    int id,
+    int? month,
+    int? year)
+        {
+            var tutorId =
+                HttpContext.Session.GetInt32("TutorId");
+
+            if (tutorId == null)
+            {
+                return RedirectToAction("Login", "Login");
+            }
+
+            // A tutor can only view their own appointment calendar.
+            if (tutorId.Value != id)
+            {
+                return Unauthorized();
+            }
+
+            var tutor = dBContext.Tutor
+                .Find(t => t.TutorId == id)
+                .FirstOrDefault();
+
+            if (tutor == null)
+            {
+                return NotFound();
+            }
+
+            int targetMonth =
+                month ?? DateTime.Today.Month;
+
+            int targetYear =
+                year ?? DateTime.Today.Year;
+
+            var startOfMonth =
+                new DateTime(
+                    targetYear,
+                    targetMonth,
+                    1);
+
+            var startOfNextMonth =
+                startOfMonth.AddMonths(1);
+
+            var appointments =
+                dBContext.Appointments
+                    .Find(a =>
+                        a.TutorId == id &&
+                        a.AppointmentDate >= startOfMonth &&
+                        a.AppointmentDate < startOfNextMonth)
+                    .ToList();
+
+            // Attach student information
+            foreach (var appointment in appointments)
+            {
+                appointment.Student =
+                    dBContext.Student
+                        .Find(s =>
+                            s.StudentId ==
+                            appointment.StudentId)
+                        .FirstOrDefault();
+            }
+
+            ViewBag.TutorId = id;
+            ViewBag.Month = targetMonth;
+            ViewBag.Year = targetYear;
+            ViewBag.Appointments = appointments;
+
+            return View("ScheduleCalendar");
+        }
     }
 }

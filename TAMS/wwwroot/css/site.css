@@ -312,3 +312,78 @@ body {
     border-radius: 30px;
     background-color: #f8f9fa;
 }
+
+
+
+.appointments-section {
+    background-color: white;
+    padding: 25px;
+    margin-top: 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+    .appointments-section h2 {
+        margin-top: 0;
+        margin-bottom: 20px;
+    }
+
+.appointment-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+    .appointment-table th {
+        background-color: #34495e;
+        color: white;
+        padding: 12px;
+        text-align: left;
+    }
+
+    .appointment-table td {
+        padding: 12px;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .appointment-table tr:hover {
+        background-color: #f8f9fa;
+    }
+
+.status {
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.scheduled {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.completed {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.cancelled {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.cancel-button {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    padding: 7px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+    .cancel-button:hover {
+        background-color: #c0392b;
+    }
+
+.no-appointments {
+    color: #777;
+    font-style: italic;
+}

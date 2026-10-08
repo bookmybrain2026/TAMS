@@ -1,15 +1,336 @@
 ﻿@model TAMS.Models.Student
 
-@{
-    ViewData["Title"] = "Student Dashboard";
+@using TAMS.Models
+@using System.Linq
+
+<div class="d-flex justify-content-end">
+    <form asp-controller="Login" asp-action="Logout" method="post">
+        @Html.AntiForgeryToken()
+
+        <button type="submit" class="btn btn-danger">
+            Logout
+        </button>
+    </form>
+</div>
+
+<h1>Welcome, @Model.FName @Model.LName!</h1>
+
+<hr />
+
+<h2>Personal Information</h2>
+
+<p>
+    <strong>Name:</strong>
+    @Model.FName @Model.LName
+</p>
+
+<p>
+    <strong>Date of Birth:</strong>
+    @Model.DOB.ToString("MM/dd/yyyy")
+</p>
+
+<p>
+    <strong>Contact Number:</strong>
+    @Model.PhoneNumber
+</p>
+
+<p>
+    <strong>Email:</strong>
+    @Model.Email
+</p>
+
+<button class="btn btn-primary mt-3"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#editForm">
+    Update Personal Information
+</button>
+
+<div id="editForm" class="collapse mt-3">
+
+    <form asp-controller="Student"
+          asp-action="UpdateInfo"
+          method="post">
+
+        @Html.AntiForgeryToken()
+
+        <input type="hidden" asp-for="StudentId" />
+
+        <div class="mb-2">
+            <label asp-for="FName">First Name</label>
+            <input class="form-control"
+                   asp-for="FName" />
+        </div>
+
+        <div class="mb-2">
+            <label asp-for="LName">Last Name</label>
+            <input class="form-control"
+                   asp-for="LName" />
+        </div>
+
+        <div class="mb-2">
+            <label asp-for="Email">Email</label>
+            <input class="form-control"
+                   asp-for="Email" />
+        </div>
+
+        <div class="mb-2">
+            <label asp-for="PhoneNumber">Phone Number</label>
+            <input class="form-control"
+                   asp-for="PhoneNumber" />
+        </div>
+
+        <div class="mb-2">
+            <label asp-for="DOB">Date of Birth</label>
+            <input class="form-control"
+                   asp-for="DOB"
+                   type="date" />
+        </div>
+
+        <button type="submit"
+                class="btn btn-success mt-2">
+            Save Changes
+        </button>
+
+        <button class="btn btn-secondary mt-2"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#editForm">
+            Cancel
+        </button>
+
+    </form>
+
+</div>
+
+<hr />
+
+<h2>Your Appointments</h2>
+
+@if (Model.Appointments == null || !Model.Appointments.Any())
+{
+    <p>No appointments found.</p>
+}
+else
+{
+    <table class="table table-bordered">
+
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Tutor</th>
+                <th>Subject</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            @foreach (var appt in Model.Appointments
+                    .OrderBy(a => a.AppointmentDate))
+            {
+                var rowClass =
+                appt.Status == "Cancelled" ? "table-danger" :
+                appt.Status == "Completed" ? "table-success" :
+                appt.Status == "Scheduled" ? "table-warning" :
+                "";
+
+                <tr class="@rowClass">
+
+                    <td>
+                        @appt.AppointmentDate.ToString(
+                        "MM/dd/yyyy hh:mm tt")
+            </td>
+
+            <td>
+                @appt.Status
+            </td>
+
+            <td>
+                @if (appt.Tutor != null)
+                        {
+                            @:@appt.Tutor.FName @appt.Tutor.LName
+                        }
+                        else
+                        {
+                            <span class="text-muted">
+                                Tutor information unavailable
+                            </span>
+                        }
+                    </td>
+
+                    <td>
+                        @if (appt.Tutor != null)
+                        {
+                            @appt.Tutor.Subject
+                        }
+                        else
+                        {
+                            <span class="text-muted">
+                                N/A
+                            </span>
+                        }
+                    </td>
+
+                    <td>
+
+                        @if (appt.Status == "Scheduled")
+                        {
+                            <form asp-controller="Appointment"
+                                  asp-action="StudentCancelAppointment"
+                                  method="post"
+                                  onsubmit="return confirm('Are you sure you want to cancel this appointment?');">
+
+                                @Html.AntiForgeryToken()
+
+                                <input type="hidden"
+                                       name="appointmentId"
+                                       value="@appt.AppointmentId" />
+
+                                <button type="submit"
+                                        class="btn btn-danger btn-sm">
+                                    Cancel
+                                </button>
+
+                            </form>
+                        }
+
+                    </td>
+
+                </tr>
+            }
+
+        </tbody>
+
+    </table>
 }
 
-<div class="container mt-5">
-    <h1>Student Dashboard</h1>
+<hr />
 
-    <h3>Welcome, @Model.FName @Model.LName!</h3>
+<h2>Search Tutors</h2>
 
-    <p><strong>Student ID:</strong> @Model.StudentId</p>
-    <p><strong>Email:</strong> @Model.Email</p>
-    <p><strong>Phone:</strong> @Model.PhoneNumber</p>
-</div>
+<form asp-controller="Student"
+      asp-action="Dashboard"
+      method="get">
+
+    <input type="hidden"
+           name="id"
+           value="@Model.StudentId" />
+
+    <div class="input-group mb-3">
+
+        <input type="text"
+               name="searchTerm"
+               value="@ViewBag.SearchTerm"
+               class="form-control"
+               placeholder="Search by tutor name or subject..." />
+
+        <button type="submit"
+                class="btn btn-primary">
+            Search
+        </button>
+
+    </div>
+
+</form>
+
+@{
+    var tutors = ViewBag.Tutors as List<Tutor>
+        ?? new List<Tutor>();
+}
+
+@if (tutors.Any())
+{
+    <div class="row">
+
+        @foreach (var tutor in tutors)
+        {
+            <div class="col-md-6 mb-3">
+
+                <div class="card">
+
+                    <div class="card-body">
+
+                        <h5 class="card-title">
+                            @tutor.FName @tutor.LName
+                        </h5>
+
+                        <p class="card-text">
+                            <strong>Subject:</strong>
+                            @tutor.Subject
+                        </p>
+
+                        <p class="card-text">
+                            <strong>Email:</strong>
+                            @tutor.Email
+                        </p>
+
+                        <p class="card-text">
+                            <strong>Phone:</strong>
+                            @tutor.PhoneNumber
+                        </p>
+
+                        <a class="btn btn-info"
+                           href="@Url.Action(
+                                                          "TutorProfile",
+                                                          "Student",
+                                                          new { tutorId = tutor.TutorId })">
+                    View Profile
+                </a>
+
+                        <a class="btn btn-success"
+                           href="@Url.Action(
+                                                  "Scheduler",
+                                                  "Appointment",
+                                                  new { tutorId = tutor.TutorId })">
+                    View Schedule
+                </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+        }
+
+    </div>
+}
+else
+{
+    <p class="text-muted">
+        No tutors found matching your search.
+    </p>
+}
+
+<hr />
+
+<h2>Book an Appointment</h2>
+
+<form asp-controller="Appointment"
+      asp-action="Scheduler"
+      method="get">
+
+    <select name="tutorId"
+            class="form-select"
+            required>
+
+        <option value="">
+            -- Select a Tutor --
+        </option>
+
+        @foreach (var tutor in tutors)
+        {
+            <option value="@tutor.TutorId">
+                @tutor.FName @tutor.LName - @tutor.Subject
+            </option>
+        }
+
+    </select>
+
+    <button type="submit"
+            class="btn btn-success mt-2">
+        View Schedule
+    </button>
+
+</form>

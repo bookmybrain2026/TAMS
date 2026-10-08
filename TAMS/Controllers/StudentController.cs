@@ -1,48 +1,210 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using TAMS.Data;
+﻿using TAMS.Data;
 using TAMS.Models;
+using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 
 namespace TAMS.Controllers
 {
-    // Handles pages and functionality related to students
     public class StudentController : Controller
     {
         private readonly MongoDBContext dBContext;
 
-        // Constructor receives the MongoDB context
         public StudentController(MongoDBContext dBContext)
         {
             this.dBContext = dBContext;
         }
 
-        // Displays the student dashboard
-        public IActionResult Dashboard(int id)
+        [HttpGet]
+        public IActionResult Dashboard(int? id, string searchTerm = "")
         {
-            // Retrieves the StudentId stored in the session during login
-            var studentId = HttpContext.Session.GetInt32("StudentId");
-
-            // Checks whether a student is logged in
-            if (studentId == null)
+            // Redirect to login if no student ID was provided
+            if (id == null)
             {
                 return RedirectToAction("Login", "Login");
             }
 
-            // Find the student's profile in MongoDB
+            // Get the student
             var student = dBContext.Student
-                .Find(s => s.StudentId == studentId.Value)
+                .Find(s => s.StudentId == id.Value)
                 .FirstOrDefault();
 
-            // Make sure the student profile exists
             if (student == null)
             {
-                return RedirectToAction("Login", "Login");
+                return NotFound();
             }
 
-            // Pass the student information to StudentDashboard.cshtml
+            // Get all tutors
+            var tutors = dBContext.Tutor
+                .Find(_ => true)
+                .ToList();
+
+            // Search tutors by name or subject
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                searchTerm = searchTerm.Trim();
+
+                tutors = tutors
+                    .Where(t =>
+                        ($"{t.FName} {t.LName}")
+                            .Contains(
+                                searchTerm,
+                                StringComparison.OrdinalIgnoreCase)
+                        ||
+                        (!string.IsNullOrWhiteSpace(t.Subject) &&
+                         t.Subject.Contains(
+                             searchTerm,
+                             StringComparison.OrdinalIgnoreCase)))
+                    .ToList();
+            }
+
+            // Get all appointments belonging to this student
+            student.Appointments = dBContext.Appointments
+                .Find(a => a.StudentId == student.StudentId)
+                .ToList();
+
+            // Attach tutor information to each appointment
+            foreach (var appointment in student.Appointments)
+            {
+                appointment.Tutor =
+                    dBContext.Tutor
+                    .Find(t => t.TutorId == appointment.TutorId)
+                    .FirstOrDefault();
+            }
+
+            ViewBag.Tutors = tutors;
+            ViewBag.SearchTerm = searchTerm;
+
             return View("StudentDashboard", student);
         }
 
+        [HttpGet]
+        public IActionResult TutorProfile(int tutorId, int studentId)
+        {
+            var tutor = dBContext.Tutor
+                .Find(t => t.TutorId == tutorId)
+                .FirstOrDefault();
+
+            if (tutor == null)
+            {
+                return NotFound();
+            }
+
+            // Get the courses taught by this tutor
+            var courseIds = tutor.TutoringCourseIds
+                ?? new List<string>();
+
+            var courses = dBContext.Course
+                .Find(c =>
+                    c.CourseId != null &&
+                    courseIds.Contains(c.CourseId))
+                .SortBy(c => c.CourseCode)
+                .ToList();
+
+            ViewBag.StudentId = studentId;
+            ViewBag.Courses = courses;
+
+            return View("TutorProfile", tutor);
+        }
+
+        [HttpPost]
+        public IActionResult UpdateInfo(Student updatedStudent)
+        {
+            // Searches for the student using StudentId
+            var student =
+                dBContext.Student
+                .Find(s => s.StudentId == updatedStudent.StudentId)
+                .FirstOrDefault();
+
+            if (student == null)
+            {
+                return NotFound();
+            }
+
+            // Specifies which fields should be changed in MongoDB
+            var update =
+                Builders<Student>.Update
+                .Set(s => s.FName, updatedStudent.FName)
+                .Set(s => s.LName, updatedStudent.LName)
+                .Set(s => s.Email, updatedStudent.Email)
+                .Set(s => s.PhoneNumber, updatedStudent.PhoneNumber)
+                .Set(s => s.DOB, updatedStudent.DOB);
+
+            dBContext.Student.UpdateOne(
+                s => s.StudentId == updatedStudent.StudentId,
+                update);
+
+            return RedirectToAction(
+                "Dashboard",
+                new { id = updatedStudent.StudentId });
+        }
+
+        [HttpGet]
+        public IActionResult CreateAccount()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public IActionResult CreateAccount(
+            string username,
+            string password,
+            Student studentModel)
+        {
+            if (string.IsNullOrWhiteSpace(username) ||
+                string.IsNullOrWhiteSpace(password))
+            {
+                ViewBag.Error =
+                    "Username and password are required.";
+
+                return View(studentModel);
+            }
+
+            var existingLogin =
+                dBContext.Login
+                .Find(l => l.Username == username)
+                .FirstOrDefault();
+
+            if (existingLogin != null)
+            {
+                ViewBag.Error =
+                    "That username already exists.";
+
+                return View(studentModel);
+            }
+
+            var lastLogin =
+                dBContext.Login
+                .Find(_ => true)
+                .SortByDescending(l => l.UserId)
+                .FirstOrDefault();
+
+            int newUserId =
+                lastLogin == null
+                    ? 1
+                    : lastLogin.UserId + 1;
+
+            var login =
+                new Login
+                {
+                    UserId = newUserId,
+                    Username = username,
+                    Password = password,
+                    Role = UserRole.Student,
+                    CreatedDate = DateTime.Now,
+                    LastLogin = DateTime.Now,
+                    isActive = true
+                };
+
+            dBContext.Login.InsertOne(login);
+
+            studentModel.StudentId = newUserId;
+
+            dBContext.Student.InsertOne(studentModel);
+
+            return RedirectToAction(
+                "Dashboard",
+                new { id = newUserId });
+        }
         [HttpGet]
         public IActionResult StudentRegistration()
         {

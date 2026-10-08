@@ -33,5 +33,8 @@ namespace TAMS.Models
         public string Email { get; set; }
 
         public virtual Login Login { get; set; }
+
+        public virtual List<Appointment> Appointments { get; set; } = new List<Appointment>();
+
     }
 }
