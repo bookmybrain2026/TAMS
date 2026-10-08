@@ -2,18 +2,19 @@
 using MongoDB.Driver;
 using TAMS.Data;
 using TAMS.Models;
+using TAMS.Services;
 
 namespace TAMS.Controllers
 {
     public class LoginController : Controller
     {
-        //Provides access to MongoDB database
-        private readonly MongoDBContext dBContext;
+        private readonly MongoDBContext dBContext; //Provides access to MongoDB database
+        private readonly IEmailService _emailService;
 
-        //Constructor that initializes the MongoDBContext for database access
-        public LoginController(MongoDBContext dBContext)
+        public LoginController( MongoDBContext dBContext, IEmailService emailService)
         {
             this.dBContext = dBContext;
+            _emailService = emailService;
         }
 
         //Display the Login page
@@ -94,13 +95,9 @@ namespace TAMS.Controllers
         }
 
         [HttpPost]
-        public IActionResult VerifyUser(ForgotPassword model)
+        public async Task<IActionResult> VerifyUser(ForgotPassword model)
         {
-            if (!ModelState.IsValid)
-            {
-                return View("ForgotPassword", model);
-            }
-
+            if (!ModelState.IsValid) { return View("ForgotPassword", model); }
             // Find the active login account using the username.
             var user = dBContext.Login
                 .Find(u =>
@@ -117,17 +114,21 @@ namespace TAMS.Controllers
 
             // Verify that the email belongs to this account.
             bool emailMatches = false;
+            string recipientName = "";
 
             switch (user.Role)
             {
                 case UserRole.Student:
-
                     var student = dBContext.Student
                         .Find(s =>
                             s.StudentId == user.UserId &&
                             s.Email == model.Email)
                         .FirstOrDefault();
-                    emailMatches = student != null;
+                    if (student != null)
+                    {
+                        emailMatches = true;
+                        recipientName = $"{student.FName} {student.LName}";
+                    }
                     break;
 
                 case UserRole.Tutor:
@@ -137,9 +138,11 @@ namespace TAMS.Controllers
                             t.TutorId == user.UserId &&
                             t.Email == model.Email)
                         .FirstOrDefault();
-
-                    emailMatches = tutor != null;
-
+                    if (tutor != null)
+                    {
+                        emailMatches = true;
+                        recipientName = $"{tutor.FName} {tutor.LName}";
+                    }
                     break;
 
                 case UserRole.Administrator:
@@ -149,23 +152,28 @@ namespace TAMS.Controllers
                             a.AdminId == user.UserId &&
                             a.Email == model.Email)
                         .FirstOrDefault();
-                    emailMatches = admin != null;
+                    if (admin != null)
+                    {
+                        emailMatches = true;
+                        recipientName = $"{admin.FName} {admin.LName}";
+                    }
                     break;
             }
 
-            // Username exists, but email does not belong to the account
+            // Username exists, but email does not belong to the account.
             if (!emailMatches)
             {
-                ModelState.AddModelError("", "The username or email is incorrect.");
+                ModelState.AddModelError( "", "The username or email is incorrect.");
                 return View("ForgotPassword", model);
             }
 
-            // random 6-digit recovery code
+            // Generate a random 6-digit recovery code.
             var recoveryCode = Random.Shared.Next(100000, 1000000).ToString();
 
-            // Delete any previous unused recovery codes
-            // for this user.
-            dBContext.PasswordRecoveries.DeleteMany(r => r.UserId == user.UserId && !r.IsUsed);
+            // Delete any previous unused recovery codes for this user.
+            dBContext.PasswordRecoveries.DeleteMany(
+                r => r.UserId == user.UserId &&
+                     !r.IsUsed);
 
             // Create the new recovery record.
             var recoveryRecord = new PasswordRecovery
@@ -180,20 +188,26 @@ namespace TAMS.Controllers
             // Save the recovery code to MongoDB.
             dBContext.PasswordRecoveries.InsertOne(recoveryRecord);
 
-            // Store the user ID for the next recovery step.
-            TempData["RecoveryUserId"] = user.UserId;
+            // Send the recovery code to the user's email.
+            try
+            {
+                await _emailService.SendPasswordRecoveryCodeAsync(model.Email, recipientName, recoveryCode);
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError( "", "The recovery email could not be sent. Please try again.");
+                Console.WriteLine($"Email error: {ex.Message}");
+                return View("ForgotPassword", model);
+            }
 
-            // Store the email for the next step.
+            // Store the user ID  &  email
+            TempData["RecoveryUserId"] = user.UserId;
             TempData["RecoveryEmail"] = model.Email;
 
-            // Show the recovery-code field.
+            // Show the recovery-code field will use when email is unable to be sent
             model.AccountVerified = true;
 
-            ViewBag.SuccessMessage = "Your account has been verified. A recovery code has been generated.";
-
-            // TEMP
-            ViewBag.RecoveryCode = recoveryCode;
-
+            ViewBag.SuccessMessage = "Your account has been verified. A recovery code has been sent to your email.";
             return View("ForgotPassword", model);
         }
 

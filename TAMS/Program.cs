@@ -1,4 +1,5 @@
 using TAMS.Data;
+using TAMS.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 //configure ASP.NET Core's session support.
@@ -13,6 +14,9 @@ builder.Services.AddSession(options =>
 
 //MongoDB 
 builder.Services.AddSingleton<MongoDBContext>();
+
+//Email service
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
