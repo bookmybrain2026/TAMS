@@ -33,5 +33,6 @@ namespace TAMS.Data
         public IMongoCollection<Admin> Admin => _database.GetCollection<Admin>("Admin");
         public IMongoCollection<Subject> Subject => _database.GetCollection<Subject>("Subject");
         public IMongoCollection<Course> Course => _database.GetCollection<Course>("Course");
+        public IMongoCollection<PasswordRecovery> PasswordRecoveries => _database.GetCollection<PasswordRecovery>("PasswordRecoveries");
     }
 }
