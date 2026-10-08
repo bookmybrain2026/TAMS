@@ -23,6 +23,9 @@ namespace TAMS.Data
 
             //Connects to the specfied MongoDB database
             _database = client.GetDatabase(databaseName);
+
+            // Delete recovery codes marked as used whenever the application starts.
+            DeleteUsedRecoveryCodes();
         }
 
         //Provides access to the MongoDB database instance
@@ -34,5 +37,17 @@ namespace TAMS.Data
         public IMongoCollection<Subject> Subject => _database.GetCollection<Subject>("Subject");
         public IMongoCollection<Course> Course => _database.GetCollection<Course>("Course");
         public IMongoCollection<PasswordRecovery> PasswordRecoveries => _database.GetCollection<PasswordRecovery>("PasswordRecoveries");
+        public IMongoCollection<Appointment> Appointments => _database.GetCollection<Appointment>("Appointments");
+
+        private void DeleteUsedRecoveryCodes()
+        {
+            var result = PasswordRecoveries.DeleteMany(
+                recovery => recovery.IsUsed == true
+            );
+
+            Console.WriteLine(
+                $"Deleted {result.DeletedCount} used recovery code(s) at startup."
+            );
+        }
     }
 }

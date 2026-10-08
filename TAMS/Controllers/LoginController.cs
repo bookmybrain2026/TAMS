@@ -91,13 +91,41 @@ namespace TAMS.Controllers
         [HttpGet]
         public IActionResult ForgotPassword()
         {
-            return View();
+            var model = new ForgotPassword();
+
+            // Check whether the password fields should be displayed
+            if (TempData["ShowPasswordFields"] != null)
+            {
+                model.ShowPasswordFields = (bool)TempData["ShowPasswordFields"];
+            }
+
+            // Retrieve the username
+            if (TempData["Username"] != null)
+            {
+                model.Username = TempData["Username"].ToString();
+            }
+
+            // Retrieve the email
+            if (TempData["Email"] != null)
+            {
+                model.Email = TempData["Email"].ToString();
+            }
+            return View(model);
         }
 
+        // Verifies the username and email address
         [HttpPost]
         public async Task<IActionResult> VerifyUser(ForgotPassword model)
         {
-            if (!ModelState.IsValid) { return View("ForgotPassword", model); }
+            ModelState.Remove("RecoveryCode");
+            ModelState.Remove("NewPassword");
+            ModelState.Remove("ConfirmPassword");
+
+            if (!ModelState.IsValid)
+            {
+                return View("ForgotPassword", model);
+            }
+
             // Find the active login account using the username.
             var user = dBContext.Login
                 .Find(u =>
@@ -108,11 +136,11 @@ namespace TAMS.Controllers
             // Username was not found.
             if (user == null)
             {
-                ModelState.AddModelError("", "The username or email is incorrect.");
+                ModelState.AddModelError( "", "The username or email is incorrect.");
                 return View("ForgotPassword", model);
             }
 
-            // Verify that the email belongs to this account.
+            // Verify that the email belongs to the account.
             bool emailMatches = false;
             string recipientName = "";
 
@@ -132,7 +160,6 @@ namespace TAMS.Controllers
                     break;
 
                 case UserRole.Tutor:
-
                     var tutor = dBContext.Tutor
                         .Find(t =>
                             t.TutorId == user.UserId &&
@@ -146,7 +173,6 @@ namespace TAMS.Controllers
                     break;
 
                 case UserRole.Administrator:
-
                     var admin = dBContext.Admin
                         .Find(a =>
                             a.AdminId == user.UserId &&
@@ -163,17 +189,12 @@ namespace TAMS.Controllers
             // Username exists, but email does not belong to the account.
             if (!emailMatches)
             {
-                ModelState.AddModelError( "", "The username or email is incorrect.");
+                ModelState.AddModelError("", "The username or email is incorrect.");
                 return View("ForgotPassword", model);
             }
 
             // Generate a random 6-digit recovery code.
             var recoveryCode = Random.Shared.Next(100000, 1000000).ToString();
-
-            // Delete any previous unused recovery codes for this user.
-            dBContext.PasswordRecoveries.DeleteMany(
-                r => r.UserId == user.UserId &&
-                     !r.IsUsed);
 
             // Create the new recovery record.
             var recoveryRecord = new PasswordRecovery
@@ -185,30 +206,158 @@ namespace TAMS.Controllers
                 IsUsed = false
             };
 
+            // Delete any previous unused recovery codes for this user.
+            dBContext.PasswordRecoveries.DeleteMany(r => r.UserId == user.UserId && !r.IsUsed);        
+
             // Save the recovery code to MongoDB.
             dBContext.PasswordRecoveries.InsertOne(recoveryRecord);
 
-            // Send the recovery code to the user's email.
+
+            // Track whether the email was successfully sent.
+            bool emailSent = false;
+
             try
             {
+                // Attempt to send the recovery code.
                 await _emailService.SendPasswordRecoveryCodeAsync(model.Email, recipientName, recoveryCode);
+                emailSent = true;
             }
             catch (Exception ex)
             {
-                ModelState.AddModelError( "", "The recovery email could not be sent. Please try again.");
-                Console.WriteLine($"Email error: {ex.Message}");
+                // Do not allow an email failure to crash the application.
+                emailSent = false;
+                Console.WriteLine($"Password recovery email error: {ex.Message}");
+            }
+
+            model.ShowRecoveryCodeField = true;
+
+            // Store information needed for the next recovery step.
+            TempData["RecoveryUserId"] = user.UserId;
+
+            // Email was successfully sent.
+            if (!emailSent)
+            {
+                ViewBag.RecoveryCode = recoveryCode;
+                TempData["RecoveryCode"] = recoveryCode;
+                TempData["EmailError"] = "The recovery email could not be sent. Please use the recovery code shown below.";
+            }
+            else
+            {
+                TempData["Success"] = "A recovery code has been sent to your email address.";
+            }
+            return View("ForgotPassword", model);
+        }
+
+        // Verifies the recovery code
+        [HttpPost]
+        public IActionResult VerifyRecoveryCode(ForgotPassword model)
+        {
+            ModelState.Remove("NewPassword");
+            ModelState.Remove("ConfirmPassword");
+
+            // Retrieve the user ID from the recovery session.
+            var userId = TempData["RecoveryUserId"];
+
+            // Check whether the recovery session exists.
+            if (userId == null)
+            {
+                ModelState.AddModelError("", "Your recovery session has expired. Please start again.");
                 return View("ForgotPassword", model);
             }
 
-            // Store the user ID  &  email
-            TempData["RecoveryUserId"] = user.UserId;
-            TempData["RecoveryEmail"] = model.Email;
+            // Convert the user ID to an integer.
+            int parsedUserId = Convert.ToInt32(userId);
 
-            // Show the recovery-code field will use when email is unable to be sent
-            model.AccountVerified = true;
+            // Find a valid recovery record.
+            var recovery = 
+                dBContext.PasswordRecoveries
+                .Find(r =>r.UserId == parsedUserId &&
+                    r.RecoveryCode == model.RecoveryCode &&
+                    !r.IsUsed &&
+                    r.ExpiresAt > DateTime.UtcNow).FirstOrDefault();
 
-            ViewBag.SuccessMessage = "Your account has been verified. A recovery code has been sent to your email.";
+            // Check whether the recovery code is invalid or expired.
+            if (recovery == null)
+            {
+                ModelState.AddModelError("RecoveryCode", "The recovery code is invalid or has expired.");
+                model.ShowRecoveryCodeField = true;
+                return View("ForgotPassword", model);
+            }
+
+            model.CodeVerified = true;
+            model.ShowPasswordFields = true;
+
+            // Store the recovery information needed for the next request.
+            TempData["RecoveryUserId"] = parsedUserId;
+            TempData["RecoveryCodeVerified"] = true;
+            TempData["ShowPasswordFields"] = true;
+
             return View("ForgotPassword", model);
+        }
+
+        // Resets the user's password
+        [HttpPost]
+        public IActionResult ResetPassword(ForgotPassword model)
+        {
+            // Remove validation for fields that are not needed when creating the new password.
+            ModelState.Remove("Email");
+            ModelState.Remove("RecoveryCode");
+
+            // Check whether the recovery code was already verified.
+            if (TempData["RecoveryCodeVerified"] == null)
+            {
+                ModelState.AddModelError("", "Please verify your recovery code first.");
+                model.ShowRecoveryCodeField = true;
+                return View("ForgotPassword", model);
+            }
+
+            // Validate the new password and confirmation.
+            if (!ModelState.IsValid)
+            {
+                model.ShowPasswordFields = true;
+                model.CodeVerified = true;
+                return View("ForgotPassword", model);
+            }
+
+            // Retrieve the user's ID from the recovery session.
+            var userId = TempData["RecoveryUserId"];
+
+            if (userId == null)
+            {
+                ModelState.AddModelError("", "Your recovery session has expired. Please start again.");
+                return View("ForgotPassword", model);
+            }
+
+            // Convert the user ID to an integer.
+            int parsedUserId = Convert.ToInt32(userId);
+
+            // Find the active login account.
+            var user = 
+                dBContext.Login
+                .Find(l => l.UserId == parsedUserId &&
+                    l.isActive).FirstOrDefault();
+
+            // Check whether the account was found.
+            if (user == null)
+            {
+                ModelState.AddModelError("", "Account not found. Please try again.");
+                return View("ForgotPassword", model);
+            }
+
+            // Assign the new password.
+            user.Password = model.NewPassword;
+
+            // Save the updated login account.
+            dBContext.Login
+                .ReplaceOne(l => l.UserId == parsedUserId,user);
+
+            // Mark the recovery code as used.
+            dBContext.PasswordRecoveries
+                .UpdateOne(r => r.UserId == parsedUserId && r.RecoveryCode == model.RecoveryCode,
+                    Builders<PasswordRecovery>.Update.Set(r => r.IsUsed, true));
+
+            TempData["Success"] = "Password updated successfully. Please log in.";
+            return RedirectToAction("Login");
         }
 
         //Logs the current user out

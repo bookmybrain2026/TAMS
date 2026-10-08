@@ -13,6 +13,23 @@ namespace TAMS.Models
         [Display(Name = "Email Address")]
         public string Email { get; set; }
 
-        public bool AccountVerified { get; set; }
+        [Required(ErrorMessage = "New Password is required.")]
+        [DataType(DataType.Password)]
+        public string NewPassword { get; set; }
+
+        [Required(ErrorMessage = "Confirm Password is required.")]
+        [DataType(DataType.Password)]
+        [Compare("NewPassword", ErrorMessage = "Passwords do not match.")]
+        public string ConfirmPassword { get; set; }
+
+        public bool ShowPasswordFields { get; set; } = false;
+
+
+        //added
+        public string RecoveryCode { get; set; }
+
+        public bool ShowRecoveryCodeField { get; set; }
+
+        public bool CodeVerified { get; set; }
     }
 }
