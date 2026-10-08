@@ -1,10 +1,4 @@
-﻿/*
-    This controller manages the appointment scheduling and booking
-    process in your ASP.NET Core MVC application. It uses MongoDB to find
-    tutors, students, schedules, and existing appointments.
- */
-
-using TAMS.Data; // Gives access to MongoDBContext.cs
+﻿using TAMS.Data; // Gives access to MongoDBContext.cs
 using TAMS.Models; // Gives access to ALL class models
 using TAMS.Services;
 using Microsoft.AspNetCore.Mvc;

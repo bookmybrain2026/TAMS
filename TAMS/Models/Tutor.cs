@@ -1,7 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using MongoDB.Bson.Serialization.Attributes;
+﻿using AMS.Models;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using MongoDB.Bson.Serialization.Attributes;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TAMS.Models
 {
@@ -35,9 +36,18 @@ namespace TAMS.Models
 
         // Courses this tutor is able to tutor
         public List<string> TutoringCourseIds { get; set; } = new List<string>();
+        public virtual List<Appointment> Appointments { get; set; } = new List<Appointment>();
+        public ICollection<Schedule> Schedules { get; set; } = new List<Schedule>();
 
         [BindNever]
         public virtual Login? Login { get; set; }
+
+        [NotMapped]
+        //public List<TutorReview> Reviews { get; set; } = new List<TutorReview>();
+        public List<Review> Reviews { get; set; } = new List<Review>();
+        public double AverageRating { get; set; }
+
+        public int ReviewCount { get; set; }
 
     }
 }

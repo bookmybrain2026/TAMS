@@ -387,3 +387,138 @@ body {
     color: #777;
     font-style: italic;
 }
+
+
+
+/* Patient Reviews Card */
+.patient-reviews-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    margin-top: 24px;
+}
+
+/* Header */
+.reviews-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+    .reviews-header h3 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 600;
+        color: #1f2937;
+    }
+
+.reviews-subtitle {
+    margin: 4px 0 0;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+/* Average rating */
+.rating-summary {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.average-rating {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.rating-number {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.rating-out-of {
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.star {
+    color: #f59e0b;
+    font-size: 24px;
+}
+
+.review-count {
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.patient-reviews-list {
+    max-height: 280px;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.patient-review {
+    padding: 16px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+    .patient-review:first-child {
+        padding-top: 0;
+    }
+
+    .patient-review:last-child {
+        border-bottom: none;
+    }
+
+.review-rating {
+    margin-bottom: 8px;
+    letter-spacing: 2px;
+}
+
+.star-filled {
+    color: #f59e0b;
+    font-size: 18px;
+}
+
+.star-empty {
+    color: #d1d5db;
+    font-size: 18px;
+}
+
+.review-comment {
+    color: #374151;
+    font-size: 14px;
+    line-height: 1.6;
+    word-wrap: break-word;
+}
+
+.no-reviews {
+    text-align: center;
+    padding: 30px 10px;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.patient-reviews-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.patient-reviews-list::-webkit-scrollbar-track {
+    background: #f3f4f6;
+    border-radius: 10px;
+}
+
+.patient-reviews-list::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+
+    .patient-reviews-list::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }

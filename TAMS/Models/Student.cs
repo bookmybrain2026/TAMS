@@ -1,7 +1,8 @@
-﻿using System;
+﻿using AMS.Models;
+using MongoDB.Bson.Serialization.Attributes;
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using MongoDB.Bson.Serialization.Attributes;
 
 namespace TAMS.Models
 {
@@ -35,6 +36,8 @@ namespace TAMS.Models
         public virtual Login Login { get; set; }
 
         public virtual List<Appointment> Appointments { get; set; } = new List<Appointment>();
+        public List<Review> AwaitingReviews { get; set; } = new List<Review>();
+
 
     }
 }

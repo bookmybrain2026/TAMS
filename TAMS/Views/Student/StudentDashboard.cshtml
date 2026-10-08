@@ -5,11 +5,7 @@
 
 <div class="d-flex justify-content-end">
     <form asp-controller="Login" asp-action="Logout" method="post">
-        @Html.AntiForgeryToken()
-
-        <button type="submit" class="btn btn-danger">
-            Logout
-        </button>
+        <button type="submit" class="btn btn-danger">Logout</button>
     </form>
 </div>
 
@@ -18,39 +14,16 @@
 <hr />
 
 <h2>Personal Information</h2>
+<p><strong>Name:</strong> @Model.FName @Model.LName</p>
+<p><strong>Date of Birth:</strong> @Model.DOB.ToString("MM/dd/yyyy")</p>
+<p><strong>Contact Number:</strong> @Model.PhoneNumber</p>
+<p><strong>Email:</strong> @Model.Email</p>
 
-<p>
-    <strong>Name:</strong>
-    @Model.FName @Model.LName
-</p>
-
-<p>
-    <strong>Date of Birth:</strong>
-    @Model.DOB.ToString("MM/dd/yyyy")
-</p>
-
-<p>
-    <strong>Contact Number:</strong>
-    @Model.PhoneNumber
-</p>
-
-<p>
-    <strong>Email:</strong>
-    @Model.Email
-</p>
-
-<button class="btn btn-primary mt-3"
-        type="button"
-        data-bs-toggle="collapse"
-        data-bs-target="#editForm">
-    Update Personal Information
-</button>
+<button class="btn btn-primary mt-3" type="button" data-bs-toggle="collapse" data-bs-target="#editForm">Update Personal Information</button>
 
 <div id="editForm" class="collapse mt-3">
 
-    <form asp-controller="Student"
-          asp-action="UpdateInfo"
-          method="post">
+    <form asp-controller="Student" asp-action="UpdateInfo" method="post">
 
         @Html.AntiForgeryToken()
 
@@ -58,49 +31,33 @@
 
         <div class="mb-2">
             <label asp-for="FName">First Name</label>
-            <input class="form-control"
-                   asp-for="FName" />
+            <input class="form-control" asp-for="FName" />
         </div>
 
         <div class="mb-2">
             <label asp-for="LName">Last Name</label>
-            <input class="form-control"
-                   asp-for="LName" />
+            <input class="form-control" asp-for="LName" />
         </div>
 
         <div class="mb-2">
             <label asp-for="Email">Email</label>
-            <input class="form-control"
-                   asp-for="Email" />
+            <input class="form-control" asp-for="Email" />
         </div>
 
         <div class="mb-2">
             <label asp-for="PhoneNumber">Phone Number</label>
-            <input class="form-control"
-                   asp-for="PhoneNumber" />
+            <input class="form-control" asp-for="PhoneNumber" />
         </div>
 
         <div class="mb-2">
             <label asp-for="DOB">Date of Birth</label>
-            <input class="form-control"
-                   asp-for="DOB"
-                   type="date" />
+            <input class="form-control" asp-for="DOB" type="date" />
         </div>
 
-        <button type="submit"
-                class="btn btn-success mt-2">
-            Save Changes
-        </button>
+        <button type="submit" class="btn btn-success mt-2">Save Changes</button>
 
-        <button class="btn btn-secondary mt-2"
-                type="button"
-                data-bs-toggle="collapse"
-                data-bs-target="#editForm">
-            Cancel
-        </button>
-
+        <button class="btn btn-secondary mt-2" type="button" data-bs-toggle="collapse" data-bs-target="#editForm"> Cancel</button>
     </form>
-
 </div>
 
 <hr />
@@ -177,25 +134,12 @@ else
 
                         @if (appt.Status == "Scheduled")
                         {
-                            <form asp-controller="Appointment"
-                                  asp-action="StudentCancelAppointment"
-                                  method="post"
-                                  onsubmit="return confirm('Are you sure you want to cancel this appointment?');">
-
+                            <form asp-controller="Student" asp-action="CancelAppointment" method="post" onsubmit="return confirm('Are you sure you want to cancel this appointment?');">
                                 @Html.AntiForgeryToken()
-
-                                <input type="hidden"
-                                       name="appointmentId"
-                                       value="@appt.AppointmentId" />
-
-                                <button type="submit"
-                                        class="btn btn-danger btn-sm">
-                                    Cancel
-                                </button>
-
+                                <input type="hidden" name="appointmentId" value="@appt.AppointmentId"/>
+                                <button type="submit" class="btn btn-danger btn-sm"> Cancel</button>
                             </form>
                         }
-
                     </td>
 
                 </tr>
@@ -210,34 +154,23 @@ else
 
 <h2>Search Tutors</h2>
 
-<form asp-controller="Student"
-      asp-action="Dashboard"
-      method="get">
-
-    <input type="hidden"
-           name="id"
-           value="@Model.StudentId" />
+<form asp-controller="Student" asp-action="Dashboard" method="get">
+    <input type="hidden" name="id" value="@Model.StudentId" />
 
     <div class="input-group mb-3">
-
         <input type="text"
                name="searchTerm"
                value="@ViewBag.SearchTerm"
                class="form-control"
                placeholder="Search by tutor name or subject..." />
 
-        <button type="submit"
-                class="btn btn-primary">
-            Search
-        </button>
-
+        <button type="submit"class="btn btn-primary">Search</button>
     </div>
-
 </form>
 
 @{
-    var tutors = ViewBag.Tutors as List<Tutor>
-        ?? new List<Tutor>();
+    var tutors = ViewBag.Tutors as List<TAMS.Models.Tutor>;
+    //?? new List<Tutor>();
 }
 
 @if (tutors.Any())
@@ -247,18 +180,14 @@ else
         @foreach (var tutor in tutors)
         {
             <div class="col-md-6 mb-3">
-
                 <div class="card">
-
                     <div class="card-body">
-
                         <h5 class="card-title">
                             @tutor.FName @tutor.LName
                         </h5>
 
                         <p class="card-text">
-                            <strong>Subject:</strong>
-                            @tutor.Subject
+                            <strong>Subject:</strong>@tutor.Subject
                         </p>
 
                         <p class="card-text">
@@ -272,28 +201,18 @@ else
                         </p>
 
                         <a class="btn btn-info"
-                           href="@Url.Action(
-                                                          "TutorProfile",
-                                                          "Student",
-                                                          new { tutorId = tutor.TutorId })">
-                    View Profile
-                </a>
+                           href="@Url.Action("TutorProfile","Student", new { tutorId = tutor.TutorId })">
+                            View Profile
+                        </a>
 
                         <a class="btn btn-success"
-                           href="@Url.Action(
-                                                  "Scheduler",
-                                                  "Appointment",
-                                                  new { tutorId = tutor.TutorId })">
-                    View Schedule
-                </a>
-
+                           href="@Url.Action("Scheduler", "Appointment", new { tutorId = tutor.TutorId })">
+                            View Schedule
+                        </a>
                     </div>
-
                 </div>
-
             </div>
         }
-
     </div>
 }
 else
@@ -307,30 +226,17 @@ else
 
 <h2>Book an Appointment</h2>
 
-<form asp-controller="Appointment"
-      asp-action="Scheduler"
-      method="get">
-
-    <select name="tutorId"
-            class="form-select"
-            required>
-
-        <option value="">
-            -- Select a Tutor --
-        </option>
-
+<form asp-controller="Student" asp-action="Scheduler"method="get">
+    <input type="hidden" name="studentId" value="@Model.StudentId" /> <!--Check this and next line-->
+    <select name="doctorId" class="form-select" required>
+    <select name="tutorId"class="form-select"required>
+        <option value="">-- Select a Tutor -- </option>
         @foreach (var tutor in tutors)
         {
             <option value="@tutor.TutorId">
                 @tutor.FName @tutor.LName - @tutor.Subject
             </option>
         }
-
     </select>
-
-    <button type="submit"
-            class="btn btn-success mt-2">
-        View Schedule
-    </button>
-
+    <button type="submit"class="btn btn-success mt-2">View Schedule </button>
 </form>

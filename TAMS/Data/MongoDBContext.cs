@@ -1,4 +1,5 @@
-﻿using MongoDB.Driver;
+﻿using AMS.Models;
+using MongoDB.Driver;
 using TAMS.Models;
 
 namespace TAMS.Data
@@ -39,6 +40,7 @@ namespace TAMS.Data
         public IMongoCollection<PasswordRecovery> PasswordRecoveries => _database.GetCollection<PasswordRecovery>("PasswordRecoveries");
         public IMongoCollection<Appointment> Appointments => _database.GetCollection<Appointment>("Appointments");
         public IMongoCollection<Schedule> Schedule => _database.GetCollection<Schedule>("Schedule");
+        public IMongoCollection<Review> Reviews => _database.GetCollection<Review>("Reviews");
 
         private void DeleteUsedRecoveryCodes()
         {

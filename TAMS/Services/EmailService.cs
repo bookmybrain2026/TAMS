@@ -1,58 +1,17 @@
-﻿using MailKit.Net.Smtp;
-using MailKit.Security;
-using MimeKit;
+﻿using MailKit.Net.Smtp; //imports MailKit’s SMTP functionality
+using MailKit.Security; //imports security settings for the SMTP connection
+using MimeKit; //used to create the email message
 
-namespace TAMS.Services
+namespace AMS.Services
 {
     public class EmailService : IEmailService
     {
         private readonly IConfiguration _configuration;
+        //IConfiguration allows the class to read values from configuration files like appsetting.json
 
-        public EmailService(IConfiguration configuration)
+        public EmailService(IConfiguration configuration) //runs when ASP.NET Core creates an EmailService object
         {
-            _configuration = configuration;
-        }
-
-        public async Task SendPasswordRecoveryCodeAsync(string userEmail, string userName, string recoveryCode)
-        {
-            var message = new MimeMessage();
-
-            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
-
-            message.To.Add(new MailboxAddress(userName, userEmail));
-            message.Subject = "TAMS Password Recovery Code";
-
-            message.Body = new TextPart("plain")
-            {
-                Text = $"""
-                Hello {userName},
-
-                Your TAMS password recovery code is:
-
-                {recoveryCode}
-
-                This code will expire in 10 minutes and can only be used once.
-
-                If you did not request a password reset, you can ignore this email.
-
-                Thank you for using TAMS.
-                """
-            };
-
-            using var smtp = new SmtpClient();
-
-            await smtp.ConnectAsync(
-                _configuration["EmailSettings:SmtpServer"],
-                int.Parse(_configuration["EmailSettings:SmtpPort"]!),
-                SecureSocketOptions.StartTls);
-
-            await smtp.AuthenticateAsync(
-                _configuration["EmailSettings:Username"],
-                _configuration["EmailSettings:Password"]);
-
-            await smtp.SendAsync(message);
-
-            await smtp.DisconnectAsync(true);
+            _configuration = configuration; //stores the configuration object in the class field so the email methods can use it
         }
 
         public async Task SendAppointmentConfirmationAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate)
@@ -118,7 +77,7 @@ namespace TAMS.Services
             message.Body = new TextPart("plain") //email body
             {
                 Text = $"""
-                Hello Dr. {tutorName},
+                Hello {tutorName},
 
                 A new appointment has been scheduled.
 
@@ -127,7 +86,7 @@ namespace TAMS.Services
                 Time: {appointmentDate.AddHours(-5):h:mm tt}
                 Status: Scheduled
 
-                Thank you for using AMS.
+                Thank you for using TAMS.
                 """
             };
 
@@ -148,5 +107,236 @@ namespace TAMS.Services
 
             await smtp.DisconnectAsync(true); //close the connection between application and email provider
         }
+
+        public async Task SendAppointmentCancellationAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate)
+        {
+            var message = new MimeMessage();
+
+            message.From.Add(new MailboxAddress( //Sender's display name & email
+                _configuration["EmailSettings:SenderName"],
+                _configuration["EmailSettings:SenderEmail"]));
+
+            message.To.Add(new MailboxAddress(studentName, studentEmail));
+
+            message.Subject = "Appointment Cancellation Confirmation";
+
+            message.Body = new TextPart("plain") //email body
+            {
+                Text = $"""
+                Hello {studentName},
+
+                Your appointment has been cancelled.
+
+                Tutor: {tutorName}
+                Appointment Date: {appointmentDate.AddHours(-5):MMMM dd, yyyy}
+                Appointment Time: {appointmentDate.AddHours(-5):h:mm tt}
+                Reason: The appointment was cancelled by the {studentName}.
+
+                If you believe this cancellation was made in error, please contact the office.
+
+                Thank you for using TAMS.
+                """
+            };
+
+            using var smtp = new MailKit.Net.Smtp.SmtpClient();
+
+            await smtp.ConnectAsync(
+                _configuration["EmailSettings:SmtpServer"],
+                int.Parse(_configuration["EmailSettings:SmtpPort"]),
+                MailKit.Security.SecureSocketOptions.StartTls);
+
+
+            await smtp.AuthenticateAsync(
+                _configuration["EmailSettings:Username"],
+                _configuration["EmailSettings:Password"]);
+
+            await smtp.SendAsync(message);
+
+            await smtp.DisconnectAsync(true);
+        }
+
+        public async Task SendTutorAppointmentCancellationAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate)
+        {
+            var message = new MimeMessage();
+
+            //message.From.Add(new MailboxAddress(
+            //    "Appointment Management System",
+            //    _configuration["EmailSettings:Username"]));
+
+            message.From.Add(new MailboxAddress( //Sender's display name & email
+                _configuration["EmailSettings:SenderName"],
+                _configuration["EmailSettings:SenderEmail"]));
+
+            message.To.Add(new MailboxAddress(tutorName, tutorEmail));
+
+            message.Subject = "Appointment Cancellation Notification";
+
+            message.Body = new TextPart("plain") //email body
+            {
+                Text = $"""
+                Hello {tutorName},
+
+                An appointment on your schedule has been cancelled
+
+                Student: {studentName}
+                Appointment Date: {appointmentDate.AddHours(-5):MMMM dd, yyyy}
+                Appointment Time: {appointmentDate.AddHours(-5):h:mm tt}
+                Reason: The appointment was cancelled by {studentName}.
+
+                Please review your schedule for the updated availability.
+
+                Thank you for using TAMS.
+                """
+            };
+
+            using var smtp = new MailKit.Net.Smtp.SmtpClient();
+
+            await smtp.ConnectAsync(
+                _configuration["EmailSettings:SmtpServer"],
+                int.Parse(_configuration["EmailSettings:SmtpPort"]),
+                MailKit.Security.SecureSocketOptions.StartTls);
+
+            await smtp.AuthenticateAsync(
+                _configuration["EmailSettings:Username"],
+                _configuration["EmailSettings:Password"]);
+
+            await smtp.SendAsync(message);
+
+            await smtp.DisconnectAsync(true);
+        }
+
+        public async Task SendAdminCancelledAppointmentAsync(string recipientEmail, string recipientName, string otherPersonName, DateTime appointmentDate, string recipientType)
+        {
+            var message = new MimeMessage();
+
+            message.From.Add(new MailboxAddress( //Sender's display name & email
+                _configuration["EmailSettings:SenderName"],
+                _configuration["EmailSettings:SenderEmail"]));
+
+            message.To.Add(
+                new MailboxAddress(recipientName, recipientEmail));
+
+            message.Subject = "Appointment Cancelled by Administrator";
+
+            message.Body = new TextPart("plain") //email body
+            {
+                Text = $"""
+                Hello {recipientName},
+
+
+                Your appointment has with {otherPersonName} been cancelled.
+
+                Appointment Date: {appointmentDate.AddHours(-5):MMMM dd, yyyy}
+                Appointment Time: {appointmentDate.AddHours(-5):h:mm tt}
+                Reason: An administrator modified the doctor's schedule.
+
+                Please review your updated appointment information or contact the office if you have any question
+
+                Thank you for using AMS.
+                """
+            };
+
+            using var smtp = new SmtpClient();
+
+            await smtp.ConnectAsync(
+                _configuration["EmailSettings:SmtpServer"],
+                int.Parse(_configuration["EmailSettings:SmtpPort"]),
+                MailKit.Security.SecureSocketOptions.StartTls
+            );
+
+            await smtp.AuthenticateAsync(
+                _configuration["EmailSettings:Username"],
+                _configuration["EmailSettings:Password"]
+            );
+
+            await smtp.SendAsync(message);
+
+            await smtp.DisconnectAsync(true);
+        }
+
+        public async Task SendPasswordRecoveryCodeAsync(string studentEmail, string studentName, string recoveryCode)
+        {
+            var message = new MimeMessage();
+
+            message.From.Add(new MailboxAddress( //Sender's display name & email
+                _configuration["EmailSettings:SenderName"],
+                _configuration["EmailSettings:SenderEmail"]));
+
+            message.To.Add(
+                new MailboxAddress(studentName, studentEmail)
+            );
+
+            message.Subject = "TAMS Password Recovery Code";
+
+            message.Body = new TextPart("plain") //email body
+            {
+                Text = $"""
+                Hello {studentName},
+                "Your password recovery code is: {recoveryCode}
+                This code will expire in 10 minutes and can only be used once
+                If you did not request a password reset, you can ignore this email
+
+                Thank you for using TAMS.
+                """
+            };
+            using var smtp = new SmtpClient();
+
+            await smtp.ConnectAsync(
+                _configuration["EmailSettings:SmtpServer"],
+                int.Parse(_configuration["EmailSettings:SmtpPort"]),
+                MailKit.Security.SecureSocketOptions.StartTls
+            );
+
+            await smtp.AuthenticateAsync(
+                _configuration["EmailSettings:Username"],
+                _configuration["EmailSettings:Password"]
+            );
+
+            await smtp.SendAsync(message);
+            await smtp.DisconnectAsync(true);
+        }
+
+        public async Task SendReviewReminderAsync(string studentEmail, string studentName, string tutorName)
+        {
+            var message = new MimeMessage();
+
+            message.From.Add(new MailboxAddress(
+                _configuration["EmailSettings:SenderName"],
+                _configuration["EmailSettings:SenderEmail"]));
+
+            message.To.Add(new MailboxAddress(studentName, studentEmail));
+
+            message.Subject = "Awaiting Review or Rating";
+
+            message.Body = new TextPart("plain")
+            {
+                Text = $"""
+                Hello {studentName},
+
+                You have an awaiting review or rating.
+
+                Please log in to your dashboard to review your appointment with Tutor {tutorName}.
+                Thank you for using TAMS.
+                """
+            };
+
+            using var smtp = new SmtpClient();
+
+            await smtp.ConnectAsync(
+                _configuration["EmailSettings:SmtpServer"],
+                int.Parse(_configuration["EmailSettings:SmtpPort"]!),
+                SecureSocketOptions.StartTls);
+
+            await smtp.AuthenticateAsync(
+                _configuration["EmailSettings:Username"],
+                _configuration["EmailSettings:Password"]);
+
+            await smtp.SendAsync(message);
+
+            await smtp.DisconnectAsync(true);
+        }
+
+
+
     }
 }

@@ -5,19 +5,10 @@
 
 <div class="d-flex justify-content-end">
 
-    <form asp-controller="Login"
-          asp-action="Logout"
-          method="post">
-
+    <form asp-controller="Login" asp-action="Logout" method="post">
         @Html.AntiForgeryToken()
-
-        <button type="submit"
-                class="btn btn-danger">
-            Logout
-        </button>
-
+        <button type="submit" class="btn btn-danger">Logout</button>
     </form>
-
 </div>
 
 <h1>Tutor Profile</h1>
@@ -25,26 +16,45 @@
 <hr />
 
 <div class="card">
-
     <div class="card-body">
-
         <h2>
             @Model.FName @Model.LName
         </h2>
-
         <p>
-            <strong>Subject:</strong>
-            @Model.Subject
+            <strong>Average Rating:</strong>
+            @if (Model.ReviewCount > 0)
+            {
+                @for (int i = 1; i <= 5; i++)
+                {
+                    if (i <= Math.Round(Model.AverageRating))
+                    {
+                        <span>⭐</span>
+                    }
+                    else
+                    {
+                        <span>☆</span>
+                    }
+                }
+                <strong>@Model.AverageRating.ToString("0.0")/5</strong>
+                <span class="text-muted">
+                    (@Model.ReviewCount @(Model.ReviewCount == 1 ? "review" : "reviews"))
+                </span>
+            }
+            else
+            {
+                <span class="text-muted">No ratings yet</span>
+            }
+        </p>
+        <p>
+            <strong>Subject:</strong> @Model.Subject
         </p>
 
         <p>
-            <strong>Email:</strong>
-            @Model.Email
+            <strong>Email:</strong> @Model.Email
         </p>
 
         <p>
-            <strong>Phone:</strong>
-            @Model.PhoneNumber
+            <strong>Phone:</strong> @Model.PhoneNumber
         </p>
 
         <hr />
@@ -82,21 +92,60 @@
         <hr />
 
         <a class="btn btn-secondary"
-           href="@Url.Action(
-                          "Dashboard",
-                          "Student",
-                          new { id = ViewBag.StudentId })">
+           href="@Url.Action("Dashboard","Student", new { id = ViewBag.StudentId })">
             ← Back to Dashboard
         </a>
 
         <a class="btn btn-success"
-           href="@Url.Action(
-                          "Scheduler",
-                          "Appointment",
-                          new { tutorId = Model.TutorId })">
+           href="@Url.Action("Scheduler","Appointment", new { tutorId = Model.TutorId })">
             View Schedule
         </a>
-
     </div>
-
 </div>
+
+<h4>Student Reviews</h4>
+@if (Model.Reviews != null && Model.Reviews.Any())
+{
+    foreach (var review in Model.Reviews)
+    {
+        <div class="card mb-3">
+            <div class="card-body">
+                @* <h5>
+                    @review.StudentName
+                </h5> *@
+                <p>
+                    <strong>Rating:</strong>
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        if (i <= review.Rating)
+                        {
+                            <span>⭐</span>
+                        }
+                        else
+                        {
+                            <span>☆</span>
+                        }
+                    }
+
+                    <span>
+                        (@review.Rating/5)
+                    </span>
+                </p>
+
+                <p>
+                    @review.Comment
+                </p>
+
+                <small class="text-muted">
+                    Submitted on @review.CreatedAt.ToLocalTime().ToString("MMMM dd, yyyy")
+                </small>
+            </div>
+        </div>
+    }
+}
+else
+{
+    <div class="alert alert-info">
+        No reviews have been submitted for this tutor yet.
+    </div>
+}
