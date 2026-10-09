@@ -3,12 +3,12 @@
 @using TAMS.Models
 @using System.Linq
 
-<div class="d-flex justify-content-end">
 
-    <form asp-controller="Login" asp-action="Logout" method="post">
-        @Html.AntiForgeryToken()
-        <button type="submit" class="btn btn-danger">Logout</button>
-    </form>
+<div class="d-flex justify-content-end">
+    <a class="btn btn-secondary"
+       href="@Url.Action("Dashboard", "Student", new { id = Context.Session.GetInt32("StudentId") })">
+        ← Back to Dashboard
+    </a>
 </div>
 
 <h1>Tutor Profile</h1>
@@ -90,11 +90,6 @@
         }
 
         <hr />
-
-        <a class="btn btn-secondary"
-           href="@Url.Action("Dashboard","Student", new { id = ViewBag.StudentId })">
-            ← Back to Dashboard
-        </a>
 
         <a class="btn btn-success"
            href="@Url.Action("Scheduler","Appointment", new { tutorId = Model.TutorId })">

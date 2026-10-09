@@ -2,7 +2,7 @@
 using MailKit.Security; //imports security settings for the SMTP connection
 using MimeKit; //used to create the email message
 
-namespace AMS.Services
+namespace TAMS.Services
 {
     public class EmailService : IEmailService
     {

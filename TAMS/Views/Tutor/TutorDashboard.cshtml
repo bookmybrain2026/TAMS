@@ -3,18 +3,11 @@
 @{
     ViewData["Title"] = "Tutor Dashboard";
 
-    var appointments = ViewBag.Appointments as List<TAMS.Models.Appointment>
-        ?? new List<TAMS.Models.Appointment>();
-
-    var schedules = ViewBag.Schedules as List<TAMS.Models.Schedule>
-        ?? new List<TAMS.Models.Schedule>();
-
-    var upcomingAppointments = appointments
-        .Where(a =>
-            a.AppointmentDate >= DateTime.Now &&
-            a.Status == "Scheduled")
-        .OrderBy(a => a.AppointmentDate)
-        .ToList();
+    var appointments = ViewBag.Appointments as List<TAMS.Models.Appointment> ?? new List<TAMS.Models.Appointment>();
+    var schedules = ViewBag.Schedules as List<TAMS.Models.Schedule> ?? new List<TAMS.Models.Schedule>();
+    var upcomingAppointments = 
+        appointments.Where(a => a.AppointmentDate >= DateTime.Now && a.Status == "Scheduled")
+        .OrderBy(a => a.AppointmentDate).ToList();
 }
 
 <div class="container mt-5">
@@ -43,39 +36,27 @@
                     </h4>
 
                     <p>
-                        <strong>Email:</strong>
-                        @Model.Email
+                        <strong>Email:</strong>@Model.Email
                     </p>
 
                     <p>
-                        <strong>Phone:</strong>
-                        @Model.PhoneNumber
+                        <strong>Phone:</strong>@Model.PhoneNumber
                     </p>
 
                     <p>
-                        <strong>Subject:</strong>
-                        @Model.Subject
+                        <strong>Subject:</strong>@Model.Subject
                     </p>
 
-                    <a asp-controller="Tutor"
-                       asp-action="Profile"
-                       class="btn btn-primary">
+                    <a asp-controller="Tutor" asp-action="Profile" class="btn btn-primary">
                         View / Edit Profile
                     </a>
 
-                    <a asp-controller="Tutor"
-                       asp-action="Schedule"
-                       asp-route-id="@Model.TutorId"
-                       class="btn btn-secondary">
+                    <a asp-controller="Tutor" asp-action="Schedule" asp-route-id="@Model.TutorId" class="btn btn-secondary">
                         Manage Schedule
                     </a>
-                    <a asp-controller="Tutor"
-                       asp-action="ScheduleCalendar"
-                       asp-route-id="@Model.TutorId"
-                       class="btn btn-info">
+                    <a asp-controller="Tutor" asp-action="ScheduleCalendar" asp-route-id="@Model.TutorId" class="btn btn-info">
                         View Appointments
                     </a>
-
                 </div>
             </div>
         </div>
@@ -162,9 +143,7 @@
                                         }
                                         else
                                         {
-                                            <span class="text-muted">
-                                                Student not found
-                                            </span>
+                                            <span class="text-muted">Student not found</span>
                                         }
                                     </td>
 
@@ -190,42 +169,38 @@
 
                                     <td>
 
-                                        <form asp-controller="Appointment"
+                                        <form asp-controller="Tutor"
                                               asp-action="CompleteAppointment"
                                               method="post"
                                               class="d-inline">
+                                            @Html.AntiForgeryToken()
 
                                             <input type="hidden"
                                                    name="appointmentId"
                                                    value="@appointment.AppointmentId" />
-
-                                            @Html.AntiForgeryToken()
 
                                             <button type="submit"
                                                     class="btn btn-success btn-sm"
                                                     onclick="return confirm('Mark this appointment as completed?');">
                                                 Complete
                                             </button>
-
                                         </form>
 
-                                        <form asp-controller="Appointment"
+                                        <form asp-controller="Tutor"
                                               asp-action="CancelAppointment"
                                               method="post"
                                               class="d-inline">
+                                            @Html.AntiForgeryToken()
 
                                             <input type="hidden"
                                                    name="appointmentId"
                                                    value="@appointment.AppointmentId" />
-
-                                            @Html.AntiForgeryToken()
 
                                             <button type="submit"
                                                     class="btn btn-danger btn-sm"
                                                     onclick="return confirm('Cancel this appointment?');">
                                                 Cancel
                                             </button>
-
                                         </form>
 
                                     </td>
@@ -285,8 +260,8 @@
                                     </td>
 
                                     <td>
-                                        @appointment.AppointmentDate.ToString("hh:mm tt")
-                                    </td>
+                                        @appointment.AppointmentDate.AddHours(-5).ToString("hh:mm tt")
+                                    </td> //hhbhb
 
                                     <td>
                                         @if (appointment.Student != null)
@@ -339,6 +314,94 @@
             }
 
         </div>
+
+    </div>
+
+</div>
+<hr />
+
+<h2>Your Schedule</h2>
+
+@if (Model.Schedules == null || !Model.Schedules.Any())
+{
+    <p>No schedule slots added yet.</p>
+}
+else
+{
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Start Time</th>
+                <th>End Time</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var s in Model.Schedules.OrderBy(s => s.Date).ThenBy(s => s.StartTime))
+            {
+                <tr>
+                    <td>@s.Date.ToString("MM/dd/yyyy")</td>
+                    <td>@s.StartTime.ToString(@"hh\:mm")</td>
+                    <td>@s.EndTime.ToString(@"hh\:mm")</td>
+                    <td>
+                        <form asp-action="DeleteSchedule" method="post" onsubmit="return confirm('Are you sure you want to delete this slot?');">
+                            <input type="hidden" name="scheduleId" value="@s.ScheduleId" />
+                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+<h2>Patient Reviews</h2>
+
+<div class="patient-reviews-card">
+
+    <div class="rating-summary">
+        <span class="average-rating">
+            ★ @Model.AverageRating.ToString("0.0") / 5
+        </span>
+
+        <span class="review-count">
+            @Model.ReviewCount patient reviews
+        </span>
+    </div>
+
+    <div class="patient-reviews-list">
+
+        @if (Model.Reviews == null || !Model.Reviews.Any())
+        {
+            <p class="text-muted">No patient reviews yet.</p>
+        }
+        else
+        {
+            @foreach (var review in Model.Reviews)
+            {
+                <div class="patient-review">
+
+                    <div class="review-rating">
+                        @for (int i = 1; i <= 5; i++)
+                        {
+                            if (i <= review.Rating)
+                            {
+                                <span class="star-filled">★</span>
+                            }
+                            else
+                            {
+                                <span class="star-empty">★</span>
+                            }
+                        }
+                    </div>
+
+                    <p class="review-comment">
+                        @review.Comment
+                    </p>
+
+                </div>
+            }
+        }
 
     </div>
 

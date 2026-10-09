@@ -124,32 +124,12 @@
                         var selectedDate =
                         firstDay.AddDays(selectedDay - 1);
 
-                        var daySchedules = schedules
-                        .Where(s =>
-                        s.Date.Date ==
-                        selectedDate.Date)
-                        .OrderBy(s => s.StartTime)
-                        .ToList();
+                        var daySchedules = schedules.Where(s => s.Date.Date == selectedDate.Date)
+                        .OrderBy(s => s.StartTime) .ToList();
 
-                        /*
-                        * Appointments are stored in the database.
-                        *
-                        * The -5 hour adjustment matches the
-                        * timezone handling currently used by AMS.
-                        *
-                        * This converts the stored appointment
-                        * time into the local time used by the
-                        * scheduler.
-                        */
-                        var dayAppointments = appointments
-                        .Where(a =>
-                        a.AppointmentDate.AddHours(-5).Date ==
-                        selectedDate.Date &&
-                        (a.Status == "Scheduled" ||
-                        a.Status == "Completed"))
-                        .OrderBy(a =>
-                        a.AppointmentDate.AddHours(-5).TimeOfDay)
-                        .ToList();
+                        var dayAppointments = appointments .Where(a => a.AppointmentDate.AddHours(-5).Date ==
+                        selectedDate.Date && (a.Status == "Scheduled" ||  a.Status == "Completed"))
+                        .OrderBy(a => a.AppointmentDate.AddHours(-5).TimeOfDay).ToList();
 
                         <td style="vertical-align: top; min-width: 130px;">
 
@@ -174,24 +154,11 @@
 
                                     @foreach (var s in daySchedules)
                                     {
-                                        /*
-                                        * The tutor's schedule is already
-                                        * represented in the local time
-                                        * shown on the calendar.
-                                        */
-                                        var slotDateTime =
-                                        s.Date.Date.Add(s.StartTime);
+                                        var slotDateTime = s.Date.Date.Add(s.StartTime);
 
-                                        /*
-                                        * Check whether a COMPLETED
-                                        * appointment occupies this
-                                        * schedule slot.
-                                        */
-                                        var slotCompleted =
-                                        dayAppointments.Any(a =>
+                                        var slotCompleted = dayAppointments.Any(a =>
                                         {
-                                            var localAppointmentTime =
-                                                    a.AppointmentDate.AddHours(-5);
+                                            var localAppointmentTime = a.AppointmentDate.AddHours(-5);
 
                                             return
                                                     a.Status == "Completed" &&
@@ -203,42 +170,20 @@
                                                     s.EndTime;
                                         });
 
-                                        /*
-                                        * Check whether a SCHEDULED
-                                        * appointment occupies this
-                                        * schedule slot.
-                                        */
                                         var slotBooked =
                                         dayAppointments.Any(a =>
                                         {
-                                            var localAppointmentTime =
-                                                    a.AppointmentDate.AddHours(-5);
+                                            var localAppointmentTime = a.AppointmentDate.AddHours(-5);
 
                                             return
-                                                    a.Status == "Scheduled" &&
-                                                    localAppointmentTime.Date ==
-                                                    slotDateTime.Date &&
-                                                    localAppointmentTime.TimeOfDay >=
-                                                    s.StartTime &&
-                                                    localAppointmentTime.TimeOfDay <
-                                                    s.EndTime;
+                                                    a.Status == "Scheduled" && 
+                                                    localAppointmentTime.Date == slotDateTime.Date 
+                                                    && localAppointmentTime.TimeOfDay >= s.StartTime 
+                                                    && localAppointmentTime.TimeOfDay < s.EndTime;
                                         });
 
-                                        /*
-                                        * The slot is expired only when:
-                                        *
-                                        * 1. It is not booked.
-                                        * 2. It is not completed.
-                                        * 3. Its scheduled time has passed.
-                                        */
-                                        var slotExpired =
-                                        !slotCompleted &&
-                                        !slotBooked &&
-                                        slotDateTime < now;
+                                        var slotExpired = !slotCompleted && !slotBooked && slotDateTime < now;
 
-                                        /*
-                                        * COMPLETED
-                                        */
                                         if (slotCompleted)
                                         {
                                             <li class="text-muted">
@@ -253,9 +198,6 @@
                                             </li>
                                         }
 
-                                        /*
-                                        * BOOKED
-                                        */
                                         else if (slotBooked)
                                         {
                                             <li class="text-muted">
@@ -270,9 +212,6 @@
                                             </li>
                                         }
 
-                                        /*
-                                        * EXPIRED
-                                        */
                                         else if (slotExpired)
                                         {
                                             <li class="text-muted">
@@ -287,39 +226,21 @@
                                             </li>
                                         }
 
-                                        /*
-                                        * AVAILABLE
-                                        */
                                         else
                                         {
                                             <li>
-
-                                                <form asp-controller="Appointment"
-                                                      asp-action="BookAppointment"
-                                                      method="post"
-                                                      onsubmit="return confirm('Do you want to confirm this appointment?');">
-
+                                                <form asp-controller="Appointment" asp-action="BookAppointment" method="post" onsubmit="return confirm('Do you want to confirm this appointment?');">
                                                     @Html.AntiForgeryToken()
-
-                                                    <input type="hidden"
-                                                           name="tutorId"
-                                                           value="@tutor.TutorId" />
-
-                                                    <input type="hidden"
-                                                           name="appointmentDate"
-                                                           value="@slotDateTime.ToString("yyyy-MM-ddTHH:mm")" />
-
-                                                    <button type="submit"
-                                                            class="btn btn-link p-0 m-0">
-
+                                                    <input type="hidden" name="tutorId" value="@tutor.TutorId" />
+                                                    <input type="hidden" name="studentId" value="@studentId" />
+                                                    <input type="hidden" name="date" value="@s.Date.ToString("yyyy-MM-dd")" />
+                                                    <input type="hidden" name="startTime" value="@s.StartTime.ToString(@"hh\:mm\:ss")" />
+                                                    <button type="submit" class="btn btn-link p-0 m-0">
                                                         @s.StartTime.ToString(@"hh\:mm")
                                                         -
                                                         @s.EndTime.ToString(@"hh\:mm")
-
                                                     </button>
-
                                                 </form>
-
                                             </li>
                                         }
                                     }

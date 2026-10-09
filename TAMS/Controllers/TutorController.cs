@@ -1,17 +1,21 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
+using System.Numerics;
 using TAMS.Data;
 using TAMS.Models;
+using TAMS.Services;
 
 namespace TAMS.Controllers
 {
     public class TutorController : Controller
     {
         private readonly MongoDBContext dBContext;
+        private readonly IEmailService _emailService;
 
-        public TutorController(MongoDBContext dBContext)
+        public TutorController(MongoDBContext dBContext, IEmailService emailService)
         {
             this.dBContext = dBContext;
+            _emailService = emailService;
         }
 
         // Public Tutor Directory
@@ -19,13 +23,20 @@ namespace TAMS.Controllers
         public IActionResult Index()
         {
             var tutors = dBContext.Tutor
-                .Find(_ => true)
-                .SortBy(t => t.LName)
-                .ThenBy(t => t.FName)
-                .ToList();
+                .Find(_ => true).SortBy(t => t.LName)
+                .ThenBy(t => t.FName).ToList();
 
+            foreach (var tutor in tutors)
+            {
+                tutor.Reviews = dBContext.Reviews
+                    .Find(r => r.TutorId == tutor.TutorId)
+                    .ToList();
+                tutor.AverageRating = tutor.Reviews.Any() ? tutor.Reviews.Average(r => r.Rating) : 0;
+                tutor.ReviewCount = tutor.Reviews.Count;
+            }
             return View(tutors);
         }
+
 
         // Public Tutor Profile
         [HttpGet]
@@ -35,9 +46,18 @@ namespace TAMS.Controllers
                 .Find(t => t.TutorId == id)
                 .FirstOrDefault();
 
-            if (tutor == null) { return NotFound(); }
+            if (tutor == null)
+            {
+                return NotFound();
+            }
 
-            // Get the courses this tutor tutors
+            tutor.Reviews = dBContext.Reviews
+                .Find(r => r.TutorId == tutor.TutorId)
+                .ToList();
+
+            tutor.AverageRating = tutor.Reviews.Any() ? tutor.Reviews.Average(r => r.Rating) : 0;
+            tutor.ReviewCount = tutor.Reviews.Count;
+
             var courseIds = tutor.TutoringCourseIds ?? new List<string>();
 
             var courses = dBContext.Course
@@ -45,7 +65,6 @@ namespace TAMS.Controllers
                 .SortBy(c => c.CourseCode)
                 .ToList();
 
-            // Get the subject name
             var subject = dBContext.Subject
                 .Find(s => s.Code == tutor.Subject)
                 .FirstOrDefault();
@@ -56,11 +75,11 @@ namespace TAMS.Controllers
             return View(tutor);
         }
 
+
         // Tutor Dashboard
         [HttpGet]
-        public IActionResult Dashboard()
+        public IActionResult Dashboard(int? id)
         {
-            // Retrieve the TutorId stored in the session during login
             var tutorId = HttpContext.Session.GetInt32("TutorId");
 
             if (tutorId == null)
@@ -68,40 +87,49 @@ namespace TAMS.Controllers
                 return RedirectToAction("Login", "Login");
             }
 
-            // Retrieve the tutor
-            var tutor = dBContext.Tutor
-                .Find(t => t.TutorId == tutorId.Value)
-                .FirstOrDefault();
-
-            if (tutor == null)
+            if (id == null)
             {
                 return RedirectToAction("Login", "Login");
             }
 
-            // Retrieve all appointments belonging to this tutor
-            var appointments = dBContext.Appointments
+            if (tutorId.Value != id.Value)
+            {
+                return Unauthorized();
+            }
+
+            var tutor = dBContext.Tutor
+                .Find(t => t.TutorId == id.Value)
+                .FirstOrDefault();
+
+            if (tutor == null)
+            {
+                return NotFound();
+            }
+
+            tutor.Appointments = dBContext.Appointments
                 .Find(a => a.TutorId == tutor.TutorId)
-                .SortBy(a => a.AppointmentDate)
                 .ToList();
 
-            // Retrieve the student connected to each appointment
-            foreach (var appointment in appointments)
+            foreach (var appointment in tutor.Appointments)
             {
                 appointment.Student = dBContext.Student
                     .Find(s => s.StudentId == appointment.StudentId)
                     .FirstOrDefault();
             }
 
-            // Retrieve all schedules belonging to this tutor
-            var schedules = dBContext.Schedule
+            tutor.Schedules = dBContext.Schedule
                 .Find(s => s.TutorId == tutor.TutorId)
-                .SortBy(s => s.Date)
                 .ToList();
 
-            // Attach the information to the tutor object
-            // so the dashboard view can access it.
-            ViewBag.Appointments = appointments;
-            ViewBag.Schedules = schedules;
+            tutor.Reviews = dBContext.Reviews
+                .Find(r => r.TutorId == tutor.TutorId)
+                .ToList();
+
+            tutor.AverageRating = tutor.Reviews.Count > 0 ? tutor.Reviews.Average(r => r.Rating) : 0;
+            tutor.ReviewCount = tutor.Reviews.Count;
+
+            ViewBag.Appointments = tutor.Appointments;
+            ViewBag.Schedules = tutor.Schedules;
 
             return View("TutorDashboard", tutor);
         }
@@ -212,36 +240,25 @@ namespace TAMS.Controllers
         public IActionResult Schedule(int id, int? month, int? year)
         {
             var tutorId = HttpContext.Session.GetInt32("TutorId");
-
-            if (tutorId == null)
-            {
-                return RedirectToAction("Login", "Login");
-            }
+            if (tutorId == null) {return RedirectToAction("Login", "Login");}
 
             // Prevent a tutor from viewing another tutor's schedule
-            if (tutorId.Value != id)
-            {
-                return Unauthorized();
-            }
+            if (tutorId.Value != id) {return Unauthorized();}
 
             var tutor = dBContext.Tutor
                 .Find(t => t.TutorId == id)
                 .FirstOrDefault();
 
-            if (tutor == null)
-            {
-                return NotFound();
-            }
+            if (tutor == null) {return NotFound();}
 
             int targetMonth = month ?? DateTime.Today.Month;
             int targetYear = year ?? DateTime.Today.Year;
 
-            var schedules = dBContext.Schedule
-                .Find(s =>
-                    s.TutorId == id &&
+            var schedules = 
+                dBContext.Schedule
+                .Find(s => s.TutorId == id &&
                     s.Date.Month == targetMonth &&
-                    s.Date.Year == targetYear)
-                .ToList();
+                    s.Date.Year == targetYear).ToList();
 
             ViewBag.TutorId = id;
             ViewBag.Month = targetMonth;
@@ -253,20 +270,11 @@ namespace TAMS.Controllers
         // Adds an available time period to the tutor's schedule
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult AddSchedule(
-            int tutorId,
-            DateTime date,
-            TimeSpan startTime,
-            TimeSpan endTime)
+        public IActionResult AddSchedule(int tutorId, DateTime date,TimeSpan startTime,TimeSpan endTime)
         {
             var loggedInTutorId = HttpContext.Session.GetInt32("TutorId");
+            if (loggedInTutorId == null) { return RedirectToAction("Login", "Login"); }
 
-            if (loggedInTutorId == null)
-            {
-                return RedirectToAction("Login", "Login");
-            }
-
-            // Prevent a tutor from modifying another tutor's schedule
             if (loggedInTutorId.Value != tutorId)
             {
                 return Unauthorized();
@@ -275,75 +283,41 @@ namespace TAMS.Controllers
             if (endTime <= startTime)
             {
                 TempData["Error"] = "End time must be after start time.";
-
-                return RedirectToAction(
-                    "Schedule",
-                    new
-                    {
-                        id = tutorId,
-                        month = date.Month,
-                        year = date.Year
-                    });
+                return RedirectToAction("Schedule", new { id = tutorId, month = date.Month, year = date.Year });
             }
 
-            var existingSchedules = dBContext.Schedule
-                .Find(s =>
-                    s.TutorId == tutorId &&
-                    s.Date.Date == date.Date)
-                .ToList();
+            var existingSchedules = 
+                dBContext.Schedule
+                .Find(s => s.TutorId == tutorId &&
+                    s.Date.Date == date.Date).ToList();
 
             // Check for overlapping schedules
-            bool overlap = existingSchedules.Any(s =>
-                startTime < s.EndTime &&
-                endTime > s.StartTime);
+            bool overlap = existingSchedules.Any(s => startTime < s.EndTime && endTime > s.StartTime);
 
             if (overlap)
             {
-                TempData["Error"] =
-                    "This schedule overlaps with an existing schedule.";
-
-                return RedirectToAction(
-                    "Schedule",
-                    new
-                    {
-                        id = tutorId,
-                        month = date.Month,
-                        year = date.Year
-                    });
+                TempData["Error"] = "This schedule overlaps with an existing schedule.";
+                return RedirectToAction("Schedule", new { id = tutorId, month = date.Month, year = date.Year });
             }
 
-            // Generate a new ScheduleId
-            var lastSchedule = dBContext.Schedule
-                .Find(_ => true)
-                .SortByDescending(s => s.ScheduleId)
-                .FirstOrDefault();
+            var lastSchedule = 
+                dBContext.Schedule.Find(_ => true)
+                .SortByDescending(s => s.ScheduleId).FirstOrDefault();
 
-            int newScheduleId =
-                lastSchedule == null
-                    ? 1
-                    : lastSchedule.ScheduleId + 1;
+            int newScheduleId = lastSchedule == null ? 1 : lastSchedule.ScheduleId + 1;
 
-            var schedule = new Schedule
-            {
+            var schedule = 
+                new Schedule {
                 ScheduleId = newScheduleId,
                 TutorId = tutorId,
                 Date = date.Date,
                 StartTime = startTime,
-                EndTime = endTime
-            };
-
+                EndTime = endTime};
             dBContext.Schedule.InsertOne(schedule);
 
             TempData["Success"] = "Schedule added successfully.";
 
-            return RedirectToAction(
-                "Schedule",
-                new
-                {
-                    id = tutorId,
-                    month = date.Month,
-                    year = date.Year
-                });
+            return RedirectToAction("Schedule", new {id = tutorId, month = date.Month, year = date.Year});
         }
 
         // Deletes a tutor's available schedule
@@ -352,102 +326,52 @@ namespace TAMS.Controllers
         public IActionResult DeleteSchedule(int scheduleId)
         {
             var tutorId = HttpContext.Session.GetInt32("TutorId");
-
-            if (tutorId == null)
-            {
-                return RedirectToAction("Login", "Login");
-            }
+            if (tutorId == null) { return RedirectToAction("Login", "Login"); }
 
             var schedule = dBContext.Schedule
                 .Find(s => s.ScheduleId == scheduleId)
                 .FirstOrDefault();
 
-            if (schedule == null)
-            {
-                return NotFound();
-            }
+            if (schedule == null) { return NotFound(); }
 
-            // Prevent a tutor from deleting another tutor's schedule
-            if (schedule.TutorId != tutorId.Value)
-            {
-                return Unauthorized();
-            }
+            if (schedule.TutorId != tutorId.Value) { return Unauthorized(); }
 
-            dBContext.Schedule.DeleteOne(
-                s => s.ScheduleId == scheduleId);
+            dBContext.Schedule.DeleteOne(s => s.ScheduleId == scheduleId);
 
             TempData["Success"] = "Schedule deleted successfully.";
-
-            return RedirectToAction(
-                "Schedule",
-                new
-                {
-                    id = tutorId.Value,
-                    month = schedule.Date.Month,
-                    year = schedule.Date.Year
-                });
+            return RedirectToAction("Dashboard", new { id = tutorId.Value });
         }
         [HttpGet]
-        public IActionResult ScheduleCalendar(
-    int id,
-    int? month,
-    int? year)
+        public IActionResult ScheduleCalendar(int id, int? month, int? year)
         {
-            var tutorId =
-                HttpContext.Session.GetInt32("TutorId");
+            var tutorId = HttpContext.Session.GetInt32("TutorId");
+            if (tutorId == null) { return RedirectToAction("Login", "Login"); }
 
-            if (tutorId == null)
-            {
-                return RedirectToAction("Login", "Login");
-            }
-
-            // A tutor can only view their own appointment calendar.
-            if (tutorId.Value != id)
-            {
-                return Unauthorized();
-            }
+            if (tutorId.Value != id) {return Unauthorized(); }
 
             var tutor = dBContext.Tutor
                 .Find(t => t.TutorId == id)
                 .FirstOrDefault();
 
-            if (tutor == null)
-            {
-                return NotFound();
-            }
+            if (tutor == null) { return NotFound(); }
 
-            int targetMonth =
-                month ?? DateTime.Today.Month;
+            int targetMonth = month ?? DateTime.Today.Month;
+            int targetYear = year ?? DateTime.Today.Year;
 
-            int targetYear =
-                year ?? DateTime.Today.Year;
+            var startOfMonth = new DateTime(targetYear, targetMonth, 1);
 
-            var startOfMonth =
-                new DateTime(
-                    targetYear,
-                    targetMonth,
-                    1);
-
-            var startOfNextMonth =
-                startOfMonth.AddMonths(1);
+            var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
 
             var appointments =
                 dBContext.Appointments
-                    .Find(a =>
-                        a.TutorId == id &&
-                        a.AppointmentDate >= startOfMonth &&
-                        a.AppointmentDate < startOfNextMonth)
-                    .ToList();
+                .Find(a => a.TutorId == id &&
+                a.AppointmentDate >= startOfMonth &&
+                a.AppointmentDate <= endOfMonth).ToList();
 
-            // Attach student information
             foreach (var appointment in appointments)
             {
                 appointment.Student =
-                    dBContext.Student
-                        .Find(s =>
-                            s.StudentId ==
-                            appointment.StudentId)
-                        .FirstOrDefault();
+                    dBContext.Student.Find(s => s.StudentId == appointment.StudentId).FirstOrDefault();
             }
 
             ViewBag.TutorId = id;
@@ -456,6 +380,110 @@ namespace TAMS.Controllers
             ViewBag.Appointments = appointments;
 
             return View("ScheduleCalendar");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CancelAppointment(int appointmentId)
+        {
+            var appointment = 
+                dBContext.Appointments                                          
+                .Find(a => a.AppointmentId == appointmentId).FirstOrDefault();  
+
+            if (appointment == null) { return NotFound(); }
+
+            var student = dBContext.Student
+                .Find(s => s.StudentId == appointment.StudentId)
+                .FirstOrDefault();
+
+            var tutor = dBContext.Tutor
+                .Find(d => d.TutorId == appointment.TutorId)
+                .FirstOrDefault();
+
+            if (student == null || tutor == null) { return NotFound();}
+
+            var update = 
+                Builders<Appointment>.                                                          
+                Update.Set(a => a.Status, "Cancelled");                                        
+            dBContext.Appointments.UpdateOne(a => a.AppointmentId == appointmentId, update);    
+
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(student.Email))
+                {
+                    await _emailService.SendAppointmentCancellationAsync(
+                        student.Email,
+                        $"{student.FName} {student.LName}",
+                        $"{tutor.FName} {tutor.LName}",
+                        appointment.AppointmentDate
+                        );
+                }
+
+                if (!string.IsNullOrWhiteSpace(tutor.Email))
+                {
+                    await _emailService.SendTutorAppointmentCancellationAsync(
+                        tutor.Email,
+                        $"{tutor.FName} {tutor.LName}",
+                        $"{student.FName} {student.LName}",
+                        appointment.AppointmentDate
+                        );
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Cancellation email failed: {ex.Message}");
+            }
+
+
+            return RedirectToAction("Dashboard", "Tutor", new { id = appointment.TutorId });
+        }
+
+
+        [HttpPost]
+        public async Task<IActionResult> CompleteAppointment(int appointmentId)
+        {
+            var appointment =
+                dBContext.Appointments
+                .Find(a => a.AppointmentId == appointmentId)
+                .FirstOrDefault();
+
+            if (appointment == null) { return NotFound(); }
+
+            if (appointment.Status != "Completed")
+            {
+                var update =
+                    Builders<Appointment>
+                    .Update.Set(a => a.Status, "Completed");
+
+                dBContext.Appointments.UpdateOne(
+                    a => a.AppointmentId == appointmentId,
+                    update);
+
+                try
+                {
+                    var student = dBContext.Student
+                        .Find(p => p.StudentId == appointment.StudentId)
+                        .FirstOrDefault();
+
+                    var tutor = dBContext.Tutor
+                        .Find(d => d.TutorId == appointment.TutorId)
+                        .FirstOrDefault();
+
+                    if (student != null && tutor != null && !string.IsNullOrWhiteSpace(student.Email))
+                    {
+                        await _emailService.SendReviewReminderAsync(
+                            student.Email,
+                            $"{student.FName} {student.LName}",
+                            $"{tutor.FName} {tutor.LName}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(
+                        $"Review reminder email failed: {ex.Message}");
+                }
+            }
+            return RedirectToAction("Dashboard", "Tutor", new { id = appointment.TutorId });
+
         }
     }
 }

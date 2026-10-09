@@ -136,7 +136,9 @@
         <!-- BUTTONS -->
         <div class="d-flex gap-2 mb-5">
             <button type="submit" class="btn btn-primary"> Save Changes </button>
-            <a asp-controller="Tutor" asp-action="Dashboard" class="btn btn-secondary"> Back to Dashboard</a>
+            <a asp-controller="Tutor" asp-action="Dashboard" asp-route-id="@Context.Session.GetInt32("TutorId")" class="btn btn-secondary">
+                Back to Dashboard
+            </a>
         </div>
 
     </form>

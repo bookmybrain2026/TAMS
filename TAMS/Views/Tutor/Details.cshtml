@@ -11,17 +11,13 @@
 <div class="container mt-5">
 
     <div class="mb-4">
-        <a asp-controller="Tutor"
-           asp-action="Index"
-           class="btn btn-secondary">
+        <a asp-controller="Tutor" asp-action="Index" class="btn btn-secondary">
             ← Back to Tutors
         </a>
     </div>
 
     <div class="card shadow-sm mb-4">
-
         <div class="card-body">
-
             <div class="text-center mb-4">
                 <h1> @Model.FName @Model.LName</h1>
                 <p class="text-muted">
@@ -32,7 +28,6 @@
             <hr />
 
             <div class="row">
-
                 <div class="col-md-6 mb-3">
                     <strong>First Name</strong>
                     <p>@Model.FName</p>
@@ -87,17 +82,11 @@
             @if (courses != null && courses.Any())
             {
                 <div class="d-flex flex-wrap gap-2">
-
                     @foreach (var course in courses)
                     {
                         <div class="course-display-bubble">
-
                             <strong>@course.CourseCode</strong>
-
-                            <span class="ms-2">
-                                @course.CourseName
-                            </span>
-
+                            <span class="ms-2"> @course.CourseName </span>
                         </div>
                     }
 
@@ -114,7 +103,6 @@
 
     </div>
 
-
     <!-- Reviews -->
     <div class="card shadow-sm mb-5">
 
@@ -124,18 +112,68 @@
 
         <div class="card-body">
 
-            <div class="text-center text-muted py-4">
+            <div class="text-center mb-4">
+                <h3>
+                    @if (Model.ReviewCount > 0)
+                    {
+                        <span class="text-warning">
+                            ★ @Model.AverageRating.ToString("0.0") / 5
+                        </span>
+                    }
+                    else
+                    {
+                        <span>Not rated yet</span>
+                    }
+                </h3>
 
-                <h5>No reviews yet</h5>
-
-                <p class="mb-0">
-                    Tutor reviews will appear here once the review feature is available.
+                <p class="text-muted">
+                    @Model.ReviewCount
+                    @(Model.ReviewCount == 1 ? "review" : "reviews")
                 </p>
-
             </div>
 
+            <hr />
+
+            @if (Model.Reviews != null && Model.Reviews.Any())
+            {
+                @foreach (var review in Model.Reviews)
+                {
+                    <div class="border rounded p-3 mb-3">
+
+                        <div class="text-warning mb-2">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                if (i <= review.Rating)
+                                {
+                                    <span>★</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">☆</span>
+                                }
+                            }
+
+                        <span class="text-dark ms-2">
+                            @review.Rating / 5
+                        </span>
+                    </div>
+
+                    <p class="mb-0">
+                        @(string.IsNullOrWhiteSpace(review.Comment) ? "No written comment." : review.Comment)
+                    </p>
+
+                    </div>
+                        }
+            }
+            else
+            {
+                <div class="text-center text-muted py-3">
+                    <h5>No reviews yet</h5>
+                    <p class="mb-0">
+                        Reviews will appear here once students have reviewed this tutor.
+                    </p>
+                </div>
+            }
         </div>
-
     </div>
-
 </div>

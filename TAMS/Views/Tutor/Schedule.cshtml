@@ -1,115 +1,54 @@
 ﻿@model List<TAMS.Models.Schedule>
 
-<div class="d-flex justify-content-end">
-    <form asp-controller="Login" asp-action="Logout" method="post">
-        @Html.AntiForgeryToken()
-        <button type="submit" class="btn btn-danger">Logout</button>
-    </form>
-</div>
-
 @if (TempData["Error"] != null)
 {
-    <div class="alert alert-danger">
-        @TempData["Error"]
-    </div>
+    <div class="alert alert-danger">@TempData["Error"]</div>
 }
-
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success">
-        @TempData["Success"]
-    </div>
-}
-
 @{
-    // Get month/year from ViewBag or fall back to current month/year
-    int month = (ViewBag.Month is int m && m >= 1 && m <= 12)
-        ? m
-        : DateTime.Today.Month;
-
-    int year = (ViewBag.Year is int y && y >= 1)
-        ? y
-        : DateTime.Today.Year;
-
+    // Get month/year from ViewBag or fallback to current
+    int month = (ViewBag.Month is int m && m >= 1 && m <= 12) ? m : DateTime.Today.Month;
+    int year = (ViewBag.Year is int y && y >= 1) ? y : DateTime.Today.Year;
     int tutorId = ViewBag.TutorId ?? 0;
 
     var firstDay = new DateTime(year, month, 1);
+    int daysInMonth = DateTime.DaysInMonth(year, month);
 
-    int daysInMonth =
-        DateTime.DaysInMonth(year, month);
+    // Day of week for first day (0=Sunday, 1=Monday, ...)
+    int startDayOfWeek = (int)firstDay.DayOfWeek;
 
-    // Sunday = 0, Monday = 1, ..., Saturday = 6
-    int startDayOfWeek =
-        (int)firstDay.DayOfWeek;
-
-    // Previous month
+    // Previous month/year
     int prevMonth = month - 1;
     int prevYear = year;
+    if (prevMonth < 1) { prevMonth = 12; prevYear -= 1; }
 
-    if (prevMonth < 1)
-    {
-        prevMonth = 12;
-        prevYear--;
-    }
-
-    // Next month
+    // Next month/year
     int nextMonth = month + 1;
     int nextYear = year;
-
-    if (nextMonth > 12)
-    {
-        nextMonth = 1;
-        nextYear++;
-    }
+    if (nextMonth > 12) { nextMonth = 1; nextYear += 1; }
 }
 
 <div class="mb-3">
     <a class="btn btn-success"
-       href="@Url.Action("Dashboard", "Tutor")">
+       href="@Url.Action("Dashboard", "Tutor", new { id = tutorId })">
         ← Back to Dashboard
     </a>
 </div>
 
-<h1>
-    Tutor Schedule - @firstDay.ToString("MMMM yyyy")
-</h1>
+<h1>Doctor Schedule - @firstDay.ToString("MMMM yyyy")</h1>
 
 <div class="d-flex justify-content-between mb-3">
-
-    <a class="btn btn-secondary"
-       href="@Url.Action(
-                   "Schedule",
-                   "Tutor",
-                   new
-                   {
-                       id = tutorId,
-                       month = prevMonth,
-                       year = prevYear
-                   })">
+    <a class="btn btn-secondary" href="@Url.Action("Schedule", new { id = tutorId, month = prevMonth, year = prevYear })">
         ← Previous Month
     </a>
 
-    <span class="align-self-center">
-        @firstDay.ToString("MMMM yyyy")
-    </span>
+    <span class="align-self-center">@firstDay.ToString("MMMM yyyy")</span>
 
-    <a class="btn btn-secondary"
-       href="@Url.Action(
-                   "Schedule",
-                   "Tutor",
-                   new
-                   {
-                       id = tutorId,
-                       month = nextMonth,
-                       year = nextYear
-                   })">
+    <a class="btn btn-secondary" href="@Url.Action("Schedule", new { id = tutorId, month = nextMonth, year = nextYear })">
         Next Month →
     </a>
-
 </div>
 
 <table class="table table-bordered text-center">
-
     <thead>
         <tr>
             <th>Sun</th>
@@ -121,130 +60,55 @@
             <th>Sat</th>
         </tr>
     </thead>
-
     <tbody>
-
         @{
             int day = 1;
-
-            int totalCells =
-            daysInMonth + startDayOfWeek;
-
-            int weeks =
-            (int)Math.Ceiling(totalCells / 7.0);
+            int totalCells = daysInMonth + startDayOfWeek;
+            int weeks = (int)Math.Ceiling(totalCells / 7.0);
 
             for (int week = 0; week < weeks; week++)
             {
                 <tr>
-
                     @for (int dow = 0; dow < 7; dow++)
                     {
-                        if ((week == 0 && dow < startDayOfWeek)
-                        || day > daysInMonth)
+                        if (week == 0 && dow < startDayOfWeek || day > daysInMonth)
                         {
                             <td></td>
                         }
                         else
                         {
-                            var currentDate =
-                            new DateTime(year, month, day);
-
-                            var daySchedules = Model
-                            .Where(s =>
-                            s.Date.Date ==
-                            currentDate.Date)
-                            .OrderBy(s => s.StartTime)
-                            .ToList();
+                            var currentDate = new DateTime(year, month, day);
+                            var daySchedules = Model.Where(s => s.Date.Date == currentDate.Date).ToList();
 
                             <td style="vertical-align: top; min-width: 120px;">
 
-                                <strong>
-                                    @day (@currentDate.ToString("ddd"))
-                                </strong>
+                                <strong>@day (@currentDate.ToString("ddd"))</strong>
 
-                                @if (daySchedules.Any())
-                                {
-                                    <ul class="mb-2">
+                                <ul class="mb-2">
+                                    @foreach (var s in daySchedules)
+                                    {
+                                        <li>@s.StartTime - @s.EndTime</li>
+                                    }
+                                </ul>
 
-                                        @foreach (var s in daySchedules)
-                                        {
-                                            <li>
-                                                @s.StartTime.ToString(@"hh\:mm")
-                                                -
-                                                @s.EndTime.ToString(@"hh\:mm")
-
-                                                <form asp-controller="Tutor"
-                                                      asp-action="DeleteSchedule"
-                                                      method="post"
-                                                      class="d-inline">
-
-                                                    @Html.AntiForgeryToken()
-
-                                                    <input type="hidden"
-                                                           name="scheduleId"
-                                                           value="@s.ScheduleId" />
-
-                                                    <button type="submit"
-                                                            class="btn btn-danger btn-sm"
-                                                            onclick="return confirm('Delete this schedule?');">
-                                                        Delete
-                                                    </button>
-
-                                                </form>
-                                            </li>
-                                        }
-
-                                    </ul>
-                                }
-                                else
-                                {
-                                    <p class="text-muted small">
-                                        No availability
-                                    </p>
-                                }
-
-                                <!-- Add Schedule -->
-                                <form asp-controller="Tutor"
-                                      asp-action="AddSchedule"
-                                      method="post">
-
+                                <!-- Add Schedule Form -->
+                                <form asp-controller="Tutor" asp-action="AddSchedule" method="post">
                                     @Html.AntiForgeryToken()
-
-                                    <input type="hidden"
-                                           name="tutorId"
-                                           value="@tutorId" />
-
-                                    <input type="hidden"
-                                           name="date"
-                                           value="@currentDate.ToString("yyyy-MM-dd")" />
-
-                                    <input type="time"
-                                           name="startTime"
-                                           class="form-control mb-1"
-                                           required />
-
-                                    <input type="time"
-                                           name="endTime"
-                                           class="form-control mb-1"
-                                           required />
-
-                                    <button type="submit"
-                                            class="btn btn-primary btn-sm w-100">
-                                        Add
-                                    </button>
-
+                                    <input type="hidden" name="tutorId" value="@tutorId" />
+                                    <input type="hidden" name="date" value="@currentDate.ToString("yyyy-MM-dd")" />
+                                    <input type="time" name="startTime" class="form-control mb-1" required />
+                                    <input type="time" name="endTime" class="form-control mb-1" required />
+                                    <button type="submit" class="btn btn-primary btn-sm w-100">Add</button>
                                 </form>
+
 
                             </td>
 
                             day++;
                         }
                     }
-
                 </tr>
             }
         }
-
     </tbody>
-
 </table>

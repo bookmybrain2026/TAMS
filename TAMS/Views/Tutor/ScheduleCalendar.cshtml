@@ -1,48 +1,25 @@
 ﻿@{
-    var appointments =
-        (List<TAMS.Models.Appointment>)ViewBag.Appointments;
-
+    var appointments = (List<TAMS.Models.Appointment>)ViewBag.Appointments;
     int month = ViewBag.Month;
-
     int year = ViewBag.Year;
-
     int tutorId = ViewBag.TutorId ?? 0;
 
-    var firstDay =
-        new DateTime(year, month, 1);
-
-    int daysInMonth =
-        DateTime.DaysInMonth(year, month);
-
-    int startDayOfWeek =
-        (int)firstDay.DayOfWeek;
+    var firstDay = new DateTime(year, month, 1);
+    int daysInMonth = DateTime.DaysInMonth(year, month);
+    int startDayOfWeek = (int)firstDay.DayOfWeek;
 
     // Previous month
-    int prevMonth = month - 1;
-    int prevYear = year;
-
-    if (prevMonth < 1)
-    {
-        prevMonth = 12;
-        prevYear--;
-    }
+    int prevMonth = month - 1; int prevYear = year;
+    if (prevMonth < 1) {prevMonth = 12; prevYear--; }
 
     // Next month
-    int nextMonth = month + 1;
-    int nextYear = year;
+    int nextMonth = month + 1; int nextYear = year;
 
-    if (nextMonth > 12)
-    {
-        nextMonth = 1;
-        nextYear++;
-    }
+    if (nextMonth > 12) { nextMonth = 1; nextYear++;}
 }
 
-<div class="d-flex justify-content-end">
-    <form asp-controller="Login"
-          asp-action="Logout"
-          method="post">
-
+@* <div class="d-flex justify-content-end">
+    <form asp-controller="Login" asp-action="Logout" method="post">
         @Html.AntiForgeryToken()
 
         <button type="submit"
@@ -51,7 +28,7 @@
         </button>
 
     </form>
-</div>
+</div> *@
 
 @if (TempData["Error"] != null)
 {
@@ -68,12 +45,10 @@
 }
 
 <div class="mb-3">
-
     <a class="btn btn-success"
-       href="@Url.Action("Dashboard", "Tutor")">
+       href="@Url.Action("Dashboard", "Tutor", new { id = tutorId })">
         ← Back to Dashboard
     </a>
-
 </div>
 
 <h1>
@@ -82,41 +57,17 @@
 </h1>
 
 <div class="d-flex justify-content-between mb-3">
-
     <a class="btn btn-secondary"
-       href="@Url.Action(
-                   "ScheduleCalendar",
-                   "Tutor",
-                   new
-                   {
-                       id = tutorId,
-                       month = prevMonth,
-                       year = prevYear
-                   })">
-
+       href="@Url.Action("ScheduleCalendar", "Tutor", new {id = tutorId, month = prevMonth, year = prevYear })">
         ← Previous Month
-
     </a>
 
-    <span class="align-self-center">
-        @firstDay.ToString("MMMM yyyy")
-    </span>
+    <span class="align-self-center">@firstDay.ToString("MMMM yyyy")</span>
 
     <a class="btn btn-secondary"
-       href="@Url.Action(
-                   "ScheduleCalendar",
-                   "Tutor",
-                   new
-                   {
-                       id = tutorId,
-                       month = nextMonth,
-                       year = nextYear
-                   })">
-
+       href="@Url.Action( "ScheduleCalendar", "Tutor", new {id = tutorId, month = nextMonth, year = nextYear })">
         Next Month →
-
     </a>
-
 </div>
 
 <table class="table table-bordered text-center">
@@ -137,111 +88,48 @@
 
         @{
             int day = 1;
-
-            int totalCells =
-            daysInMonth + startDayOfWeek;
-
-            int weeks =
-            (int)Math.Ceiling(totalCells / 7.0);
+            int totalCells = daysInMonth + startDayOfWeek;
+            int weeks = (int)Math.Ceiling(totalCells / 7.0);
 
             for (int week = 0; week < weeks; week++)
             {
                 <tr>
-
                     @for (int dow = 0; dow < 7; dow++)
                     {
-                        if ((week == 0 && dow < startDayOfWeek)
-                        || day > daysInMonth)
+                        if ((week == 0 && dow < startDayOfWeek) || day > daysInMonth)
                         {
                             <td></td>
                         }
                         else
                         {
-                            var currentDate =
-                            new DateTime(year, month, day);
+                            var currentDate = new DateTime(year, month, day);
 
-                            var dayAppointments =
-                            appointments
-                            .Where(a =>
-                            a.AppointmentDate.Date ==
-                            currentDate.Date)
-                            .OrderBy(a =>
-                            a.AppointmentDate.TimeOfDay)
-                            .ToList();
+                            var dayAppointments = appointments
+                                .Where(a => a.AppointmentDate.Date == currentDate.Date)
+                                .OrderBy(a => a.AppointmentDate.TimeOfDay)
+                                .ToList();
+                            <td style="vertical-align: top; min-width: 120px;">
+                                <strong>@day (@currentDate.ToString("ddd"))</strong>
 
-                            <td style="vertical-align: top; min-width: 160px;">
-
-                                <strong>
-                                    @day
-                                    (@currentDate.ToString("ddd"))
-                                </strong>
-
-                                <ul class="list-unstyled mt-2 mb-1">
-
-                                    @if (dayAppointments.Any())
+                                <ul class="list-unstyled mt-1 mb-1">
+                                    @foreach (var appt in dayAppointments)
                                     {
-                                        @foreach (var appt in dayAppointments)
+                                        if (appt.Status == "Cancelled")
                                         {
-                                            var studentName =
-                                            appt.Student != null
-                                            ? $"{appt.Student.FName} {appt.Student.LName}"
-                                            : "Student not found";
-
-                                            if (appt.Status == "Cancelled")
-                                            {
-                                                <li class="text-muted">
-
-                                                    <s>
-                                                        @appt.AppointmentDate.ToString("hh:mm tt")
-                                                        -
-                                                        @studentName
-                                                        (Cancelled)
-                                                    </s>
-
-                                                </li>
-                                            }
-                                            else if (appt.Status == "Completed")
-                                            {
-                                                <li class="text-success">
-
-                                                    @appt.AppointmentDate.ToString("hh:mm tt")
-                                                    -
-                                                    @studentName
-                                                    (Completed)
-
-                                                </li>
-                                            }
-                                            else
-                                            {
-                                                <li>
-
-                                                    @appt.AppointmentDate.ToString("hh:mm tt")
-                                                    -
-                                                    @studentName
-
-                                                </li>
-                                            }
+                                            <li class="text-muted"><s>@appt.AppointmentDate.AddHours(-5).ToString("hh:mm tt") - @appt.Student.FName @appt.Student.LName (Cancelled)</s></li>
+                                        }
+                                        else
+                                        {
+                                            <li>@appt.AppointmentDate.AddHours(-5).ToString("hh:mm tt") - @appt.Student.FName @appt.Student.LName</li>
                                         }
                                     }
-                                    else
-                                    {
-                                        <li class="text-muted small">
-                                            No appointments
-                                        </li>
-                                    }
-
                                 </ul>
-
                             </td>
-
                             day++;
                         }
                     }
-
                 </tr>
             }
         }
-
     </tbody>
-
 </table>
