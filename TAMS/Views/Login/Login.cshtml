@@ -3,62 +3,92 @@
 @{
     ViewData["Title"] = "Login";
 }
+<head>
+    <link href="~/css/Login.css" rel="stylesheet" />
+</head>
+<body>
+    <div class="login-wrapper">
+        <div class="login-container">
 
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-5">
+            <div class="login-panel">
 
-            <div class="card shadow mt-5">
-                <div class="card-body p-4">
+                <div class="brand-name">
+                    BookMy<span>Brain</span>
+                </div>
 
-                    <h2 class="text-center mb-4">TAMS Login</h2>
+                <h1 class="login-heading">
+                    Welcome back!
+                </h1>
 
-                    <form asp-controller="Login" asp-action="Login" method="post">
+                <p class="login-subtitle">
+                    Please sign in before continuing.
+                </p>
 
-                        <div asp-validation-summary="ModelOnly"class="text-danger mb-3"></div>
+                <form asp-controller="Login" asp-action="Login" method="post">
+                    <div asp-validation-summary="ModelOnly"
+                         class="text-danger mb-3">
+                    </div>
 
-                        <div class="mb-3">
-                            <label asp-for="Username" class="form-label">Username</label>
-                            <input asp-for="Username" class="form-control" placeholder="Enter your username" />
-                            <span asp-validation-for="Username" class="text-danger"></span>
-                        </div>
+                    <div class="mb-3">
+                        <label asp-for="Username" class="form-label"> Username </label>
+                        <input asp-for="Username" class="form-control" placeholder="Enter your username" autocomplete="username" />
+                        <span asp-validation-for="Username" class="text-danger"> </span>
+                    </div>
 
-                        <div class="mb-3">
-                            <label asp-for="Password" class="form-label">Password</label>
-                            <input asp-for="Password" type="password" class="form-control" placeholder="Enter your password" />
-                            <span asp-validation-for="Password" class="text-danger"></span>
-                        </div>
+                    <div class="mb-3">
+                        <label asp-for="Password" class="form-label">Password</label>
+                        <input asp-for="Password"  type="password" class="form-control" placeholder="Enter your password" autocomplete="current-password" />
+                        <span asp-validation-for="Password" class="text-danger"></span>
+                    </div>
 
-                        <div class="mb-3">
-                            <label asp-for="Role" class="form-label"> Login As
-                            </label>
-                            <select asp-for="Role" asp-items="Html.GetEnumSelectList<UserRole>()" class="form-select">
-                                <option value="">Please Select Your Role</option>
-                            </select>
-                            <span asp-validation-for="Role" class="text-danger"></span>
-                        </div>
+                    <div class="mb-3">
+                        <label asp-for="Role" class="form-label">Login As</label>
+                        <select asp-for="Role" asp-items="Html.GetEnumSelectList<UserRole>()" class="form-select">
+                            <option value="">Please Select Your Role</option>
+                        </select>
+                        <span asp-validation-for="Role"class="text-danger"></span>
+                    </div>
 
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">Login</button>
-                        </div>
-                        <div class="text-center mt-3">
-                            <a asp-controller="Login" asp-action="ForgotPassword">Forgot Password?</a>
-                        </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn login-button">Sign In</button>
+                    </div>
 
-                        <div class="text-center mt-3">
-                            <a asp-controller="Student" asp-action="StudentRegistration" class="btn btn-secondary">
-                                Create Student Account
-                            </a>
-                        </div>
+                    <a asp-controller="Login" asp-action="ForgotPassword" class="forgot-link">Forgot Password?</a>
 
-                    </form>
+                    <div class="login-divider"> Create an account </div>
+                    <a asp-controller="Student" asp-action="StudentRegistration" class="register-button">Create Student Account</a>
+
+                    <p class="signup-text">Don't have an account?
+                        <a asp-controller="Student" asp-action="StudentRegistration" class="signup-link">Sign Up Now</a>
+                    </p>
+
+                </form>
+            </div>
+
+            <div class="illustration-panel">
+
+                <div class="illustration-content">
+
+                    @* <h2 class="illustration-title">
+                        Learn. Read. Grow.
+                    </h2>
+
+                    <p class="illustration-description">
+                        Discover new ideas, expand your knowledge,
+                        and make every reading experience count.
+                    </p> *@
+
+                    <img src="~/images/BMB Owl.png" alt="BookMyBrain Owl" class="book-illustration" />
+
+                    @* <p class="illustration-footer">
+                        Your next great idea starts here.
+                    </p> *@
 
                 </div>
             </div>
-
         </div>
     </div>
-</div>
+</body>
 
 @section Scripts {
     @{
