@@ -1,12 +1,21 @@
-﻿@{
+﻿@using TAMS.Models
+
+@{
     ViewData["Title"] = "Administrator Dashboard";
+
+    var tutors = ViewBag.Tutors as List<Tutor> ?? new List<Tutor>();
+    var students = ViewBag.Students as List<Student> ?? new List<Student>();
+    var appointments = ViewBag.Appointments as List<Appointment> ?? new List<Appointment>();
 }
 
 <div class="container mt-5">
 
-    <h1>Administrator Dashboard</h1>
-
-    <p>Welcome to the TAMS Administrator Dashboard.</p>
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1>Administrator Dashboard</h1>
+            <p>Welcome to the TAMS Administrator Dashboard.</p>
+        </div>
+    </div>
 
     <hr />
 
@@ -16,44 +25,373 @@
         <a asp-controller="Admin" asp-action="CreateTutor" class="btn btn-primary">Create Tutor Account</a>
     </div>
 
-</div>
+    <hr />
 
-<div class="row mt-4">
+    <h3>System Management</h3>
 
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Subject Management</h5>
+    <div class="row mt-4">
 
-                <p class="card-text">
-                    Add, edit, and delete tutoring subjects.
-                </p>
+        <div class="col-md-4 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Subject Management</h5>
+                    <p class="card-text">Add, edit, and delete tutoring subjects.</p>
+                    <a asp-controller="Subject" asp-action="Index" class="btn btn-primary"> Manage Subjects</a>
+                </div>
+            </div>
+        </div>
 
-                <a asp-controller="Subject"
-                   asp-action="Index"
-                   class="btn btn-primary">
-                    Manage Subjects
-                </a>
+        <div class="col-md-4 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Course Management</h5>
+                    <p class="card-text">Add, edit, and delete courses.</p>
+                    <a asp-controller="Course" asp-action="Index" class="btn btn-primary"> Manage Courses</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Appointment Management</h5>
+                    <p class="card-text">View scheduled tutoring appointments and manage appointment statuses.</p>
+                    <a asp-controller="Admin" asp-action="Scheduler" class="btn btn-success"> View All Appointments</a>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="col-md-4">
-        <div class="card">
+    <hr />
+
+    <h2>Tutor List</h2>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>Tutor ID</th>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Subject</th>
+                    <th>Email</th>
+                    <th>Phone Number</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @if (tutors.Count > 0)
+                {
+                    @foreach (var tutor in tutors)
+                    {
+                        <tr>
+                            <td>@tutor.TutorId</td>
+                            <td>@tutor.FName</td>
+                            <td>@tutor.LName</td>
+                            <td>@tutor.Subject</td>
+                            <td>@tutor.Email</td>
+                            <td>@tutor.PhoneNumber</td>
+
+                            <td>
+                                <a asp-controller="Admin" asp-action="Dashboard" asp-route-editTutorId="@tutor.TutorId" class="btn btn-warning btn-sm mb-1">Edit</a>
+                                <form asp-controller="Admin" asp-action="DeleteTutor" method="post" style="display:inline;"
+                                      onsubmit="return confirm('Are you sure you want to delete this tutor?');">
+                                    <input type="hidden" name="id" value="@tutor.TutorId" />
+                                    <button type="submit" class="btn btn-danger btn-sm mb-1">Delete </button>
+                                </form>
+                                <a asp-controller="Admin" asp-action="Dashboard" asp-route-viewTutorId="@tutor.TutorId" class="btn btn-info btn-sm mb-1"> View Schedule </a>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="text-center"> No tutors found.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (ViewBag.EditTutor != null)
+    {
+        var tutorToEdit = (Tutor)ViewBag.EditTutor;
+
+        <div class="card mt-4">
             <div class="card-body">
-                <h5 class="card-title">Course Management</h5>
 
-                <p class="card-text">
-                    Add, edit, and delete courses.
-                </p>
+                <h3>Edit Tutor Information</h3>
+                <form asp-controller="Admin" asp-action="UpdateTutor" method="post">
+                    <input type="hidden" name="tutorId" value="@tutorToEdit.TutorId" />
 
-                <a asp-controller="Course"
-                   asp-action="Index"
-                   class="btn btn-primary">
-                    Manage Courses
-                </a>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">First Name</label>
+                            <input name="fName"value="@tutorToEdit.FName"  class="form-control" required />
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Last Name</label>
+                            <input name="lName" value="@tutorToEdit.LName" class="form-control" required />
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Subject</label>
+                            <input name="subject" value="@tutorToEdit.Subject" class="form-control" required />
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email</label>
+                            <input name="email" type="email" value="@tutorToEdit.Email" class="form-control" required />
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Phone Number</label>
+                            <input name="phoneNumber" value="@tutorToEdit.PhoneNumber" class="form-control" />
+                        </div>
+
+                    </div>
+
+                    <button type="submit" class="btn btn-primary mt-2">Save Changes</button>
+                    <a asp-controller="Admin" asp-action="Dashboard" class="btn btn-secondary mt-2">Cancel</a>
+                </form>
+
             </div>
         </div>
+    }
+
+    @if (ViewBag.ViewTutorSchedules != null)
+    {
+        var schedules =
+        ViewBag.ViewTutorSchedules as List<Schedule>
+        ?? new List<Schedule>();
+
+        var tutorName = ViewBag.ViewTutorName as string ?? "Tutor";
+
+        <div class="card mt-4">
+            <div class="card-body">
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <h3>Schedule for @tutorName</h3>
+                    <a asp-controller="Admin" asp-action="Dashboard" class="btn btn-secondary btn-sm">Cancel</a>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered mt-3">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Start Time</th>
+                                <th>End Time</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @if (schedules.Count > 0)
+                            {
+                                @foreach (var slot in schedules
+                                                        .OrderBy(s => s.Date)
+                                                        .ThenBy(s => s.StartTime))
+                                {
+                                    <tr>
+                                        <td>@slot.Date.ToString("MM/dd/yyyy")</td>
+                                        <td>@slot.StartTime.ToString(@"hh\:mm")</td>
+                                        <td>@slot.EndTime.ToString(@"hh\:mm")</td>
+
+                                        <td>
+                                            <form asp-controller="Admin" asp-action="DeleteScheduleSlot" method="post"
+                                                  onsubmit="return confirm('Delete this time slot?');">
+                                                <input type="hidden" name="scheduleId" value="@slot.ScheduleId" />
+                                                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="4" class="text-center">
+                                        No schedule slots found.
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    }
+
+    <hr />
+
+    <hr />
+
+    <h2>Student List</h2>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+
+            <thead>
+                <tr>
+                    <th>Student ID</th>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Date of Birth</th>
+                    <th>Email</th>
+                    <th>Phone Number</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @if (students.Count > 0)
+                {
+                    @foreach (var student in students)
+                    {
+                        <tr>
+                            <td>@student.StudentId</td>
+                            <td>@student.FName</td>
+                            <td>@student.LName</td>
+                            <td>@student.DOB.ToString("MM/dd/yyyy")</td>
+                            <td>@student.Email</td>
+                            <td>@student.PhoneNumber</td>
+
+                            <td>
+                                <form asp-controller="Admin" asp-action="DeleteStudent" method="post" style="display:inline;"
+                                      onsubmit="return confirm('Are you sure you want to delete this student? Their login account will also be deleted, and their scheduled appointments will be cancelled.');">
+                                    <input type="hidden" name="id" value="@student.StudentId" />
+                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="text-center">
+                            No students found.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+
+        </table>
     </div>
+
+    <hr />
+
+    <h2>All Appointments</h2>
+
+    <div class="table-responsive">
+        <table class="table table-bordered">
+
+            <thead>
+                <tr>
+                    <th>Appointment ID</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Tutor</th>
+                    <th>Student</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @if (appointments.Count > 0)
+                {
+                    @foreach (var appt in appointments.OrderBy(a => a.AppointmentDate))
+                    {
+                        var status = appt.Status?.Trim() ?? "Scheduled";
+
+                        var rowClass = status switch
+                        {
+                            "Cancelled" => "table-danger",
+                            "Completed" => "table-success",
+                            "Scheduled" => "table-warning",
+                            _ => ""
+                        };
+
+                        <tr class="@rowClass">
+
+                            <td>@appt.AppointmentId</td>
+
+                            <td>
+                                @appt.AppointmentDate.ToString("MM/dd/yyyy")
+                            </td>
+
+                            <td>
+                                @appt.AppointmentDate.ToString("hh:mm tt")
+                            </td>
+
+                            <td>
+                                @if (appt.Tutor != null)
+                                {
+                                    @($"{appt.Tutor.FName} {appt.Tutor.LName}")
+                                }
+                                else
+                                {
+                                    @("Tutor unavailable")
+                                }
+                            </td>
+
+                            <td>
+                                @if (appt.Student != null)
+                                {
+                                    @($"{appt.Student.FName} {appt.Student.LName}")
+                                }
+                                else
+                                {
+                                    @("Student unavailable")
+                                }
+                            </td>
+
+                            <td>@status</td>
+
+                            <td>
+                                @if (status == "Scheduled")
+                                {
+                                    <form asp-controller="Admin" asp-action="CancelAppointment" method="post" style="display:inline;"
+                                          onsubmit="return confirm('Cancel this appointment?');">
+                                        <input type="hidden" name="appointmentId" value="@appt.AppointmentId" />
+                                        <button type="submit" class="btn btn-danger btn-sm">Cancel</button>
+                                    </form>
+                                }
+                            </td>
+
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="text-center">
+                            No appointments found.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+
+        </table>
+    </div>
+
+    <hr />
+
+    <h2>System Analytics</h2>
+
+    <p>
+        Download a report containing system usage analytics.
+    </p>
+
+    <form asp-controller="Admin" asp-action="DownloadSystemUsageReport" method="get" class="mb-3">
+        <button type="submit" class="btn btn-info"> Download System Usage Analytics </button>
+    </form>
 
 </div>

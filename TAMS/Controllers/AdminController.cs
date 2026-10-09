@@ -1,45 +1,83 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
+using System.Text;
 using TAMS.Data;
 using TAMS.Models;
+using TAMS.Services;
 
 namespace TAMS.Controllers
 {
     public class AdminController : Controller
     {
         private readonly MongoDBContext dBContext;
+        private readonly IEmailService _emailService;
 
-        public AdminController(MongoDBContext dBContext)
+        public AdminController(MongoDBContext dBContext, IEmailService emailService)
         {
             this.dBContext = dBContext;
+            _emailService = emailService;
         }
 
-        // Displays the administrator dashboard
-        public IActionResult Dashboard(int id)
+
+        [HttpGet]
+        public IActionResult Dashboard(int? id, int? editTutorId, int? viewTutorId)
         {
             var adminId = HttpContext.Session.GetInt32("AdminId");
-            if (adminId == null)
+            if (adminId == null) { return RedirectToAction("Login", "Login"); }
+
+            ViewBag.AdminId = adminId;
+            ViewBag.Tutors = dBContext.Tutor .Find(_ => true) .ToList(); // Load all tutors.
+            ViewBag.Students = dBContext.Student .Find(_ => true) .ToList(); // Load all students.
+
+            // Load and sort appointments.
+            var appointments = dBContext.Appointments.Find(_ => true).SortBy(a => a.AppointmentDate).ToList();
+
+            // Load the tutor and student associated with each appointment.
+            foreach (var appointment in appointments)
             {
-                return RedirectToAction("Login", "Login");
+                appointment.Tutor = dBContext.Tutor
+                    .Find(t => t.TutorId == appointment.TutorId).FirstOrDefault();
+                appointment.Student = dBContext.Student
+                    .Find(s => s.StudentId == appointment.StudentId).FirstOrDefault();
+            }
+            ViewBag.Appointments = appointments;
+
+            // Load tutor information for editing.
+            if (editTutorId.HasValue)
+            {
+                var tutor = dBContext.Tutor
+                    .Find(t => t.TutorId == editTutorId.Value)
+                    .FirstOrDefault();
+
+                if (tutor != null)
+                {
+                    ViewBag.EditTutor = tutor;
+                    ViewBag.EditLogin = dBContext.Login
+                        .Find(l => l.UserId == editTutorId.Value).FirstOrDefault();
+                }
+            }
+
+            // Load schedules for a selected tutor.
+            if (viewTutorId.HasValue)
+            {
+                var tutor = dBContext.Tutor
+                    .Find(t => t.TutorId == viewTutorId.Value)
+                    .FirstOrDefault();
+
+                if (tutor != null)
+                {
+                    var schedules = dBContext.Schedule
+                        .Find(s => s.TutorId == viewTutorId.Value).ToList()
+                        .OrderBy(s => s.Date).ThenBy(s => s.StartTime).ToList();
+                    ViewBag.ViewTutorSchedules = schedules;
+                    ViewBag.ViewTutorName = $"{tutor.FName} {tutor.LName}";
+                    ViewBag.CurrentTutorId = viewTutorId.Value;
+                }
             }
             return View("AdminDashboard");
         }
 
-        // Displays the Create Tutor page
-        [HttpGet]
-        public IActionResult CreateTutor()
-        {
-            var adminId = HttpContext.Session.GetInt32("AdminId");
-            if (adminId == null)
-            {
-                LoadSubjects();
-                return RedirectToAction("Login", "Login");
-            }
-            LoadSubjects();
-            return View();
-        }
-
-        // Loads subjects from MongoDB for the tutor subject dropdown
+        // Load subjects from MongoDB.
         private void LoadSubjects()
         {
             ViewBag.Subjects = dBContext.Subject
@@ -48,16 +86,21 @@ namespace TAMS.Controllers
                 .ToList();
         }
 
-        // Creates the Tutor and Login accounts
+        [HttpGet]
+        public IActionResult CreateTutor()
+        {
+            var adminId = HttpContext.Session.GetInt32("AdminId");
+            if (adminId == null) { return RedirectToAction("Login", "Login"); }
+            LoadSubjects();
+            return View();
+        }
+      
+        // Create tutor and login accounts.
         [HttpPost]
         public IActionResult CreateTutor(TutorRegistration model)
         {
             var adminId = HttpContext.Session.GetInt32("AdminId");
-
-            if (adminId == null)
-            {
-                return RedirectToAction("Login", "Login");
-            }
+            if (adminId == null){ return RedirectToAction("Login", "Login"); }
 
             if (!ModelState.IsValid)
             {
@@ -65,10 +108,9 @@ namespace TAMS.Controllers
                 return View(model);
             }
 
-            // Check whether the username already exists
+            // Check whether the username already exists.
             var existingUsername = dBContext.Login
-                .Find(u => u.Username == model.Username)
-                .FirstOrDefault();
+                .Find(u => u.Username == model.Username).FirstOrDefault();
 
             if (existingUsername != null)
             {
@@ -77,11 +119,9 @@ namespace TAMS.Controllers
                 return View(model);
             }
 
-            // Check whether the email already exists
-            var existingEmail =
-                dBContext.Tutor
-                .Find(t => t.Email == model.Email)
-                .FirstOrDefault();
+            // Check whether the tutor email already exists.
+            var existingEmail = dBContext.Tutor
+                .Find(t => t.Email == model.Email).FirstOrDefault();
 
             if (existingEmail != null)
             {
@@ -90,16 +130,13 @@ namespace TAMS.Controllers
                 return View(model);
             }
 
-            // Find the highest existing UserId
-            var lastUser = dBContext.Login
-                .Find(_ => true)
-                .SortByDescending(u => u.UserId)
-                .FirstOrDefault();
+            // Generate the next user ID.
+            var lastUser = dBContext.Login.Find(_ => true)
+                .SortByDescending(u => u.UserId).FirstOrDefault();
 
-            // Generate the next UserId
             int newUserId = lastUser == null ? 1 : lastUser.UserId + 1;
 
-            // Create the Tutor's Login account
+            // Create the tutor login.
             var newLogin = new Login
             {
                 UserId = newUserId,
@@ -111,10 +148,9 @@ namespace TAMS.Controllers
                 isActive = true
             };
 
-            // Save Login account
             dBContext.Login.InsertOne(newLogin);
 
-            // Create the Tutor profile
+            // Create the tutor profile.
             var newTutor = new Tutor
             {
                 TutorId = newUserId,
@@ -125,11 +161,493 @@ namespace TAMS.Controllers
                 Email = model.Email
             };
 
-            // Save Tutor profile
             dBContext.Tutor.InsertOne(newTutor);
-
-            // Return to the Admin Dashboard
             return RedirectToAction("Dashboard");
+        }
+
+        [HttpPost]
+        public IActionResult UpdateTutor(int tutorId, string fName, string lName, string subject, string email, string phoneNumber)
+        {
+            var adminId = HttpContext.Session.GetInt32("AdminId");
+            if (adminId == null){ return RedirectToAction("Login", "Login"); }
+
+            var tutor = dBContext.Tutor
+                .Find(t => t.TutorId == tutorId).FirstOrDefault();
+
+            if (tutor == null) { return NotFound(); }
+
+            // Check that another tutor is not using the email.
+            var duplicateEmail = dBContext.Tutor
+                .Find(t => t.Email == email && t.TutorId != tutorId).FirstOrDefault();
+
+            if (duplicateEmail != null)
+            {
+                TempData["Error"] = "Another tutor is already using this email.";
+                return RedirectToAction("Dashboard", new { editTutorId = tutorId });
+            }
+
+            var update = Builders<Tutor>.Update
+                .Set(t => t.FName, fName)
+                .Set(t => t.LName, lName)
+                .Set(t => t.Subject, subject)
+                .Set(t => t.Email, email)
+                .Set(t => t.PhoneNumber, phoneNumber);
+
+            dBContext.Tutor.UpdateOne(t => t.TutorId == tutorId, update);
+
+            return RedirectToAction("Dashboard", new { editTutorId = tutorId });
+        }
+
+        [HttpPost]
+        public IActionResult DeleteTutor(int id)
+        {
+            var adminId = HttpContext.Session.GetInt32("AdminId");
+            if (adminId == null){ return RedirectToAction("Login", "Login"); }
+
+            var tutor = dBContext.Tutor
+                .Find(t => t.TutorId == id).FirstOrDefault();
+
+            if (tutor != null)
+            {
+                // Delete the tutor profile and associated login.
+                dBContext.Tutor.DeleteOne(t => t.TutorId == id);
+                dBContext.Login.DeleteOne(l => l.UserId == id);
+
+                // Cancel future scheduled appointments for this tutor.
+                var affectedAppointments = dBContext.Appointments
+                    .Find(a => a.TutorId == id && a.Status == "Scheduled").ToList();
+
+                foreach (var appointment in affectedAppointments)
+                {
+                    var update = Builders<Appointment>.Update.Set(a => a.Status, "Cancelled");
+                    dBContext.Appointments.UpdateOne(a => a.AppointmentId == appointment.AppointmentId, update);
+                }
+
+                // Remove the tutor's schedule slots.
+                dBContext.Schedule.DeleteMany(s => s.TutorId == id);
+            }
+            return RedirectToAction("Dashboard");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult DeleteStudent(int id)
+        {
+            // Verify that an administrator is logged in.
+            var adminId = HttpContext.Session.GetInt32("AdminId");
+            if (adminId == null) { return RedirectToAction("Login", "Login"); }
+
+            // Find the student.
+            var student = dBContext.Student
+                .Find(s => s.StudentId == id).FirstOrDefault();
+
+            if (student != null)
+            {
+                // Cancel scheduled appointments associated with the student.
+                var appointments = dBContext.Appointments
+                    .Find(a => a.StudentId == id && a.Status == "Scheduled")
+                    .ToList();
+
+                foreach (var appointment in appointments)
+                {
+                    var update = Builders<Appointment>.Update.Set(a => a.Status, "Cancelled");
+
+                    dBContext.Appointments.UpdateOne(a => a.AppointmentId == appointment.AppointmentId,
+                        update);
+                }
+
+                // Delete the student's login account.
+                dBContext.Login.DeleteOne(l => l.UserId == id);
+
+                // Delete the student record.
+                dBContext.Student.DeleteOne(s => s.StudentId == id);
+            }
+            return RedirectToAction("Dashboard");
+        }
+
+        [HttpGet]
+        public IActionResult Scheduler(int? month, int? year)
+        {
+            var adminId = HttpContext.Session.GetInt32("AdminId");
+            if (adminId == null) { return RedirectToAction("Login", "Login"); }
+
+            ViewBag.AdminId = adminId;
+
+            int targetMonth = month ?? DateTime.Today.Month;
+            int targetYear = year ?? DateTime.Today.Year;
+
+            // Validate the requested calendar month.
+            if (targetMonth < 1 || targetMonth > 12 || targetYear < 1 || targetYear > 9998)
+            {
+                targetMonth = DateTime.Today.Month;
+                targetYear = DateTime.Today.Year;
+            }
+
+            var startOfMonth = new DateTime(targetYear, targetMonth, 1);
+
+            var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
+
+            // Load appointments in the requested month.
+            var appointments = dBContext.Appointments
+                .Find(_ => true).ToList()
+                .Where(a => a.AppointmentDate.Date >= startOfMonth.Date && a.AppointmentDate.Date <= endOfMonth.Date)
+                .OrderBy(a => a.AppointmentDate)
+                .ToList();
+
+            // Load associated tutors and students.
+            foreach (var appointment in appointments)
+            {
+                appointment.Tutor = dBContext.Tutor
+                    .Find(t => t.TutorId == appointment.TutorId)
+                    .FirstOrDefault();
+
+                appointment.Student = dBContext.Student
+                    .Find(s => s.StudentId == appointment.StudentId)
+                    .FirstOrDefault();
+            }
+
+            // Load schedules for the requested month.
+            var schedules = dBContext.Schedule
+                .Find(_ => true).ToList()
+                .Where(s => s.Date.Month == targetMonth && s.Date.Year == targetYear)
+                .OrderBy(s => s.Date)
+                .ThenBy(s => s.StartTime)
+                .ToList();
+
+            // Load each schedule's tutor.
+            foreach (var schedule in schedules)
+            {
+                schedule.Tutor = dBContext.Tutor
+                    .Find(t => t.TutorId == schedule.TutorId)
+                    .FirstOrDefault();
+            }
+
+            var tutors = dBContext.Tutor
+                .Find(_ => true).ToList();
+
+            ViewBag.Appointments = appointments;
+            ViewBag.Schedules = schedules;
+            ViewBag.Tutors = tutors;
+            ViewBag.Month = targetMonth;
+            ViewBag.Year = targetYear;
+
+            return View("AdminScheduler");
+        }
+
+        [HttpPost]
+        public IActionResult AddSlot(int tutorId, DateTime date, TimeSpan startTime,TimeSpan endTime)
+        {
+            var adminId = HttpContext.Session.GetInt32("AdminId");
+            if (adminId == null) { return RedirectToAction("Login", "Login"); }
+
+            if (endTime <= startTime)
+            {
+                TempData["Error"] = "End time must be after start time.";
+                return RedirectToAction("Scheduler", new { month = date.Month, year = date.Year });
+            }
+
+            var tutor = dBContext.Tutor
+                .Find(t => t.TutorId == tutorId)
+                .FirstOrDefault();
+
+            if (tutor == null)
+            {
+                TempData["Error"] = "The selected tutor was not found.";
+
+                return RedirectToAction("Scheduler", new { month = date.Month, year = date.Year });
+            }
+
+            var existingSlots = dBContext.Schedule
+                .Find(s => s.TutorId == tutorId).ToList();
+
+            bool overlaps = existingSlots.Any(s =>
+                s.Date.Date == date.Date &&
+                startTime < s.EndTime &&
+                endTime > s.StartTime);
+
+            if (overlaps)
+            {
+                TempData["Error"] = "This time overlaps an existing tutor schedule.";
+                return RedirectToAction("Scheduler", new { month = date.Month, year = date.Year });
+            }
+
+            // Generate the next schedule ID.
+            var lastSchedule = dBContext.Schedule
+                .Find(_ => true)
+                .SortByDescending(s => s.ScheduleId)
+                .FirstOrDefault();
+
+            int newScheduleId = lastSchedule == null ? 1 : lastSchedule.ScheduleId + 1;
+
+            var schedule = new Schedule
+            {
+                ScheduleId = newScheduleId,
+                TutorId = tutorId,
+                Date = date.Date,
+                StartTime = startTime,
+                EndTime = endTime
+            };
+
+            dBContext.Schedule.InsertOne(schedule);
+            return RedirectToAction("Scheduler", new { month = date.Month, year = date.Year });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CancelAppointment(int appointmentId)
+        {
+            var adminId = HttpContext.Session.GetInt32("AdminId");
+            if (adminId == null) { return RedirectToAction("Login", "Login"); }
+
+            var appointment = dBContext.Appointments
+                .Find(a => a.AppointmentId == appointmentId)
+                .FirstOrDefault();
+
+            if (appointment == null) { return NotFound(); }
+
+            if (appointment.Status?.Trim() != "Scheduled")
+            {
+                TempData["Error"] = "Only scheduled appointments can be cancelled.";
+                return RedirectToAction("Dashboard");
+            }
+
+            var student = dBContext.Student
+                .Find(s => s.StudentId == appointment.StudentId)
+                .FirstOrDefault();
+
+            var tutor = dBContext.Tutor
+                .Find(t => t.TutorId == appointment.TutorId)
+                .FirstOrDefault();
+
+            if (student == null || tutor == null)
+            {
+                TempData["Error"] = "The appointment could not be cancelled because the associated student or tutor could not be found.";
+                return RedirectToAction("Dashboard");
+            }
+
+            var update = Builders<Appointment>.Update.Set(a => a.Status, "Cancelled");
+            dBContext.Appointments.UpdateOne(a => a.AppointmentId == appointmentId, update);
+
+            try
+            {
+                // Notify the student.
+                if (!string.IsNullOrWhiteSpace(student.Email))
+                {
+                    await _emailService.SendAdminCancelledAppointmentAsync(
+                        student.Email,
+                        $"{student.FName} {student.LName}",
+                        $"{tutor.FName} {tutor.LName}",
+                        appointment.AppointmentDate,
+                        "Student"
+                    );
+                }
+
+                // Notify the tutor.
+                if (!string.IsNullOrWhiteSpace(tutor.Email))
+                {
+                    await _emailService.SendAdminCancelledAppointmentAsync(
+                        tutor.Email,
+                        $"{tutor.FName} {tutor.LName}",
+                        $"{student.FName} {student.LName}",
+                        appointment.AppointmentDate,
+                        "Tutor"
+                    );
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Cancellation email failed: {ex.Message}");
+                TempData["Error"] = "The appointment was cancelled, but a notification email could not be sent.";
+            }
+            return RedirectToAction("Dashboard");
+        }
+
+        [HttpPost]
+        public IActionResult DeleteScheduleSlot(int scheduleId)
+        {
+            var adminId = HttpContext.Session.GetInt32("AdminId");
+
+            if (adminId == null)
+            {
+                return RedirectToAction("Login", "Login");
+            }
+
+            var slot = dBContext.Schedule
+                .Find(s => s.ScheduleId == scheduleId)
+                .FirstOrDefault();
+
+            if (slot == null) { return NotFound(); }
+
+            var affectedAppointments = dBContext.Appointments
+                .Find(a =>
+                    a.TutorId == slot.TutorId &&
+                    a.AppointmentDate.Date == slot.Date.Date &&
+                    a.AppointmentDate.TimeOfDay >= slot.StartTime &&
+                    a.AppointmentDate.TimeOfDay < slot.EndTime &&
+                    a.Status == "Scheduled")
+                .ToList();
+
+            foreach (var appointment in affectedAppointments)
+            {
+                var update = Builders<Appointment>.Update.Set(a => a.Status, "Cancelled");
+                dBContext.Appointments.UpdateOne(a => a.AppointmentId == appointment.AppointmentId, update);
+            }
+
+            int tutorId = slot.TutorId;
+
+            dBContext.Schedule.DeleteOne(s => s.ScheduleId == scheduleId);
+            return RedirectToAction("Dashboard", new { viewTutorId = tutorId });
+        }
+
+        [HttpGet]
+        public IActionResult DownloadSystemUsageReport()
+        {
+            var adminId = HttpContext.Session.GetInt32("AdminId");
+
+            if (adminId == null)
+            {
+                return RedirectToAction("Login", "Login");
+            }
+
+            var allLogins = dBContext.Login
+                .Find(_ => true)
+                .ToList();
+
+            var last7Days = DateTime.Today.AddDays(-6);
+
+            var loginsPerDay = allLogins
+                .Where(l => l.LastLogin >= last7Days)
+                .GroupBy(l => l.LastLogin.Date)
+                .Select(g => new
+                {
+                    Date = g.Key,
+                    Count = g.Count()
+                })
+                .OrderBy(g => g.Date)
+                .ToList();
+
+            var roleLogins = allLogins
+                .GroupBy(l => l.Role)
+                .Select(g => new
+                {
+                    Role = g.Key.ToString(),
+                    Count = g.Count()
+                })
+                .OrderBy(g => g.Role)
+                .ToList();
+
+            var userLastLogins = allLogins
+                .Select(l => new
+                {
+                    l.Username,
+                    Role = l.Role.ToString(),
+                    l.LastLogin
+                })
+                .OrderBy(u => u.Username)
+                .ToList();
+
+            int dateWidth = 14;
+            int totalLoginsWidth = 24;
+
+            int roleWidth = roleLogins.Any()
+                ? Math.Max(
+                    roleLogins.Max(r => r.Role.Length),
+                    "Role".Length) + 4
+                : "Role".Length + 4;
+
+            int usernameWidth = userLastLogins.Any()
+                ? Math.Max(
+                    userLastLogins.Max(u => u.Username.Length),
+                    "Username".Length) + 2
+                : "Username".Length + 2;
+
+            int roleUserWidth = userLastLogins.Any()
+                ? Math.Max(
+                    userLastLogins.Max(u => u.Role.Length),
+                    "Role".Length) + 4
+                : "Role".Length + 4;
+
+            int lastLoginWidth = 24;
+
+            string separator = new string(
+                '-',
+                usernameWidth + roleUserWidth + lastLoginWidth + 10);
+
+            var lines = new List<string>
+            {
+                "TAMS System Usage Analytics Report",
+                $"Generated: {DateTime.Now}",
+                separator,
+                "",
+                "================ Logins per Day (Last 7 Days) ================",
+                string.Format(
+                    "{0,-" + dateWidth + "} | {1," +
+                    totalLoginsWidth + "}|",
+                    "Date",
+                    "Total Logins")
+            };
+
+            foreach (var login in loginsPerDay)
+            {
+                lines.Add(string.Format(
+                    "{0,-" + dateWidth + "} | {1," +
+                    totalLoginsWidth + "}|",
+                    login.Date.ToString("MM/dd/yyyy"),
+                    login.Count));
+            }
+
+            lines.Add("");
+            lines.Add("====================== Logins by Role ======================");
+
+            lines.Add(string.Format(
+                "{0,-" + roleWidth + "} | {1," +
+                totalLoginsWidth + "}|",
+                "Role",
+                "Login Count"));
+
+            foreach (var role in roleLogins)
+            {
+                lines.Add(string.Format(
+                    "{0,-" + roleWidth + "} | {1," +
+                    totalLoginsWidth + "}|",
+                    role.Role,
+                    role.Count));
+            }
+
+            lines.Add("");
+            lines.Add("=================== Last Login by User ====================");
+
+            lines.Add(string.Format(
+                "{0,-" + usernameWidth +
+                "} | {1,-" + roleUserWidth +
+                "} | {2," + lastLoginWidth + "}|",
+                "Username",
+                "Role",
+                "Last Login"));
+
+            foreach (var user in userLastLogins)
+            {
+                lines.Add(string.Format(
+                    "{0,-" + usernameWidth +
+                    "} | {1,-" + roleUserWidth +
+                    "} | {2," + lastLoginWidth + "}|",
+                    user.Username,
+                    user.Role,
+                    user.LastLogin.ToString("MM/dd/yyyy hh:mm tt")));
+            }
+
+            string reportContent = string.Join(
+                Environment.NewLine,
+                lines);
+
+            byte[] fileBytes = Encoding.UTF8.GetBytes(reportContent);
+
+            string fileName =
+                $"TAMS_SystemUsageReport_{DateTime.Now:yyyyMMddHHmmss}.txt";
+
+            return File(
+                fileBytes,
+                "text/plain",
+                fileName);
         }
     }
 }

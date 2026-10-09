@@ -41,6 +41,8 @@ namespace TAMS.Data
         public IMongoCollection<Appointment> Appointments => _database.GetCollection<Appointment>("Appointments");
         public IMongoCollection<Schedule> Schedule => _database.GetCollection<Schedule>("Schedule");
         public IMongoCollection<Review> Reviews => _database.GetCollection<Review>("Reviews");
+        public IMongoCollection<Report> Reports => _database.GetCollection<Report>("Reports");
+
 
         private void DeleteUsedRecoveryCodes()
         {
