@@ -36,15 +36,15 @@
                     </h4>
 
                     <p>
-                        <strong>Email:</strong>@Model.Email
+                        <strong>Email: </strong>@Model.Email
                     </p>
 
                     <p>
-                        <strong>Phone:</strong>@Model.PhoneNumber
+                        <strong>Phone: </strong>@Model.PhoneNumber
                     </p>
 
                     <p>
-                        <strong>Subject:</strong>@Model.Subject
+                        <strong>Subject: </strong>@Model.Subject
                     </p>
 
                     <a asp-controller="Tutor" asp-action="Profile" class="btn btn-primary">
@@ -355,9 +355,9 @@ else
         </tbody>
     </table>
 }
-<h2>Patient Reviews</h2>
+<h2>Student Reviews</h2>
 
-<div class="patient-reviews-card">
+<div class="student-reviews-card">
 
     <div class="rating-summary">
         <span class="average-rating">
@@ -365,21 +365,21 @@ else
         </span>
 
         <span class="review-count">
-            @Model.ReviewCount patient reviews
+            @Model.ReviewCount student reviews
         </span>
     </div>
 
-    <div class="patient-reviews-list">
+    <div class="student-reviews-list">
 
         @if (Model.Reviews == null || !Model.Reviews.Any())
         {
-            <p class="text-muted">No patient reviews yet.</p>
+            <p class="text-muted">No student reviews yet.</p>
         }
         else
         {
             @foreach (var review in Model.Reviews)
             {
-                <div class="patient-review">
+                <div class="student-review">
 
                     <div class="review-rating">
                         @for (int i = 1; i <= 5; i++)

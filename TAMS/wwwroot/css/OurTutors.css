@@ -12,8 +12,6 @@
     --bmb-muted: #8a7967;
 }
 
-/* Page background */
-
 html,
 body {
     min-height: 100%;
@@ -26,8 +24,6 @@ body {
     padding-bottom: 50px;
     color: var(--bmb-dark);
 }
-
-/* Page heading */
 
 .tutors-heading h1 {
     color: var(--bmb-dark);
@@ -170,7 +166,6 @@ body {
     outline-offset: 3px;
 }
 
-/* Empty state */
 
 .tutors-page .alert-info {
     background-color: #ffedc2;
@@ -179,8 +174,6 @@ body {
     border-radius: 12px;
     padding: 18px;
 }
-
-/* Responsive layout */
 
 @media (max-width: 767px) {
     .tutors-page {

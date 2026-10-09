@@ -40,6 +40,10 @@ body {
     display: block;
 }
 
+
+
+
+
 .course-bubble {
     display: inline-flex;
     align-items: center;
@@ -172,8 +176,8 @@ body {
 
 
 
-/* Patient Reviews Card */
-.patient-reviews-card {
+
+.student-reviews-card {
     background: #ffffff;
     border-radius: 12px;
     padding: 24px;
@@ -181,7 +185,6 @@ body {
     margin-top: 24px;
 }
 
-/* Header */
 .reviews-header {
     display: flex;
     justify-content: space-between;
@@ -202,7 +205,6 @@ body {
     font-size: 14px;
 }
 
-/* Average rating */
 .rating-summary {
     display: flex;
     align-items: center;
@@ -239,22 +241,22 @@ body {
     font-size: 14px;
 }
 
-.patient-reviews-list {
+.student-reviews-list {
     max-height: 280px;
     overflow-y: auto;
     padding-right: 8px;
 }
 
-.patient-review {
+.student-review {
     padding: 16px 0;
     border-bottom: 1px solid #f0f0f0;
 }
 
-    .patient-review:first-child {
+    .student-review:first-child {
         padding-top: 0;
     }
 
-    .patient-review:last-child {
+    .student-review:last-child {
         border-bottom: none;
     }
 
@@ -287,20 +289,20 @@ body {
     font-size: 14px;
 }
 
-.patient-reviews-list::-webkit-scrollbar {
+.student-reviews-list::-webkit-scrollbar {
     width: 6px;
 }
 
-.patient-reviews-list::-webkit-scrollbar-track {
+.student-reviews-list::-webkit-scrollbar-track {
     background: #f3f4f6;
     border-radius: 10px;
 }
 
-.patient-reviews-list::-webkit-scrollbar-thumb {
+.student-reviews-list::-webkit-scrollbar-thumb {
     background: #cbd5e1;
     border-radius: 10px;
 }
 
-    .patient-reviews-list::-webkit-scrollbar-thumb:hover {
+    .student-reviews-list::-webkit-scrollbar-thumb:hover {
         background: #94a3b8;
     }
