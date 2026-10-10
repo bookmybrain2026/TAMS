@@ -1,146 +1,179 @@
 ﻿@model TAMS.Models.Tutor
 @using TAMS.Models
+@using Microsoft.AspNetCore.Http
 
 @{
     ViewData["Title"] = "Tutor Profile";
+
     var subjects = ViewBag.Subjects as List<Subject>;
     var courses = ViewBag.Courses as List<Course>;
     var selectedCourses = Model.TutoringCourseIds ?? new List<string>();
 }
 
-<div class="container mt-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1>Tutor Profile</h1>
-            <p class="text-muted">
-                View and edit your profile information and tutoring courses.
-            </p>
-        </div>
+<head>
+    <link href="~/css/OurTutors.css" rel="stylesheet" />
+    <link href="~/css/Profile.css" rel="stylesheet" />
+</head>
+
+<div class="container mt-5 tutor-profile-page">
+    <div class="tutors-heading text-center mb-5">
+        <h1>Tutor Profile</h1>
+        <p>Manage your personal information and tutoring courses.</p>
     </div>
 
     @if (TempData["SuccessMessage"] != null)
     {
-        <div class="alert alert-success"> @TempData["SuccessMessage"] </div>
+        <div class="alert tutor-alert-success" role="alert">
+            <strong>Success!</strong> @TempData["SuccessMessage"]
+        </div>
     }
+
     @if (TempData["ErrorMessage"] != null)
     {
-        <div class="alert alert-danger"> @TempData["ErrorMessage"] </div>
+        <div class="alert tutor-alert-error" role="alert">
+            <strong>Error:</strong> @TempData["ErrorMessage"]
+        </div>
     }
 
-    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
-    <form asp-controller="Tutor" asp-action="Profile" method="post">
+    <div asp-validation-summary="ModelOnly" class="alert tutor-alert-error" role="alert"></div>
 
-        @Html.AntiForgeryToken()
+        <form asp-controller="Tutor" sp-action="Profile" method="post">
+            @Html.AntiForgeryToken()
+            <div class="card shadow-sm mb-4 tutor-card">
 
-        <!-- PROFILE INFORMATION -->
-        <div class="card shadow-sm mb-4">
+                <div class="card-body">
 
-            <div class="card-header">
-                <h4 class="mb-0">Personal Information</h4>
+                    <div class="profile-section-heading">
+                        <div class="profile-section-icon">
+                            <span aria-hidden="true">&#128100;</span>
+                        </div>
+
+                        <div>
+                            <h3>Personal Information</h3>
+                            <p>Keep your contact information up to date.</p>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label asp-for="FName" class="profile-label">First Name</label>
+                            <input asp-for="FName" class="form-control profile-input" autocomplete="given-name" />
+                            <span asp-validation-for="FName" class="text-danger profile-validation"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="LName" class="profile-label">Last Name</label>
+                            <input asp-for="LName" class="form-control profile-input" autocomplete="family-name" />
+                            <span asp-validation-for="LName" class="text-danger profile-validation"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Email" class="profile-label">Email Address</label>
+                            <input asp-for="Email" type="email" class="form-control profile-input" autocomplete="email" />
+                            <span asp-validation-for="Email" class="text-danger profile-validation"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="PhoneNumber" class="profile-label">Phone Number</label>
+                            <input asp-for="PhoneNumber" class="form-control profile-input" autocomplete="tel" />
+                            <span asp-validation-for="PhoneNumber" class="text-danger profile-validation"></span>
+                        </div>
+
+                        <div class="col-12">
+                            <label asp-for="Subject" class="profile-label">Tutoring Subject</label>
+
+                            <select asp-for="Subject" id="subjectSelect"class="form-select profile-input">
+                                <option value="">-- Select a Subject --</option>
+                                @if (subjects != null)
+                                {
+                                    foreach (var subject in subjects)
+                                    {
+                                        <option value="@subject.Code">
+                                            @subject.Code - @subject.Name
+                                        </option>
+                                    }
+                                }
+                            </select>
+                            <span asp-validation-for="Subject" class="text-danger profile-validation"></span>
+                            <small class="profile-help-text">
+                                Choose the subject area that best represents your tutoring expertise.
+                            </small>
+                        </div>
+
+                    </div>
+                </div>
             </div>
 
-            <div class="card-body">
+            <div class="card shadow-sm mb-4 tutor-card">
+                <div class="card-body">
+                    <div class="profile-section-heading">
+                        <div class="profile-section-icon">
+                            <span aria-hidden="true">&#128218;</span>
+                        </div>
 
-                <div class="row">
-                    <!-- First Name -->
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="FName" class="form-label"> First Name </label>
-                        <input asp-for="FName" class="form-control" /> 
-                        <span asp-validation-for="FName" class="text-danger"></span>
+                        <div>
+                            <h3>Courses I Tutor</h3>
+                            <p>Select the courses you are available to tutor.</p>
+                        </div>
                     </div>
 
-                    <!-- Last Name -->
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="LName" class="form-label"> Last Name </label>
-                        <input asp-for="LName" class="form-control" />
-                        <span asp-validation-for="LName" class="text-danger"></span>
-                    </div>
-                </div>
+                    <hr />
 
-                <div class="row">
-                    <!-- Email -->
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="Email" class="form-label"> Email </label>
-                        <input asp-for="Email" type="email" class="form-control" />
-                        <span asp-validation-for="Email" class="text-danger"></span>
-                    </div>
+                    <p class="profile-instructions">
+                        Select all the courses you can help students with.
+                        Only courses belonging to your selected subject will be shown.
+                    </p>
 
-                    <!-- Phone -->
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="PhoneNumber" class="form-label">Phone Number</label>
-                        <input asp-for="PhoneNumber" class="form-control" />
-                        <span asp-validation-for="PhoneNumber" class="text-danger"></span>
-                    </div>
-                </div>
+                    <div id="courseContainer" class="course-selection-list">
 
-                <!-- Subject -->
-                <div class="mb-3">
-                    <label asp-for="Subject" class="form-label"> Subject </label>
-                    <select asp-for="Subject" id="subjectSelect" class="form-select">
-                        <option value="">  -- Select a Subject -- </option>
-
-                        @if (subjects != null)
+                        @if (courses != null && courses.Any())
                         {
-                            foreach (var subject in subjects)
+                            foreach (var course in courses)
                             {
-                                <option value="@subject.Code">
-                                    @subject.Code - @subject.Name
-                                </option>
+                                var isSelected = selectedCourses.Contains(course.CourseId);
+                                <label class="course-bubble" data-subject="@course.SubjectCode">
+                                    <input type="checkbox" name="TutoringCourseIds" value="@course.CourseId" checked="@isSelected" />
+                                    <span class="course-bubble-content">
+                                        <strong>@course.CourseCode</strong>
+                                        <small>@course.CourseName</small>
+                                    </span>
+                                    <span class="course-checkmark" aria-hidden="true">
+                                        &#10003;
+                                    </span>
+                                </label>
                             }
                         }
-                    </select>
-                    <span asp-validation-for="Subject" class="text-danger"></span>
-                </div>
-
-            </div>
-
-        </div>
-
-        <!-- COURSES -->
-        <div class="card shadow-sm mb-4">
-            <div class="card-header">
-                <h4 class="mb-0">Courses I Tutor</h4>
-            </div>
-
-            <div class="card-body">
-                <p class="text-muted">
-                    Select the courses you are available to tutor.
-                    Only courses belonging to your selected subject are shown.
-                </p>
-
-                <div id="courseContainer" class="d-flex flex-wrap gap-2">
-
-                    @if (courses != null && courses.Any())
-                    {
-                        foreach (var course in courses)
+                        else
                         {
-                            var isSelected = selectedCourses.Contains(course.CourseId);
-                            <label class="course-bubble" data-subject="@course.SubjectCode">
-                                <input type="checkbox" name="TutoringCourseIds" value="@course.CourseId" @(isSelected ? "checked" : "") />
-                                <span>
-                                    <strong>@course.CourseCode</strong>
-                                    <br />
-                                    <small>@course.CourseName</small>
-                                </span>
-                            </label>
+                            <p class="profile-help-text">
+                                No courses are currently available.
+                            </p>
                         }
-                    }
-                </div>
 
-                <div id="noCoursesMessage" class="alert alert-info mt-3" style="display:none;">
-                    There are currently no courses available for this subject.
-                </div>
+                    </div>
 
+                    <div id="noCoursesMessage" class="profile-empty-message" style="display:none;">
+                        There are currently no courses available for this subject.
+                    </div>
+
+                    <div class="profile-selection-note">
+                        Your selected courses will be associated with your tutor profile
+                        when you save your changes.
+                    </div>
+
+                </div>
             </div>
-        </div>
-        <!-- BUTTONS -->
-        <div class="d-flex gap-2 mb-5">
-            <button type="submit" class="btn btn-primary"> Save Changes </button>
-            <a asp-controller="Tutor" asp-action="Dashboard" asp-route-id="@Context.Session.GetInt32("TutorId")" class="btn btn-secondary">
-                Back to Dashboard
-            </a>
-        </div>
 
-    </form>
+            <div class="profile-actions mb-5">
+                <button type="submit" class="btn btn-primary profile-save-button">
+                    Save Changes
+                </button>
+                <a asp-controller="Tutor" asp-action="Dashboard" asp-route-id="@Context.Session.GetInt32("TutorId")" class="btn btn-secondary profile-back-button">
+                    Back to Dashboard
+                </a>
+            </div>
 
+        </form>
 </div>

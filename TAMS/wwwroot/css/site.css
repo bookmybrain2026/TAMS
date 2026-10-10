@@ -311,13 +311,13 @@ body {
     border-bottom: 1px solid #f0f0f0;
 }
 
-    .student-review:first-child {
-        padding-top: 0;
-    }
+.student-review:first-child {
+    padding-top: 0;
+}
 
-    .student-review:last-child {
-        border-bottom: none;
-    }
+.student-review:last-child {
+    border-bottom: none;
+}
 
 .review-rating {
     margin-bottom: 8px;

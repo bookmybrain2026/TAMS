@@ -186,53 +186,55 @@ function searchTutors() {
     });
 }
 
+
+
 const subjectSelect = document.getElementById("subjectSelect");
+const courseBubbles = document.querySelectorAll(".course-bubble");
+const noCoursesMessage = document.getElementById("noCoursesMessage");
+function updateCourses() {
+    const selectedSubject = subjectSelect.value;
+    let visibleCourses = 0;
+    courseBubbles.forEach(function (bubble) {
+        const courseSubject = bubble.getAttribute("data-subject");
+        const checkbox = bubble.querySelector("input");
 
-if (subjectSelect) {
-    const courseBubbles = document.querySelectorAll(".course-bubble");
-    const noCoursesMessage = document.getElementById("noCoursesMessage");
-
-    function updateCourses() {
-        const selectedSubject = subjectSelect.value;
-        let visibleCourses = 0;
-
-        courseBubbles.forEach(function (bubble) {
-            const courseSubject = bubble.getAttribute("data-subject");
-            const checkbox = bubble.querySelector("input");
-
-            if (courseSubject === selectedSubject) {
-                bubble.style.display = "inline-flex";
-                visibleCourses++;
-            }
-            else {
-                bubble.style.display = "none";
-                if (checkbox) { checkbox.checked = false; }
-                bubble.classList.remove("selected");
-            }
-        });
-
-        if (noCoursesMessage) {
-            noCoursesMessage.style.display =
-                visibleCourses === 0 && selectedSubject !== "" ? "block" : "none";
+        if (courseSubject === selectedSubject) {
+            bubble.style.display = "inline-flex";
+            visibleCourses++;
         }
+        else {
+            bubble.style.display = "none";
+            checkbox.checked = false;
+            bubble.classList.remove("selected");
+        }
+    });
+
+    if (visibleCourses === 0 && selectedSubject !== "") {
+        noCoursesMessage.style.display = "block";
+    }
+    else {
+        noCoursesMessage.style.display = "none";
+    }
+}
+
+courseBubbles.forEach(function (bubble) {
+    const checkbox = bubble.querySelector("input");
+    if (checkbox.checked) {
+        bubble.classList.add("selected");
     }
 
-    courseBubbles.forEach(function (bubble) {
-        const checkbox = bubble.querySelector("input");
-        if (!checkbox) return;
-        if (checkbox.checked) { bubble.classList.add("selected"); }
-        bubble.addEventListener("click", function (event) {
-            if (event.target === checkbox) {
-                bubble.classList.toggle("selected", checkbox.checked);
-                return;
-            }
-            checkbox.checked = !checkbox.checked;
-            bubble.classList.toggle("selected", checkbox.checked);
-        });
+    bubble.addEventListener("click", function () {
+        checkbox.checked = !checkbox.checked;
+        if (checkbox.checked) {
+            bubble.classList.add("selected");
+        }
+        else {
+            bubble.classList.remove("selected");
+        }
     });
-    subjectSelect.addEventListener("change", updateCourses);
-    updateCourses();
-}
+});
+subjectSelect.addEventListener("change", updateCourses);
+updateCourses();
 
 
 //Student Dashboard search
