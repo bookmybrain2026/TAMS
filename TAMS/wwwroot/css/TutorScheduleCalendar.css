@@ -108,8 +108,6 @@ body {
     outline-offset: 3px;
 }
 
-/* Alerts */
-
 .calendar-alert {
     margin-bottom: 20px;
     padding: 14px 18px;
@@ -129,8 +127,6 @@ body {
     background: #fff0ed;
     color: #a13b2d;
 }
-
-/* Main calendar card */
 
 .calendar-card {
     overflow: hidden;
@@ -171,8 +167,6 @@ body {
     font-weight: 800;
 }
 
-/* Legend */
-
 .calendar-legend {
     display: flex;
     align-items: center;
@@ -190,9 +184,9 @@ body {
     border-radius: 50%;
 }
 
-    .legend-dot:first-child {
-        margin-left: 0;
-    }
+.legend-dot:first-child {
+    margin-left: 0;
+}
 
 .legend-dot-active {
     background: var(--bmb-orange);
@@ -201,8 +195,6 @@ body {
 .legend-dot-cancelled {
     background: #b8aaa0;
 }
-
-/* Calendar table */
 
 .calendar-table-wrapper {
     width: 100%;
@@ -219,35 +211,35 @@ body {
     border-spacing: 5px;
 }
 
-    .schedule-table thead th {
-        padding: 14px 8px;
-        border-radius: 7px;
-        background: var(--bmb-cream);
-        color: var(--bmb-brown);
-        font-size: 12px;
-        font-weight: 800;
-        text-align: center;
-    }
+.schedule-table thead th {
+    padding: 14px 8px;
+    border-radius: 7px;
+    background: var(--bmb-cream);
+    color: var(--bmb-brown);
+    font-size: 12px;
+    font-weight: 800;
+    text-align: center;
+}
 
-    .schedule-table tbody td {
-        height: 125px;
-        padding: 10px;
-        border: 1px solid #f0e5d4;
-        border-radius: 8px;
-        background: var(--bmb-light);
-        vertical-align: top;
-        transition: border-color 0.2s ease, background-color 0.2s ease;
-    }
+.schedule-table tbody td {
+    height: 125px;
+    padding: 10px;
+    border: 1px solid #f0e5d4;
+    border-radius: 8px;
+    background: var(--bmb-light);
+    vertical-align: top;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
 
-        .schedule-table tbody td.calendar-day-cell:hover {
-            border-color: var(--bmb-orange);
-            background: #fffaf0;
-        }
+.schedule-table tbody td.calendar-day-cell:hover {
+    border-color: var(--bmb-orange);
+    background: #fffaf0;
+}
 
-        .schedule-table tbody td.calendar-empty-cell {
-            background: #faf7f1;
-            border-color: #f5eee3;
-        }
+.schedule-table tbody td.calendar-empty-cell {
+    background: #faf7f1;
+    border-color: #f5eee3;
+}
 
 .calendar-day-number {
     display: inline-flex;
@@ -269,8 +261,6 @@ body {
     font-size: 11px;
     font-weight: 600;
 }
-
-/* Appointment entries */
 
 .calendar-appointments {
     display: flex;
@@ -311,19 +301,17 @@ body {
     opacity: 0.8;
 }
 
-    .appointment-cancelled .appointment-time,
-    .appointment-cancelled .appointment-student {
-        color: var(--bmb-muted);
-        text-decoration: line-through;
-    }
+.appointment-cancelled .appointment-time,
+.appointment-cancelled .appointment-student {
+    color: var(--bmb-muted);
+    text-decoration: line-through;
+}
 
 .appointment-status {
     color: #8b5144;
     font-size: 10px;
     font-weight: 700;
 }
-
-/* Footer */
 
 .calendar-footer {
     padding: 16px 24px;
@@ -333,11 +321,9 @@ body {
     font-size: 12px;
 }
 
-    .calendar-footer strong {
-        color: var(--bmb-brown);
-    }
-
-/* Responsive layout */
+.calendar-footer strong {
+    color: var(--bmb-brown);
+}
 
 @media (max-width: 700px) {
     .schedule-calendar {

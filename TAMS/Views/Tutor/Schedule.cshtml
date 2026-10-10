@@ -1,114 +1,165 @@
 ﻿@model List<TAMS.Models.Schedule>
 
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger">@TempData["Error"]</div>
-}
 @{
-    // Get month/year from ViewBag or fallback to current
     int month = (ViewBag.Month is int m && m >= 1 && m <= 12) ? m : DateTime.Today.Month;
     int year = (ViewBag.Year is int y && y >= 1) ? y : DateTime.Today.Year;
+
     int tutorId = ViewBag.TutorId ?? 0;
 
     var firstDay = new DateTime(year, month, 1);
     int daysInMonth = DateTime.DaysInMonth(year, month);
-
-    // Day of week for first day (0=Sunday, 1=Monday, ...)
     int startDayOfWeek = (int)firstDay.DayOfWeek;
 
-    // Previous month/year
     int prevMonth = month - 1;
     int prevYear = year;
-    if (prevMonth < 1) { prevMonth = 12; prevYear -= 1; }
+    if (prevMonth < 1) { prevMonth = 12; prevYear--; }
 
-    // Next month/year
     int nextMonth = month + 1;
     int nextYear = year;
-    if (nextMonth > 12) { nextMonth = 1; nextYear += 1; }
+    if (nextMonth > 12) { nextMonth = 1; nextYear++; }
 }
 
-<div class="mb-3">
-    <a class="btn btn-success"
-       href="@Url.Action("Dashboard", "Tutor", new { id = tutorId })">
-        ← Back to Dashboard
-    </a>
-</div>
+<link href="~/css/tutorschedule.css" rel="stylesheet" />
 
-<h1>Doctor Schedule - @firstDay.ToString("MMMM yyyy")</h1>
+<div class="schedule-page">
+    @if (TempData["Error"] != null)
+    {
+        <div class="schedule-alert schedule-alert-error">
+            @TempData["Error"]
+        </div>
+    }
 
-<div class="d-flex justify-content-between mb-3">
-    <a class="btn btn-secondary" href="@Url.Action("Schedule", new { id = tutorId, month = prevMonth, year = prevYear })">
-        ← Previous Month
-    </a>
+    @if (TempData["Success"] != null)
+    {
+        <div class="schedule-alert schedule-alert-success">
+            @TempData["Success"]
+        </div>
+    }
 
-    <span class="align-self-center">@firstDay.ToString("MMMM yyyy")</span>
+    <header class="schedule-header">
+        <div class="schedule-heading">
+            <span class="schedule-eyebrow">TAMS • TUTOR PORTAL</span>
+            <h1>Manage Schedule</h1>
+            <p>Manage your availability and add appointment time slots.</p>
+        </div>
 
-    <a class="btn btn-secondary" href="@Url.Action("Schedule", new { id = tutorId, month = nextMonth, year = nextYear })">
-        Next Month →
-    </a>
-</div>
+        <a class="schedule-button schedule-button-primary" href="@Url.Action("Dashboard", "Tutor", new { id = tutorId })">
+            ← Back to Dashboard
+        </a>
+    </header>
 
-<table class="table table-bordered text-center">
-    <thead>
-        <tr>
-            <th>Sun</th>
-            <th>Mon</th>
-            <th>Tue</th>
-            <th>Wed</th>
-            <th>Thu</th>
-            <th>Fri</th>
-            <th>Sat</th>
-        </tr>
-    </thead>
-    <tbody>
-        @{
-            int day = 1;
-            int totalCells = daysInMonth + startDayOfWeek;
-            int weeks = (int)Math.Ceiling(totalCells / 7.0);
+    <section class="schedule-card">
 
-            for (int week = 0; week < weeks; week++)
-            {
-                <tr>
-                    @for (int dow = 0; dow < 7; dow++)
-                    {
-                        if (week == 0 && dow < startDayOfWeek || day > daysInMonth)
+        <div class="schedule-toolbar">
+            <a class="schedule-button schedule-button-secondary" href="@Url.Action("Schedule", "Tutor", new { id = tutorId, month = prevMonth, year = prevYear })">
+                ← Previous Month
+            </a>
+
+            <div class="schedule-current-month">
+                <span class="schedule-month-label">SCHEDULE OVERVIEW</span>
+                <h2>@firstDay.ToString("MMMM yyyy")</h2>
+            </div>
+
+            <a class="schedule-button schedule-button-secondary" href="@Url.Action("Schedule", "Tutor", new { id = tutorId, month = nextMonth, year = nextYear })">
+                Next Month →
+            </a>
+        </div>
+
+        <div class="schedule-legend">
+            <span class="schedule-legend-dot"></span>
+            <span>Available time slots</span>
+        </div>
+
+        <div class="schedule-table-wrapper">
+            <table class="schedule-table">
+                <thead>
+                    <tr>
+                        <th>Sun</th>
+                        <th>Mon</th>
+                        <th>Tue</th>
+                        <th>Wed</th>
+                        <th>Thu</th>
+                        <th>Fri</th>
+                        <th>Sat</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @{
+                        int day = 1;
+                        int totalCells = daysInMonth + startDayOfWeek;
+                        int weeks = (int)Math.Ceiling(totalCells / 7.0);
+
+                        for (int week = 0; week < weeks; week++)
                         {
-                            <td></td>
-                        }
-                        else
-                        {
-                            var currentDate = new DateTime(year, month, day);
-                            var daySchedules = Model.Where(s => s.Date.Date == currentDate.Date).ToList();
-
-                            <td style="vertical-align: top; min-width: 120px;">
-
-                                <strong>@day (@currentDate.ToString("ddd"))</strong>
-
-                                <ul class="mb-2">
-                                    @foreach (var s in daySchedules)
+                            <tr>
+                                @for (int dow = 0; dow < 7; dow++)
+                                {
+                                    if ((week == 0 && dow < startDayOfWeek) || day > daysInMonth)
                                     {
-                                        <li>@s.StartTime - @s.EndTime</li>
+                                        <td class="schedule-empty-cell"></td>
                                     }
-                                </ul>
+                                    else
+                                    {
+                                        var currentDate = new DateTime(year, month, day);
 
-                                <!-- Add Schedule Form -->
-                                <form asp-controller="Tutor" asp-action="AddSchedule" method="post">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="tutorId" value="@tutorId" />
-                                    <input type="hidden" name="date" value="@currentDate.ToString("yyyy-MM-dd")" />
-                                    <input type="time" name="startTime" class="form-control mb-1" required />
-                                    <input type="time" name="endTime" class="form-control mb-1" required />
-                                    <button type="submit" class="btn btn-primary btn-sm w-100">Add</button>
-                                </form>
+                                        var daySchedules = Model
+                                        .Where(s => s.Date.Date == currentDate.Date)
+                                        .ToList();
 
+                                        <td class="schedule-day-cell">
+                                            <div class="schedule-day-heading">
+                                                <span class="schedule-day-number"> @day </span>
+                                                <span class="schedule-day-name"> @currentDate.ToString("ddd") </span>
+                                            </div>
 
-                            </td>
+                                            <div class="schedule-slots">
+                                                @if (daySchedules.Any())
+                                                {
+                                                    @foreach (var s in daySchedules)
+                                                    {
+                                                        <div class="schedule-slot">
+                                                            <span class="schedule-slot-dot"></span>
+                                                            <span> @s.StartTime - @s.EndTime </span>
+                                                        </div>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <p class="schedule-no-slots">
+                                                        No availability
+                                                    </p>
+                                                }
+                                            </div>
 
-                            day++;
+                                            <form asp-controller="Tutor" asp-action="AddSchedule" method="post" class="schedule-add-form">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="tutorId" value="@tutorId" />
+                                                <input type="hidden" name="date" value="@currentDate.ToString("yyyy-MM-dd")" />
+                                                <label class="schedule-input-label"> Start time </label>
+                                                <input type="time" name="startTime" class="schedule-time-input" required />
+                                                <label class="schedule-input-label"> End time </label>
+                                                <input type="time" name="endTime" class="schedule-time-input" required />
+                                                <button type="submit" class="schedule-add-button">
+                                                    + Add Schedule
+                                                </button>
+                                            </form>
+                                        </td>
+
+                                        day++;
+                                    }
+                                }
+                            </tr>
                         }
                     }
-                </tr>
-            }
-        }
-    </tbody>
-</table>
+                </tbody>
+            </table>
+        </div>
+
+        <footer class="schedule-footer">
+            Managing availability for
+            <strong>@firstDay.ToString("MMMM yyyy")</strong>
+        </footer>
+
+    </section>
+</div>

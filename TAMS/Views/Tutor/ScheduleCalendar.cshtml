@@ -45,8 +45,7 @@
                 <p>View your scheduled appointments and student sessions.</p>
             </div>
 
-            <a class="calendar-button calendar-button-primary"
-               href="@Url.Action("Dashboard", "Tutor", new { id = tutorId })">
+            <a class="calendar-button calendar-button-primary" href="@Url.Action("Dashboard", "Tutor", new { id = tutorId })">
                 ← Back to Dashboard
             </a>
         </header>
@@ -54,8 +53,7 @@
         <section class="calendar-card">
 
             <div class="calendar-toolbar">
-                <a class="calendar-button calendar-button-secondary"
-                   href="@Url.Action("ScheduleCalendar", "Tutor",  new { id = tutorId, month = prevMonth, year = prevYear })">
+                <a class="calendar-button calendar-button-secondary" href="@Url.Action("ScheduleCalendar", "Tutor",  new { id = tutorId, month = prevMonth, year = prevYear })">
                     ← Previous Month
                 </a>
 
@@ -64,8 +62,7 @@
                     <h2>@firstDay.ToString("MMMM yyyy")</h2>
                 </div>
 
-                <a class="calendar-button calendar-button-secondary"
-                   href="@Url.Action("ScheduleCalendar", "Tutor", new { id = tutorId, month = nextMonth, year = nextYear })">
+                <a class="calendar-button calendar-button-secondary" href="@Url.Action("ScheduleCalendar", "Tutor", new { id = tutorId, month = nextMonth, year = nextYear })">
                     Next Month →
                 </a>
             </div>
@@ -103,8 +100,7 @@
                                 <tr>
                                     @for (int dow = 0; dow < 7; dow++)
                                     {
-                                        if ((week == 0 && dow < startDayOfWeek)
-                                        || day > daysInMonth)
+                                        if ((week == 0 && dow < startDayOfWeek) || day > daysInMonth)
                                         {
                                             <td class="calendar-empty-cell"></td>
                                         }
