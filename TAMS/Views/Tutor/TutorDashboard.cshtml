@@ -1,135 +1,250 @@
 ﻿@model TAMS.Models.Tutor
 
+@using TAMS.Models
+@using System.Linq
+
 @{
     ViewData["Title"] = "Tutor Dashboard";
 
-    var appointments = ViewBag.Appointments as List<TAMS.Models.Appointment> ?? new List<TAMS.Models.Appointment>();
-    var schedules = ViewBag.Schedules as List<TAMS.Models.Schedule> ?? new List<TAMS.Models.Schedule>();
-    var upcomingAppointments = 
-        appointments.Where(a => a.AppointmentDate >= DateTime.Now && a.Status == "Scheduled")
-        .OrderBy(a => a.AppointmentDate).ToList();
+    var appointments = ViewBag.Appointments as List<Appointment> ?? new List<Appointment>();
+    var schedules = ViewBag.Schedules as List<Schedule> ?? new List<Schedule>();
+    var upcomingAppointments = appointments
+        .Where(a => a.AppointmentDate >= DateTime.Now && a.Status == "Scheduled")
+        .OrderBy(a => a.AppointmentDate)
+        .ToList();
+    var sortedSchedules = schedules
+        .OrderBy(s => s.Date)
+        .ThenBy(s => s.StartTime)
+        .ToList();
+    var completedAppointments = appointments
+        .Count(a => a.Status == "Completed");
+    var cancelledAppointments = appointments
+        .Count(a => a.Status == "Cancelled");
 }
 
-<div class="container mt-5">
+<link href="~/css/tutordashboard.css" rel="stylesheet" />
 
-    <!-- Dashboard Header -->
-    <div class="d-flex justify-content-between align-items-center">
-        <div>
-            <h1>Tutor Dashboard</h1>
-            <p class="text-muted">
-                Welcome back, @Model.FName @Model.LName!
-            </p>
+<div class="tutor-dashboard">
+    <header class="tutor-dashboard-header">
+        <div class="tutor-header-top">
+            <span class="tutor-dashboard-tag">TUTOR PORTAL</span>
+
+            <span class="tutor-header-date"> @DateTime.Now.ToString("MMMM d, yyyy")</span>
         </div>
-    </div>
 
-    <hr />
-
-    <!-- Tutor Information -->
-    <div class="row mb-4">
-
-        <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div class="card-body">
-
-                    <h4>
-                        @Model.FName @Model.LName
-                    </h4>
-
-                    <p>
-                        <strong>Email: </strong>@Model.Email
-                    </p>
-
-                    <p>
-                        <strong>Phone: </strong>@Model.PhoneNumber
-                    </p>
-
-                    <p>
-                        <strong>Subject: </strong>@Model.Subject
-                    </p>
-
-                    <a asp-controller="Tutor" asp-action="Profile" class="btn btn-primary">
-                        View / Edit Profile
-                    </a>
-
-                    <a asp-controller="Tutor" asp-action="Schedule" asp-route-id="@Model.TutorId" class="btn btn-secondary">
-                        Manage Schedule
-                    </a>
-                    <a asp-controller="Tutor" asp-action="ScheduleCalendar" asp-route-id="@Model.TutorId" class="btn btn-info">
-                        View Appointments
-                    </a>
-                </div>
+        <div class="tutor-header-content">
+            <div>
+                <p class="tutor-eyebrow">YOUR TEACHING SPACE</p>
+                <h1>Tutor Dashboard</h1>
+                <p class="tutor-header-subtitle">
+                    Welcome back, @Model.FName!
+                    Here's what's happening with your students.
+                </p>
+            </div>
+            <div class="tutor-header-mark" aria-hidden="true">
+                <span>✦</span>
             </div>
         </div>
+    </header>
 
-        <!-- Appointment Summary -->
-        <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div class="card-body">
+    <section class="tutor-overview-grid">
+        <article class="tutor-panel tutor-profile-panel">
+            <div class="tutor-panel-heading">
+                <h2>YOUR PROFILE</h2>
+                <span class="tutor-panel-icon" aria-hidden="true">♙</span>
+            </div>
 
-                    <h4>Appointment Summary</h4>
+            <div class="tutor-profile-intro">
+                <div class="tutor-avatar" aria-hidden="true">
+                    @(string.IsNullOrWhiteSpace(Model.FName) ? "T" : Model.FName.Substring(0, 1).ToUpper())
+                </div>
 
-                    <p>
-                        <strong>Upcoming Appointments:</strong>
+                <div class="tutor-profile-name">
+                    <h3>@Model.FName @Model.LName</h3>
+                    <p>@Model.Subject</p>
+                </div>
+            </div>
+
+            <div class="tutor-profile-details">
+                <div class="tutor-detail-row">
+                    <span>Email</span>
+                    <strong>@Model.Email</strong>
+                </div>
+
+                <div class="tutor-detail-row">
+                    <span>Phone</span>
+                    <strong>
+                        @(string.IsNullOrWhiteSpace(Model.PhoneNumber) ? "Not provided" : Model.PhoneNumber)
+                    </strong>
+                </div>
+
+                <div class="tutor-detail-row">
+                    <span>Average rating</span>
+                    <strong class="tutor-rating">
+                        ★ @Model.AverageRating.ToString("0.0") / 5
+                    </strong>
+                </div>
+
+                <div class="tutor-detail-row">
+                    <span>Student reviews</span>
+                    <strong>@Model.ReviewCount</strong>
+                </div>
+            </div>
+
+            <a asp-controller="Tutor" asp-action="Profile" class="tutor-button tutor-button-primary tutor-full-button">
+                View / Edit Profile
+            </a>
+        </article>
+
+        <article class="tutor-panel tutor-stats-panel">
+            <div class="tutor-panel-heading">
+                <h2>CLASS OVERVIEW</h2>
+                <span class="tutor-panel-icon" aria-hidden="true">▦</span>
+            </div>
+
+            <div class="tutor-stat-grid">
+
+                <div class="tutor-stat-box">
+                    <span class="tutor-stat-label">UPCOMING</span>
+                    <strong class="tutor-stat-number">
                         @upcomingAppointments.Count
-                    </p>
+                    </strong>
+                    <span class="tutor-stat-caption"> Scheduled sessions </span>
+                    <div class="tutor-stat-track">
+                        <span style="width: 100%"></span>
+                    </div>
+                </div>
 
-                    <p>
-                        <strong>Total Appointments:</strong>
-                        @appointments.Count
-                    </p>
+                <div class="tutor-stat-box">
+                    <span class="tutor-stat-label">TOTAL</span>
+                    <strong class="tutor-stat-number"> @appointments.Count </strong>
+                    <span class="tutor-stat-caption"> All appointments </span>
+                    <div class="tutor-stat-track">
+                        <span style="width: 78%"></span>
+                    </div>
+                </div>
 
-                    <p>
-                        <strong>Available Schedule Entries:</strong>
-                        @schedules.Count
-                    </p>
+                <div class="tutor-stat-box">
+                    <span class="tutor-stat-label">COMPLETED</span>
+                    <strong class="tutor-stat-number"> @completedAppointments </strong>
+                    <span class="tutor-stat-caption"> Finished sessions </span>
+                    <div class="tutor-stat-track">
+                        <span style="width: 100%"></span>
+                    </div>
+                </div>
 
+                <div class="tutor-stat-box">
+                    <span class="tutor-stat-label">OPEN SLOTS</span>
+                    <strong class="tutor-stat-number"> @schedules.Count </strong>
+                    <span class="tutor-stat-caption"> Schedule entries </span>
+                    <div class="tutor-stat-track">
+                        <span style="width: 65%"></span>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="tutor-completion-summary">
+                <div>
+                    <span>Appointment completion</span>
+                    <strong>
+                        @(appointments.Count == 0 ? "0" : Math.Round(completedAppointments * 100.0 / appointments.Count).ToString("0"))%
+                    </strong>
+                </div>
+
+                <div class="tutor-completion-track">
+                    <span style="width: @(appointments.Count == 0 ? 0 : Math.Round(completedAppointments * 100.0 / appointments.Count))%"></span>
                 </div>
             </div>
-        </div>
+        </article>
 
-    </div>
+        <article class="tutor-panel tutor-quick-panel">
+            <div class="tutor-panel-heading">
+                <h2>QUICK ACTIONS</h2>
+            </div>
 
-    <!-- Upcoming Appointments -->
-    <div class="card shadow-sm mb-4">
+            <a asp-controller="Tutor" asp-action="Schedule" asp-route-id="@Model.TutorId" class="tutor-quick-link">
+                <span class="tutor-quick-icon" aria-hidden="true">＋</span>
+                <span>
+                    <strong>Manage Schedule</strong>
+                    <small>Add or remove availability</small>
+                </span>
+                <span class="tutor-quick-arrow" aria-hidden="true">›</span>
+            </a>
 
-        <div class="card-body">
+            <a asp-controller="Tutor" asp-action="ScheduleCalendar" asp-route-id="@Model.TutorId" class="tutor-quick-link">
+                <span class="tutor-quick-icon" aria-hidden="true">▦</span>
+                <span>
+                    <strong>View Appointments</strong>
+                    <small>Open your appointment calendar</small>
+                </span>
+                <span class="tutor-quick-arrow" aria-hidden="true">›</span>
+            </a>
 
-            <h3 class="mb-3">
-                Upcoming Appointments
-            </h3>
+            <a asp-controller="Tutor" asp-action="Profile" class="tutor-quick-link">
+                <span class="tutor-quick-icon" aria-hidden="true">✎</span>
+                <span>
+                    <strong>Edit Profile</strong>
+                    <small>Keep your information updated</small>
+                </span>
+                <span class="tutor-quick-arrow" aria-hidden="true">›</span>
+            </a>
+
+            <div class="tutor-mini-summary">
+                <span>Cancelled appointments</span>
+                <strong>@cancelledAppointments</strong>
+            </div>
+        </article>
+
+    </section>
+
+    <section class="tutor-main-grid">
+        <article class="tutor-panel tutor-upcoming-panel">
+            <div class="tutor-section-header">
+                <div>
+                    <p class="tutor-eyebrow">YOUR NEXT SESSIONS</p>
+                    <h2>Upcoming Appointments</h2>
+                </div>
+
+                <span class="tutor-count-pill">
+                    @upcomingAppointments.Count upcoming
+                </span>
+            </div>
 
             @if (upcomingAppointments.Count == 0)
             {
-                <div class="alert alert-info">
-                    You currently have no upcoming appointments.
+                <div class="tutor-empty-state">
+                    <span class="tutor-empty-icon" aria-hidden="true">☼</span>
+                    <h3>Your schedule is clear</h3>
+                    <p>
+                        You currently have no upcoming scheduled appointments.
+                    </p>
+                    <a asp-controller="Tutor" asp-action="Schedule" asp-route-id="@Model.TutorId" class="tutor-button tutor-button-primary">
+                        Manage Availability
+                    </a>
                 </div>
             }
             else
             {
-                <div class="table-responsive">
-
-                    <table class="table table-bordered table-hover">
-
+                <div class="tutor-table-scroll tutor-upcoming-scroll">
+                    <table class="table tutor-table">
                         <thead>
                             <tr>
                                 <th>Date</th>
                                 <th>Time</th>
                                 <th>Student</th>
-                                <th>Email</th>
-                                <th>Phone</th>
+                                <th>Contact</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
 
                         <tbody>
-
                             @foreach (var appointment in upcomingAppointments)
                             {
                                 <tr>
-
-                                    <td>
-                                        @appointment.AppointmentDate.ToString("MM/dd/yyyy")
+                                    <td class="tutor-date-cell">
+                                        @appointment.AppointmentDate.ToString("MMM d, yyyy")
                                     </td>
 
                                     <td>
@@ -139,134 +254,10 @@
                                     <td>
                                         @if (appointment.Student != null)
                                         {
-                                            @($"{appointment.Student.FName} {appointment.Student.LName}")
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted">Student not found</span>
-                                        }
-                                    </td>
-
-                                    <td>
-                                        @if (appointment.Student != null)
-                                        {
-                                            @appointment.Student.Email
-                                        }
-                                    </td>
-
-                                    <td>
-                                        @if (appointment.Student != null)
-                                        {
-                                            @appointment.Student.PhoneNumber
-                                        }
-                                    </td>
-
-                                    <td>
-                                        <span class="badge bg-primary">
-                                            @appointment.Status
-                                        </span>
-                                    </td>
-
-                                    <td>
-
-                                        <form asp-controller="Tutor"
-                                              asp-action="CompleteAppointment"
-                                              method="post"
-                                              class="d-inline">
-                                            @Html.AntiForgeryToken()
-
-                                            <input type="hidden"
-                                                   name="appointmentId"
-                                                   value="@appointment.AppointmentId" />
-
-                                            <button type="submit"
-                                                    class="btn btn-success btn-sm"
-                                                    onclick="return confirm('Mark this appointment as completed?');">
-                                                Complete
-                                            </button>
-                                        </form>
-
-                                        <form asp-controller="Tutor"
-                                              asp-action="CancelAppointment"
-                                              method="post"
-                                              class="d-inline">
-                                            @Html.AntiForgeryToken()
-
-                                            <input type="hidden"
-                                                   name="appointmentId"
-                                                   value="@appointment.AppointmentId" />
-
-                                            <button type="submit"
-                                                    class="btn btn-danger btn-sm"
-                                                    onclick="return confirm('Cancel this appointment?');">
-                                                Cancel
-                                            </button>
-                                        </form>
-
-                                    </td>
-
-                                </tr>
-                            }
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-            }
-
-        </div>
-
-    </div>
-
-    <!-- All Appointments -->
-    <div class="card shadow-sm">
-
-        <div class="card-body">
-
-            <h3 class="mb-3">
-                Appointment History
-            </h3>
-
-            @if (appointments.Count == 0)
-            {
-                <div class="alert alert-info">
-                    No appointments have been scheduled yet.
-                </div>
-            }
-            else
-            {
-                <div class="table-responsive">
-
-                    <table class="table table-bordered">
-
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Time</th>
-                                <th>Student</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-
-                            @foreach (var appointment in appointments.OrderByDescending(a => a.AppointmentDate))
-                            {
-                                <tr>
-
-                                    <td>
-                                        @appointment.AppointmentDate.ToString("MM/dd/yyyy")
-                                    </td>
-
-                                    <td>
-                                        @appointment.AppointmentDate.AddHours(-5).ToString("hh:mm tt")
-                                    </td> //hhbhb
-
-                                    <td>
-                                        @if (appointment.Student != null)
-                                        {
-                                            @($"{appointment.Student.FName} {appointment.Student.LName}")
+                                            <strong class="tutor-student-name">
+                                                @appointment.Student.FName
+                                                @appointment.Student.LName
+                                            </strong>
                                         }
                                         else
                                         {
@@ -277,132 +268,350 @@
                                     </td>
 
                                     <td>
-                                        @if (appointment.Status == "Scheduled")
+                                        @if (appointment.Student != null)
                                         {
-                                            <span class="badge bg-primary">
-                                                Scheduled
-                                            </span>
-                                        }
-                                        else if (appointment.Status == "Completed")
-                                        {
-                                            <span class="badge bg-success">
-                                                Completed
-                                            </span>
-                                        }
-                                        else if (appointment.Status == "Cancelled")
-                                        {
-                                            <span class="badge bg-danger">
-                                                Cancelled
-                                            </span>
+                                            <div class="tutor-contact-cell">
+                                                <span>@appointment.Student.Email</span>
+                                                <span>@appointment.Student.PhoneNumber</span>
+                                            </div>
                                         }
                                         else
                                         {
-                                            <span class="badge bg-secondary">
-                                                @appointment.Status
-                                            </span>
+                                            <span class="text-muted">Unavailable</span>
                                         }
                                     </td>
 
+                                    <td>
+                                        <span class="tutor-status tutor-status-scheduled">
+                                            @appointment.Status
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        <div class="tutor-table-actions">
+                                            <form asp-controller="Tutor" asp-action="CompleteAppointment" method="post" onsubmit="return confirm('Mark this appointment as completed?');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="appointmentId" value="@appointment.AppointmentId" />
+                                                <button type="submit" class="tutor-button tutor-button-small tutor-button-success">
+                                                    Complete
+                                                </button>
+                                            </form>
+
+                                            <form asp-controller="Tutor" asp-action="CancelAppointment" method="post" onsubmit="return confirm('Cancel this appointment?');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="appointmentId" value="@appointment.AppointmentId" />
+                                                <button type="submit" class="tutor-button tutor-button-small tutor-button-danger">
+                                                    Cancel
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
                                 </tr>
                             }
-
                         </tbody>
-
                     </table>
-
                 </div>
             }
+        </article>
 
+        <aside class="tutor-panel tutor-focus-panel">
+            <div class="tutor-panel-heading">
+                <h2>YOUR SCHEDULE</h2>
+                <span class="tutor-panel-icon" aria-hidden="true">◷</span>
+            </div>
+
+            <div class="tutor-today-date">
+                <span class="tutor-today-label">TODAY</span>
+                <strong>@DateTime.Today.ToString("dddd")</strong>
+                <span>@DateTime.Today.ToString("MMMM d, yyyy")</span>
+            </div>
+
+            <div class="tutor-focus-section">
+                <h3>UP NEXT</h3>
+
+                @if (upcomingAppointments.Any())
+                {
+                    @foreach (var appointment in upcomingAppointments.Take(4))
+                    {
+                        <div class="tutor-agenda-item">
+                            <span class="tutor-agenda-dot"></span>
+                            <div>
+                                <strong>
+                                    @appointment.AppointmentDate.ToString("hh:mm tt")
+                                </strong>
+                                <p>
+                                    @if (appointment.Student != null)
+                                    {
+                                        @($"{appointment.Student.FName} {appointment.Student.LName}")
+                                    }
+                                    else
+                                    {
+                                        @:Student unavailable
+                                    }
+                                </p>
+                                <small>
+                                    @appointment.AppointmentDate.ToString("MMM d")
+                                </small>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p class="tutor-muted-copy">
+                        No upcoming sessions. Enjoy the extra time or add availability.
+                    </p>
+                }
+            </div>
+
+            <div class="tutor-focus-footer">
+                <div>
+                    <span>Available schedule entries</span>
+                    <strong>@schedules.Count</strong>
+                </div>
+
+                <a asp-controller="Tutor" asp-action="Schedule" asp-route-id="@Model.TutorId" class="tutor-text-link">
+                    Manage schedule →
+                </a>
+            </div>
+        </aside>
+    </section>
+
+    <section class="tutor-panel tutor-history-panel">
+        <div class="tutor-section-header">
+            <div>
+                <p class="tutor-eyebrow">PAST AND CURRENT SESSIONS</p>
+                <h2>Appointment History</h2>
+            </div>
+
+            <span class="tutor-count-pill">
+                @appointments.Count total
+            </span>
         </div>
 
-    </div>
-
-</div>
-<hr />
-
-<h2>Your Schedule</h2>
-
-@if (Model.Schedules == null || !Model.Schedules.Any())
-{
-    <p>No schedule slots added yet.</p>
-}
-else
-{
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Start Time</th>
-                <th>End Time</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var s in Model.Schedules.OrderBy(s => s.Date).ThenBy(s => s.StartTime))
-            {
-                <tr>
-                    <td>@s.Date.ToString("MM/dd/yyyy")</td>
-                    <td>@s.StartTime.ToString(@"hh\:mm")</td>
-                    <td>@s.EndTime.ToString(@"hh\:mm")</td>
-                    <td>
-                        <form asp-action="DeleteSchedule" method="post" onsubmit="return confirm('Are you sure you want to delete this slot?');">
-                            <input type="hidden" name="scheduleId" value="@s.ScheduleId" />
-                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                        </form>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
-<h2>Student Reviews</h2>
-
-<div class="student-reviews-card">
-
-    <div class="rating-summary">
-        <span class="average-rating">
-            ★ @Model.AverageRating.ToString("0.0") / 5
-        </span>
-
-        <span class="review-count">
-            @Model.ReviewCount student reviews
-        </span>
-    </div>
-
-    <div class="student-reviews-list">
-
-        @if (Model.Reviews == null || !Model.Reviews.Any())
+        @if (appointments.Count == 0)
         {
-            <p class="text-muted">No student reviews yet.</p>
+            <div class="tutor-empty-state tutor-empty-compact">
+                <h3>No appointments yet</h3>
+                <p>Appointments will appear here once students book a session.</p>
+            </div>
         }
         else
         {
-            @foreach (var review in Model.Reviews)
-            {
-                <div class="student-review">
+            <div class="tutor-table-scroll tutor-history-scroll">
+                <table class="table tutor-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Student</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
 
-                    <div class="review-rating">
-                        @for (int i = 1; i <= 5; i++)
+                    <tbody>
+                        @foreach (var appointment in appointments
+                                            .OrderByDescending(a => a.AppointmentDate))
                         {
-                            if (i <= review.Rating)
-                            {
-                                <span class="star-filled">★</span>
-                            }
-                            else
-                            {
-                                <span class="star-empty">★</span>
-                            }
+                            <tr>
+                                <td>
+                                    @appointment.AppointmentDate.ToString("MMM d, yyyy")
+                                </td>
+
+                                <td>
+                                    @appointment.AppointmentDate.AddHours(-5).ToString("hh:mm tt")
+                                </td>
+
+                                <td>
+                                    @if (appointment.Student != null)
+                                    {
+                                        @($"{appointment.Student.FName} {appointment.Student.LName}")
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">
+                                            Student not found
+                                        </span>
+                                    }
+                                </td>
+
+                                <td>
+                                    @if (appointment.Status == "Scheduled")
+                                    {
+                                        <span class="tutor-status tutor-status-scheduled">
+                                            Scheduled
+                                        </span>
+                                    }
+                                    else if (appointment.Status == "Completed")
+                                    {
+                                        <span class="tutor-status tutor-status-completed">
+                                            Completed
+                                        </span>
+                                    }
+                                    else if (appointment.Status == "Cancelled")
+                                    {
+                                        <span class="tutor-status tutor-status-cancelled">
+                                            Cancelled
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="tutor-status tutor-status-other">
+                                            @appointment.Status
+                                        </span>
+                                    }
+                                </td>
+                            </tr>
                         }
-                    </div>
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
 
-                    <p class="review-comment">
-                        @review.Comment
-                    </p>
+    <section class="tutor-bottom-grid">
+        <article class="tutor-panel tutor-schedule-panel">
+            <div class="tutor-section-header">
+                <div>
+                    <p class="tutor-eyebrow">PLAN YOUR AVAILABILITY</p>
+                    <h2>Your Schedule</h2>
+                </div>
 
+                <span class="tutor-count-pill">
+                    @schedules.Count slots
+                </span>
+            </div>
+
+            <div class="tutor-schedule-toolbar">
+                <p>Manage the dates and times students can book.</p>
+
+                <a asp-controller="Tutor" asp-action="Schedule" asp-route-id="@Model.TutorId" class="tutor-button tutor-button-primary">
+                    Manage Schedule
+                </a>
+            </div>
+
+            @if (sortedSchedules.Count == 0)
+            {
+                <div class="tutor-empty-state tutor-empty-compact">
+                    <h3>No schedule slots added</h3>
+                    <p>Add available times so students can book appointments.</p>
                 </div>
             }
-        }
+            else
+            {
+                <div class="tutor-table-scroll tutor-schedule-scroll">
+                    <table class="table tutor-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Start</th>
+                                <th>End</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
 
-    </div>
+                        <tbody>
+                            @foreach (var schedule in sortedSchedules)
+                            {
+                                <tr>
+                                    <td>
+                                        @schedule.Date.ToString("MMM d, yyyy")
+                                    </td>
 
+                                    <td>
+                                        @schedule.StartTime.ToString(@"hh\:mm")
+                                    </td>
+
+                                    <td>
+                                        @schedule.EndTime.ToString(@"hh\:mm")
+                                    </td>
+
+                                    <td>
+                                        <form asp-controller="Tutor" asp-action="DeleteSchedule" method="post" onsubmit="return confirm('Are you sure you want to delete this slot?');">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="scheduleId" value="@schedule.ScheduleId" />
+                                            <button type="submit" class="tutor-button tutor-button-small tutor-button-danger">
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </article>
+
+        <article class="tutor-panel tutor-reviews-panel">
+            <div class="tutor-section-header">
+                <div>
+                    <p class="tutor-eyebrow">STUDENT FEEDBACK</p>
+                    <h2>Student Reviews</h2>
+                </div>
+            </div>
+
+            <div class="tutor-review-summary">
+                <div class="tutor-review-score">
+                    <span class="tutor-review-star">★</span>
+                    <strong>@Model.AverageRating.ToString("0.0")</strong>
+                    <span>/ 5</span>
+                </div>
+
+                <div>
+                    <strong>
+                        @(Model.ReviewCount == 1 ? "1 student review" : $"{Model.ReviewCount} student reviews")
+                    </strong>
+                    <p>Overall student rating</p>
+                </div>
+            </div>
+
+            <div class="tutor-review-list">
+                @if (Model.Reviews == null || !Model.Reviews.Any())
+                {
+                    <div class="tutor-empty-state tutor-empty-compact">
+                        <h3>No student reviews yet</h3>
+                        <p>Reviews will appear here after students rate their sessions.</p>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var review in Model.Reviews)
+                    {
+                        <div class="tutor-review-item">
+                            <div class="tutor-review-item-top">
+                                <span class="tutor-review-item-label">
+                                    Student feedback
+                                </span>
+
+                                <span class="tutor-review-stars"
+                                      aria-label="@review.Rating out of 5 stars">
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        if (i <= review.Rating)
+                                        {
+                                            <span class="star-filled">★</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="star-empty">★</span>
+                                        }
+                                    }
+                                </span>
+                            </div>
+
+                            <p class="tutor-review-comment">
+                                @review.Comment
+                            </p>
+                        </div>
+                    }
+                }
+            </div>
+        </article>
+    </section>
+
+    <footer class="tutor-dashboard-footer">
+        <span>Made for better learning, one session at a time.</span>
+        <span>© @DateTime.Now.Year Tutor Portal</span>
+    </footer>
 </div>
