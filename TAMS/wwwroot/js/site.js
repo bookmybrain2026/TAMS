@@ -58,28 +58,30 @@ document.addEventListener("keydown", function (event) {
         hideSubjectForms();
     }
 });
-
-// Search Subjects
 function searchSubjects() {
-    var input = document.getElementById("subjectSearch");
-    var filter = input.value.toLowerCase();
+    const searchInput = document.getElementById("subjectSearch");
+    const noMatch = document.getElementById("subjectNoMatch");
 
-    var table = document.getElementById("subjectTableBody");
-    var rows = table.getElementsByTagName("tr");
+    if (!searchInput) return;
 
-    for (var i = 0; i < rows.length; i++) {
-        var code = rows[i].cells[0].textContent.toLowerCase();
-        var name = rows[i].cells[1].textContent.toLowerCase();
+    const search = searchInput.value.toLowerCase().trim();
+    const rows = document.querySelectorAll(".subject-row");
+    let visibleCount = 0;
 
-        if (code.includes(filter) || name.includes(filter)) {
-            rows[i].style.display = "";
-        }
-        else {
-            rows[i].style.display = "none";
-        }
+    rows.forEach(row => {
+        const text = (row.dataset.search || "").toLowerCase();
+        const matches = text.includes(search);
+
+        row.style.display = matches ? "" : "none";
+
+        if (matches) visibleCount++;
+    });
+
+    if (noMatch) {
+        noMatch.style.display =
+            rows.length > 0 && visibleCount === 0 ? "" : "none";
     }
 }
-
 
 
 // Show Add Course 
@@ -144,31 +146,29 @@ document.addEventListener("keydown", function (event) {
     }
 });
 
-
-
-// Search Courses
 function searchCourses() {
-    var input = document.getElementById("courseSearch");
-    var filter = input.value.toLowerCase();
+    const search = document.getElementById("courseSearch")
+        .value.toLowerCase().trim();
 
-    var table = document.getElementById("courseTableBody");
-    var rows = table.getElementsByTagName("tr");
+    const rows = document.querySelectorAll(".course-row");
+    const noMatch = document.getElementById("courseNoMatch");
+    let visibleCount = 0;
 
-    for (var i = 0; i < rows.length; i++) {
-        var subject = rows[i].cells[0].textContent.toLowerCase();
-        var courseCode = rows[i].cells[1].textContent.toLowerCase();
-        var courseName = rows[i].cells[2].textContent.toLowerCase();
+    rows.forEach(row => {
+        const text = row.dataset.search.toLowerCase();
+        const matches = text.includes(search);
 
-        if (subject.includes(filter) ||
-            courseCode.includes(filter) ||
-            courseName.includes(filter)) {
-            rows[i].style.display = "";
-        }
-        else {
-            rows[i].style.display = "none";
-        }
+        row.style.display = matches ? "" : "none";
+
+        if (matches) visibleCount++;
+    });
+
+    if (noMatch) {
+        noMatch.style.display =
+            rows.length > 0 && visibleCount === 0 ? "" : "none";
     }
 }
+
 
 function searchTutors() {
     var input = document.getElementById("tutorSearch");
@@ -218,7 +218,7 @@ function updateCourses() {
 }
 
 
-// Change bubble appearance when selected.
+// Change bubble appearance when selected
 courseBubbles.forEach(function (bubble) {
     const checkbox = bubble.querySelector("input");
     if (checkbox.checked) {
@@ -235,10 +235,10 @@ courseBubbles.forEach(function (bubble) {
         }
     });
 });
-// Update courses when subject changes.
+// Update courses when subject changes
 subjectSelect.addEventListener("change", updateCourses);
 
-// Run when page loads.
+// Run when page loads
 updateCourses();
 
 

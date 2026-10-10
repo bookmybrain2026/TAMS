@@ -2,138 +2,219 @@
 
 @{
     ViewData["Title"] = "Manage Subjects";
+    var subjects = Model?.ToList() ?? new List<TAMS.Models.Subject>();
 }
 
-<a asp-controller="Admin" asp-action="Dashboard" class="btn btn-secondary mb-3">← Back to Dashboard</a>
+<link rel="stylesheet" href="~/css/SubjectIndex.css" asp-append-version="true" />
 
-<h1>Manage Subjects</h1>
+<div class="subject-dashboard">
 
-<div class="mb-3">
-    <button type="button"
-            class="btn btn-primary"
-            onclick="showSubjectAddForm()">
-        + Add New Subject
-    </button>
-</div>
+    <header class="dashboard-header">
+        <div>
+            <p class="dashboard-eyebrow">TAMS · ADMINISTRATION</p>
+            <h1>Subject Management</h1>
+            <p class="dashboard-subtitle">
+                Create, update, and organize the subjects available for tutoring.
+            </p>
+        </div>
 
+        <div class="header-actions">
+            <a asp-controller="Admin" asp-action="Dashboard" class="subject-secondary-button">
+                ← Back to Dashboard
+            </a>
+            <button type="button" class="subject-primary-button" onclick="showSubjectAddForm()">
+                <span aria-hidden="true">＋</span> Add New Subject
+            </button>
+        </div>
+    </header>
 
-<div class="mb-3">
-    <label for="subjectSearch" class="form-label">Search Subjects</label>
-    <input type="text" id="subjectSearch" class="form-control" placeholder="Search by subject code or subject name..." onkeyup="searchSubjects()" />
-</div>
+    <section class="subject-summary" aria-label="Subject overview">
+        <article class="subject-summary-card summary-card-cream">
+            <div class="summary-card-top">
+                <span class="summary-label">Total Subjects</span>
+                <span class="summary-icon" aria-hidden="true">▤</span>
+            </div>
 
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success">
-        @TempData["SuccessMessage"]
-    </div>
-}
+            <div class="summary-number" id="subjectCount">
+                @subjects.Count
+            </div>
+            <p class="summary-note">Subjects currently in the system</p>
+            <div class="summary-bottom-line">
+                <span style="width:100%"></span>
+            </div>
+        </article>
+    </section>
 
-@if (TempData["ErrorMessage"] != null)
-{
-    <div class="alert alert-danger">
-        @TempData["ErrorMessage"]
-    </div>
-}
-
-<table class="table table-bordered" id="subjectTable">
-
-    <thead>
-        <tr>
-            <th>Subject Code</th>
-            <th>Subject Name</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody id="subjectTableBody">
-
-        @foreach (var subject in Model)
+    <section class="dashboard-section">
+        <div class="section-heading">
+            <div>
+                <p class="section-kicker">SUBJECT DIRECTORY</p>
+                <h2>All Subjects</h2>
+            </div>
+            <span class="count-pill">
+                @subjects.Count subjects
+            </span>
+        </div>
+        @if (TempData["SuccessMessage"] != null)
         {
-            <tr>
-                <td>@subject.Code</td>
-                <td>@subject.Name</td>
-                <td>
-                    <!-- Edit Button -->
-                    <button type="button" class="btn btn-warning" onclick="showSubjectEditForm( '@subject.SubjectId', '@subject.Code', '@subject.Name')">Edit</button>
-                    <!-- Delete Button -->
-                    <form asp-action="Delete" method="post" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this subject?');">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="id" value="@subject.SubjectId" />
-                        <button type="submit" class="btn btn-danger">Delete</button>
-                    </form>
-
-                </td>
-            </tr>
+            <div class="subject-alert alert-success" role="status">
+                @TempData["SuccessMessage"]
+            </div>
         }
-    </tbody>
-</table>
-
-<hr />
-
-<!-- ADD SUBJECT -->
-<div id="addSubjectModal" class="course-modal" style="display:none;">
-    <div class="course-modal-content">
-        <button type="button" class="course-modal-close" onclick="hideSubjectForms()" aria-label="Close">
-            &times;
-        </button>
-        <h3>Add New Subject</h3>
-        <form asp-action="Create" method="post">
-            @Html.AntiForgeryToken()
-
-            <div class="form-group mb-3">
-                <label for="CreateCode">Subject Code</label>
-                <input type="text" id="CreateCode" name="Code" class="form-control" placeholder="Example: MATH" required />
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="subject-alert alert-error" role="alert">
+                @TempData["ErrorMessage"]
             </div>
+        }
 
-            <div class="form-group mb-3">
-                <label for="CreateName">Subject Name</label>
-                <input type="text" id="CreateName" name="Name" class="form-control" placeholder="Example: Mathematics" required />
-            </div>
+        <div class="directory-search">
+            <span class="directory-search-icon" aria-hidden="true">⌕</span>
+            <input type="text" id="subjectSearch" class="subject-input directory-search-input" placeholder="Search by subject code or subject name..."
+                   aria-label="Search subjects" autocomplete="off" oninput="searchSubjects()" />
+        </div>
 
-            <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-primary">
-                    Create Subject
-                </button>
+        <div class="subject-table-wrap">
+            <table class="subject-table" id="subjectTable">
+                <thead>
+                    <tr>
+                        <th>Subject Code</th>
+                        <th>Subject Name</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
 
-                <button type="button" class="btn btn-secondary" onclick="hideSubjectForms()">
-                    Cancel
-                </button>
-            </div>
-        </form>
+                <tbody id="subjectTableBody">
+                    @if (subjects.Count > 0)
+                    {
+                        @foreach (var subject in subjects)
+                        {
+                            <tr class="subject-row"
+                                data-search="@($"{subject.Code} {subject.Name}")">
+
+                                <td>
+                                    <span class="subject-pill">
+                                        @subject.Code
+                                    </span>
+                                </td>
+
+                                <td>@subject.Name</td>
+
+                                <td>
+                                    <div class="table-actions">
+                                        <button type="button" class="small-action action-edit" onclick="showSubjectEditForm('@subject.SubjectId', '@subject.Code', '@subject.Name')">
+                                            Edit
+                                        </button>
+
+                                        <form asp-controller="Subject" asp-action="Delete" method="post" onsubmit="return confirm('Are you sure you want to delete this subject?');">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@subject.SubjectId" />
+                                            <button type="submit" class="small-action action-delete">
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+
+                        <tr id="subjectNoMatch" style="display:none;">
+                            <td colspan="3" class="empty-state">
+                                No subjects match your search.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="3" class="empty-state">
+                                No subjects found. Add a subject to get started.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <div id="addSubjectModal" class="subject-modal" style="display:none;" aria-hidden="true">
+        <div class="subject-modal-content" role="dialog" aria-modal="true" aria-labelledby="addSubjectTitle">
+            <button type="button" class="subject-modal-close" onclick="hideSubjectForms()" aria-label="Close">
+                &times;
+            </button>
+
+            <p class="section-kicker">SUBJECT DIRECTORY</p>
+            <h2 id="addSubjectTitle">Add New Subject</h2>
+
+            <p class="modal-subtitle">
+                Enter the details for the new tutoring subject.
+            </p>
+
+            <form asp-controller="Subject" asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="subject-form-group">
+                    <label for="CreateCode">Subject Code</label>
+                    <input type="text" id="CreateCode" name="Code" class="subject-input" placeholder="Example: MATH" required />
+                </div>
+
+                <div class="subject-form-group">
+                    <label for="CreateName">Subject Name</label>
+                    <input type="text" id="CreateName" name="Name" class="subject-input" placeholder="Example: Mathematics" required />
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="subject-primary-button">
+                        Create Subject
+                    </button>
+
+                    <button type="button" class="subject-secondary-button" onclick="hideSubjectForms()">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
-</div>
 
+    <div id="editSubjectModal" class="subject-modal" style="display:none;" aria-hidden="true">
+        <div class="subject-modal-content" role="dialog" aria-modal="true" aria-labelledby="editSubjectTitle">
+            <button type="button" class="subject-modal-close" onclick="hideSubjectForms()" aria-label="Close">
+                &times;
+            </button>
+            <p class="section-kicker">SUBJECT DIRECTORY</p>
+            <h2 id="editSubjectTitle">Edit Subject</h2>
+            <p class="modal-subtitle">Update the selected subject information.</p>
 
-<!-- EDIT SUBJECT -->
-<div id="editSubjectModal" class="course-modal" style="display:none;">
-    <div class="course-modal-content">
-        <button type="button" class="course-modal-close" onclick="hideSubjectForms()" aria-label="Close">
-            &times;
-        </button>
-        <h3>Edit Subject</h3>
-        <form asp-action="Edit" method="post">
-            @Html.AntiForgeryToken()
-            <input type="hidden" id="EditSubjectId" name="id" />
+            <form asp-controller="Subject" asp-action="Edit" method="post">
+                @Html.AntiForgeryToken()
 
-            <div class="form-group mb-3">
-                <label for="EditCode">Subject Code</label>
-                <input type="text" id="EditCode" name="Code" class="form-control" required />
-            </div>
+                <input type="hidden" id="EditSubjectId" name="id" />
 
-            <div class="form-group mb-3">
-                <label for="EditName">Subject Name</label>
-                <input type="text" id="EditName" name="Name" class="form-control" required />
-            </div>
+                <div class="subject-form-group">
+                    <label for="EditCode">Subject Code</label>
+                    <input type="text" id="EditCode" name="Code" class="subject-input" required />
+                </div>
 
-            <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-primary">
-                    Save Changes
-                </button>
+                <div class="subject-form-group">
+                    <label for="EditName">Subject Name</label>
+                    <input type="text" id="EditName" name="Name" class="subject-input" required />
+                </div>
 
-                <button type="button" class="btn btn-secondary" onclick="hideSubjectForms()">
-                    Cancel
-                </button>
-            </div>
-        </form>
+                <div class="form-actions">
+                    <button type="submit" class="subject-primary-button">
+                        Save Changes
+                    </button>
+                    <button type="button" class="subject-secondary-button" onclick="hideSubjectForms()">
+                        Cancel
+                    </button>
+                </div>
+
+            </form>
+        </div>
     </div>
+
+    <footer class="dashboard-footer">
+        TAMS · Tutoring Appointment Management System
+    </footer>
+
 </div>

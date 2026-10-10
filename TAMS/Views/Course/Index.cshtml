@@ -3,185 +3,295 @@
 
 @{
     ViewData["Title"] = "Manage Courses";
-    var subjects = ViewBag.Subjects as List<Subject>;
+    var subjects = ViewBag.Subjects as List<Subject> ?? new List<Subject>();
+    var courses = Model?.ToList() ?? new List<Course>();
 }
 
-<a asp-controller="Admin" asp-action="Dashboard" class="btn btn-secondary mb-3">← Back to Dashboard</a>
+<link rel="stylesheet" href="~/css/CourseIndex.css" asp-append-version="true" />
 
-<h1>Manage Courses</h1>
+<div class="course-dashboard">
 
-<div class="mb-3">
-    <button type="button" class="btn btn-primary" onclick="showCourseAddForm()">
-        + Add New Course
-    </button>
-</div>
+    <header class="dashboard-header">
+        <div>
+            <p class="dashboard-eyebrow">TAMS · ADMINISTRATION</p>
+            <h1>Course Management</h1>
+            <p class="dashboard-subtitle">
+                Create, update, and manage the courses available for tutoring.
+            </p>
+        </div>
 
-<div class="mb-3">
-    <label for="courseSearch" class="form-label">Search Courses</label>
-    <input type="text" id="courseSearch" class="form-control" placeholder="Search by subject, course code, or course name..." onkeyup="searchCourses()" />
-</div>
+        <div class="header-actions">
+            <a asp-controller="Admin" asp-action="Dashboard" class="course-secondary-button">
+                ← Back to Dashboard
+            </a>
 
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success">
-        @TempData["SuccessMessage"]
-    </div>
-}
+            <button type="button" class="course-primary-button" onclick="showCourseAddForm()">
+                <span aria-hidden="true">＋</span> Add New Course
+            </button>
+        </div>
+    </header>
 
-@if (TempData["ErrorMessage"] != null)
-{
-    <div class="alert alert-danger">
-        @TempData["ErrorMessage"]
-    </div>
-}
+    <section class="course-summary" aria-label="Course overview">
+        <article class="course-summary-card summary-card-cream">
+            <div class="summary-card-top">
+                <span class="summary-label">Total Courses</span>
+                <span class="summary-icon" aria-hidden="true">▣</span>
+            </div>
 
-<table class="table table-bordered" id="courseTable">
-    <thead>
-        <tr>
-            <th>Subject</th>
-            <th>Course Code</th>
-            <th>Course Name</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody id="courseTableBody">
+            <div class="summary-number" id="courseCount">
+                @courses.Count
+            </div>
 
-        @foreach (var course in Model)
+            <p class="summary-note">Courses currently in the system</p>
+
+            <div class="summary-bottom-line">
+                <span style="width:100%"></span>
+            </div>
+        </article>
+
+        <article class="course-summary-card summary-card-yellow">
+            <div class="summary-card-top">
+                <span class="summary-label">Available Subjects</span>
+                <span class="summary-icon" aria-hidden="true">▤</span>
+            </div>
+
+            <div class="summary-number">@subjects.Count</div>
+
+            <p class="summary-note">Subjects available for courses</p>
+
+            <div class="summary-bottom-line">
+                <span style="width:100%"></span>
+            </div>
+        </article>
+    </section>
+
+    <section class="dashboard-section">
+        <div class="section-heading">
+            <div>
+                <p class="section-kicker">COURSE DIRECTORY</p>
+                <h2>All Courses</h2>
+            </div>
+
+            <span class="count-pill">
+                @courses.Count courses
+            </span>
+        </div>
+
+        @if (TempData["SuccessMessage"] != null)
         {
-            <tr>
-                <td>
-                    @course.SubjectCode
-
-                    @if (subjects != null)
-                    {
-                        var subject = subjects.FirstOrDefault(
-                        s => s.Code == course.SubjectCode);
-
-                        if (subject != null)
-                        {
-                            <span> - @subject.Name</span>
-                        }
-                    }
-                </td>
-                <td>@course.CourseCode</td>
-                <td>@course.CourseName</td>
-                <td>
-                    <button type="button" class="btn btn-warning" onclick="showCourseEditForm('@course.CourseId', '@course.SubjectCode', '@course.CourseCode', '@course.CourseName')">
-                        Edit
-                    </button>
-                    <form asp-action="Delete" method="post" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this course?');">
-
-                        @Html.AntiForgeryToken()
-
-                        <input type="hidden" name="id" value="@course.CourseId" />
-                        <button type="submit" class="btn btn-danger">Delete</button>
-                    </form>
-                </td>
-            </tr>
+            <div class="course-alert alert-success" role="status">
+                @TempData["SuccessMessage"]
+            </div>
         }
-    </tbody>
-</table>
 
-<hr />
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="course-alert alert-error" role="alert">
+                @TempData["ErrorMessage"]
+            </div>
+        }
 
-<!-- ADD COURSE -->
-<div id="addCourseModal" class="course-modal" style="display:none;">
-    <div class="course-modal-content">
-        <button type="button" class="course-modal-close" onclick="hideCourseForms()" aria-label="Close">
-            &times;
-        </button>
-        <h3>Add New Course</h3>
-        <form asp-action="Create" method="post">
-            @Html.AntiForgeryToken()
-            <div class="form-group mb-3">
-                <label for="CreateSubjectCode">Subject</label>
+        <div class="directory-search">
+            <span class="directory-search-icon" aria-hidden="true">⌕</span>
+            <input type="text" id="courseSearch" class="course-input directory-search-input" placeholder="Search by subject, course code, or course name..."
+                   aria-label="Search courses" autocomplete="off" oninput="searchCourses()" />
+        </div>
 
-                <select id="CreateSubjectCode" name="SubjectCode" class="form-control" required>
-                    <option value="">-- Select a Subject --</option>
-                    @if (subjects != null)
+        <div class="course-table-wrap">
+            <table class="course-table" id="courseTable">
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        <th>Course Code</th>
+                        <th>Course Name</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody id="courseTableBody">
+                    @if (courses.Count > 0)
                     {
-                        foreach (var subject in subjects)
+                        @foreach (var course in courses)
+                        {
+                            var subject = subjects.FirstOrDefault(
+                            s => s.Code == course.SubjectCode);
+
+                            var subjectName = subject?.Name ?? "";
+
+                            <tr class="course-row"
+                                data-search="@($"{course.SubjectCode} {subjectName} {course.CourseCode} {course.CourseName}")">
+
+                                <td>
+                                    <span class="subject-pill">
+                                        @course.SubjectCode
+                                    </span>
+
+                                    @if (subject != null)
+                                    {
+                                        <span class="subject-name">
+                                            @subject.Name
+                                        </span>
+                                    }
+                                </td>
+
+                                <td class="table-id">
+                                    @course.CourseCode
+                                </td>
+
+                                <td>@course.CourseName</td>
+
+                                <td>
+                                    <div class="table-actions">
+                                        <button type="button" class="small-action action-edit" onclick="showCourseEditForm('@course.CourseId', '@course.SubjectCode', '@course.CourseCode', '@course.CourseName')">
+                                            Edit
+                                        </button>
+
+                                        <form asp-controller="Course" asp-action="Delete" method="post" onsubmit="return confirm('Are you sure you want to delete this course?');">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@course.CourseId" />
+                                            <button type="submit" class="small-action action-delete">
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+
+                        <tr id="courseNoMatch" style="display:none;">
+                            <td colspan="4" class="empty-state">
+                                No courses match your search.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="4" class="empty-state">
+                                No courses found. Add a course to get started.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- ADD COURSE -->
+    <div id="addCourseModal" class="course-modal" style="display:none;" aria-hidden="true">
+
+        <div class="course-modal-content" role="dialog" aria-modal="true" aria-labelledby="addCourseTitle">
+            <button type="button" class="course-modal-close" onclick="hideCourseForms()" aria-label="Close">
+                &times;
+            </button>
+
+            <p class="section-kicker">COURSE DIRECTORY</p>
+            <h2 id="addCourseTitle">Add New Course</h2>
+            <p class="modal-subtitle">
+                Enter the details for the new course.
+            </p>
+
+            <form asp-controller="Course" asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div class="course-form-group">
+                    <label for="CreateSubjectCode">Subject</label>
+                    <select id="CreateSubjectCode" name="SubjectCode" class="course-input" required>
+                        <option value="">-- Select a Subject --</option>
+
+                        @foreach (var subject in subjects)
                         {
                             <option value="@subject.Code">
                                 @subject.Code - @subject.Name
                             </option>
                         }
-                    }
-                </select>
-            </div>
+                    </select>
+                </div>
 
-            <div class="form-group mb-3">
-                <label for="CreateCourseCode">Course Code</label>
-                <input type="text" id="CreateCourseCode" name="CourseCode" class="form-control" placeholder="Example: MATH 1314" required />
-            </div>
+                <div class="course-form-group">
+                    <label for="CreateCourseCode">Course Code</label>
+                    <input type="text" id="CreateCourseCode" name="CourseCode" class="course-input" placeholder="Example: MATH 1314" required />
+                </div>
 
-            <div class="form-group mb-3">
-                <label for="CreateCourseName">Course Name</label>
-                <input type="text" id="CreateCourseName" name="CourseName" class="form-control" placeholder="Example: College Algebra" required />
-            </div>
+                <div class="course-form-group">
+                    <label for="CreateCourseName">Course Name</label>
+                    <input type="text" id="CreateCourseName" name="CourseName" class="course-input" placeholder="Example: College Algebra"  required />
+                </div>
 
-            <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-primary">
-                    Create Course
-                </button>
-
-                <button type="button"
-                        class="btn btn-secondary"
-                        onclick="hideCourseForms()">
-                    Cancel
-                </button>
-            </div>
-        </form>
+                <div class="form-actions">
+                    <button type="submit" class="course-primary-button">
+                        Create Course
+                    </button>
+                    <button type="button" class="course-secondary-button" onclick="hideCourseForms()">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
-</div>
 
+    <!-- EDIT COURSE -->
+    <div id="editCourseModal" class="course-modal" style="display:none;" aria-hidden="true">
 
-<!-- EDIT COURSE -->
-<div id="editCourseModal" class="course-modal" style="display:none;">
-    <div class="course-modal-content">
-        <button type="button"class="course-modal-close" onclick="hideCourseForms()" aria-label="Close">
-            &times;
-        </button>
-        <h3>Edit Course</h3>
-        <form asp-action="Edit" method="post">
-            @Html.AntiForgeryToken()
-            <input type="hidden" id="EditCourseId" name="id" />
-            <div class="form-group mb-3">
-                <label for="EditSubjectCode">Subject</label>
-                <select id="EditSubjectCode" name="SubjectCode" class="form-control" required>
-                    <option value="">-- Select a Subject --</option>
-                    @if (subjects != null)
-                    {
-                        foreach (var subject in subjects)
+        <div class="course-modal-content" role="dialog" aria-modal="true" aria-labelledby="editCourseTitle">
+            <button type="button" class="course-modal-close" onclick="hideCourseForms()" aria-label="Close">
+                &times;
+            </button>
+
+            <p class="section-kicker">COURSE DIRECTORY</p>
+            <h2 id="editCourseTitle">Edit Course</h2>
+            <p class="modal-subtitle">
+                Update the selected course information.
+            </p>
+
+            <form asp-controller="Course" asp-action="Edit" method="post">
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" id="EditCourseId" name="id" />
+
+                <div class="course-form-group">
+                    <label for="EditSubjectCode">Subject</label>
+
+                    <select id="EditSubjectCode"
+                            name="SubjectCode"
+                            class="course-input"
+                            required>
+                        <option value="">-- Select a Subject --</option>
+
+                        @foreach (var subject in subjects)
                         {
                             <option value="@subject.Code">
                                 @subject.Code - @subject.Name
                             </option>
                         }
-                    }
-                </select>
-            </div>
+                    </select>
+                </div>
 
-            <div class="form-group mb-3">
-                <label for="EditCourseCode">Course Code</label>
-                <input type="text" id="EditCourseCode" name="CourseCode" class="form-control" required />
-            </div>
+                <div class="course-form-group">
+                    <label for="EditCourseCode">Course Code</label>
+                    <input type="text" id="EditCourseCode" name="CourseCode" class="course-input" required />
+                </div>
 
-            <div class="form-group mb-3">
-                <label for="EditCourseName">Course Name</label>
-                <input type="text" id="EditCourseName" name="CourseName" class="form-control" required />
-            </div>
+                <div class="course-form-group">
+                    <label for="EditCourseName">Course Name</label>
 
-            <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-primary">
-                    Save Changes
-                </button>
+                    <input type="text" id="EditCourseName" name="CourseName" class="course-input" required />
+                </div>
 
-                <button type="button" class="btn btn-secondary" onclick="hideCourseForms()">
-                    Cancel
-                </button>
-            </div>
-        </form>
+                <div class="form-actions">
+                    <button type="submit" class="course-primary-button">
+                        Save Changes
+                    </button>
+
+                    <button type="button" class="course-secondary-button" onclick="hideCourseForms()">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
-</div>
 
+    <footer class="dashboard-footer">
+        TAMS · Tutoring Appointment Management System
+    </footer>
+
+</div>
