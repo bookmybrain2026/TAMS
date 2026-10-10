@@ -568,3 +568,140 @@
         border-radius: 8px !important;
     }
 }
+
+/*Scroll Reviews*/
+.student-dashboard .reviews-card {
+    min-width: 0;
+    overflow: hidden;
+}
+
+.student-dashboard .reviews-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.student-dashboard .reviews-header .dashboard-section-title {
+    margin-bottom: 8px;
+}
+
+.student-dashboard .reviews-description {
+    margin: 0;
+    color: var(--bmb-muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.student-dashboard .reviews-count {
+    flex-shrink: 0;
+    padding: 7px 12px;
+    border: 1px solid var(--bmb-border);
+    border-radius: 20px;
+    background: #fff6e4;
+    color: var(--bmb-brown);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.student-dashboard .reviews-vertical-scroll {
+    width: 100%;
+    height: 440px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 2px 8px 10px 2px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--bmb-orange) #fff0cf;
+    -webkit-overflow-scrolling: touch;
+}
+
+.student-dashboard .reviews-vertical-scroll::-webkit-scrollbar {
+    width: 9px;
+}
+
+.student-dashboard .reviews-vertical-scroll::-webkit-scrollbar-track {
+    background: #fff0cf;
+    border-radius: 10px;
+}
+
+.student-dashboard .reviews-vertical-scroll::-webkit-scrollbar-thumb {
+    background: var(--bmb-orange);
+    border: 2px solid #fff0cf;
+    border-radius: 10px;
+}
+
+
+.student-dashboard .reviews-vertical-track {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-auto-flow: row;
+    gap: 16px;
+    align-items: stretch;
+    width: 100%;
+}
+
+.student-dashboard .reviews-vertical-track .review-item {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    height: 100%;
+    margin: 0;
+    padding: 18px;
+    background: var(--bmb-soft);
+    border: 1px solid var(--bmb-border);
+    border-radius: 12px;
+}
+
+.student-dashboard .reviews-vertical-track .review-item h5 {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f0e5d3;
+    overflow-wrap: anywhere;
+}
+
+.student-dashboard .reviews-vertical-track .review-item form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.student-dashboard .reviews-vertical-track .review-item textarea {
+    min-height: 100px;
+}
+
+.student-dashboard .reviews-vertical-track .review-item button[type="submit"] {
+    align-self: flex-start;
+    margin-top: auto;
+}
+
+.student-dashboard .reviews-scroll-hint {
+    margin: 8px 0 0;
+    color: var(--bmb-muted);
+    font-size: 12px;
+    text-align: right;
+}
+
+@media (max-width: 900px) {
+    .student-dashboard .reviews-vertical-track {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 550px) {
+    .student-dashboard .reviews-header {
+        align-items: flex-start;
+    }
+
+    .student-dashboard .reviews-vertical-scroll {
+        height: 440px;
+    }
+
+    .student-dashboard .reviews-vertical-track {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .student-dashboard .reviews-vertical-track .review-item {
+        padding: 15px;
+    }
+}

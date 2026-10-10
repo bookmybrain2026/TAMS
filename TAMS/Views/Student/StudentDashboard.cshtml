@@ -181,42 +181,44 @@
             </section>
 
             <section class="dashboard-card reviews-card">
-                <h2 class="dashboard-section-title">
-                    Awaiting Reviews
-                </h2>
+                <div class="reviews-header">
+                    <div>
+                        <h2 class="dashboard-section-title">Awaiting Reviews</h2>
+                        <p class="reviews-description">
+                            Rate and review your completed tutoring appointments.
+                        </p>
+                    </div>
 
-                @if (Model.AwaitingReviews != null &&
-                     Model.AwaitingReviews.Any())
+                    @if (Model.AwaitingReviews != null && Model.AwaitingReviews.Any())
+                    {
+                        <span class="reviews-count">
+                            @Model.AwaitingReviews.Count()
+                            @(Model.AwaitingReviews.Count() == 1 ? "Review" : "Reviews")
+                        </span>
+                    }
+                </div>
+
+                @if (Model.AwaitingReviews != null && Model.AwaitingReviews.Any())
                 {
-                    <p>
-                        Please rate and review your completed
-                        tutoring appointments.
-                    </p>
-
-                    <div class="row">
-
-                        @foreach (var review in Model.AwaitingReviews)
-                        {
-                            <div class="col-md-6 col-lg-4 mb-3">
-
+                    <div class="reviews-vertical-scroll">
+                        <div class="reviews-vertical-track">
+                            @foreach (var review in Model.AwaitingReviews)
+                            {
                                 <div class="review-item">
-
-                                    <h5>
-                                        @review.TutorName
-                                    </h5>
+                                    <h5>@review.TutorName</h5>
 
                                     <form asp-controller="Student" asp-action="SubmitReview" method="post">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="appointmentId" value="@review.AppointmentId" />
                                         <div class="mb-3">
-                                            <label for="rating-@review.AppointmentId" class="form-label">Rating</label>
+                                            <label for="rating-@review.AppointmentId" class="form-label"> Rating </label>
                                             <select id="rating-@review.AppointmentId" name="rating" class="form-select" required>
-                                                <option value=""> Select a rating </option>
-                                                <option value="1"> 1 - Poor </option>
-                                                <option value="2"> 2 - Fair </option>
-                                                <option value="3"> 3 - Good </option>
-                                                <option value="4"> 4 - Very Good </option>
-                                                <option value="5"> 5 - Excellent </option>
+                                                <option value="">Select a rating</option>
+                                                <option value="1">1 - Poor</option>
+                                                <option value="2">2 - Fair</option>
+                                                <option value="3">3 - Good</option>
+                                                <option value="4">4 - Very Good</option>
+                                                <option value="5">5 - Excellent</option>
                                             </select>
                                         </div>
 
@@ -225,13 +227,13 @@
                                             <textarea id="comment-@review.AppointmentId" name="comment" class="form-control" rows="4" placeholder="Write your review..." required></textarea>
                                         </div>
 
-                                        <button type="submit" class="btn btn-primary"> Submit Review </button>
+                                        <button type="submit" class="btn btn-primary">
+                                            Submit Review
+                                        </button>
                                     </form>
                                 </div>
-
-                            </div>
-                        }
-
+                            }
+                        </div>
                     </div>
                 }
                 else
@@ -240,7 +242,6 @@
                         You do not have any appointments awaiting review.
                     </div>
                 }
-
             </section>
 
     <section class="dashboard-card tutors-card">
