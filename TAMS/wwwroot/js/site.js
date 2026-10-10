@@ -169,7 +169,6 @@ function searchCourses() {
     }
 }
 
-
 function searchTutors() {
     var input = document.getElementById("tutorSearch");
     var filter = input.value.toLowerCase();
@@ -188,58 +187,52 @@ function searchTutors() {
 }
 
 const subjectSelect = document.getElementById("subjectSelect");
-const courseBubbles = document.querySelectorAll(".course-bubble");
-const noCoursesMessage = document.getElementById("noCoursesMessage");
 
-function updateCourses() {
-    const selectedSubject = subjectSelect.value;
-    let visibleCourses = 0;
+if (subjectSelect) {
+    const courseBubbles = document.querySelectorAll(".course-bubble");
+    const noCoursesMessage = document.getElementById("noCoursesMessage");
+
+    function updateCourses() {
+        const selectedSubject = subjectSelect.value;
+        let visibleCourses = 0;
+
+        courseBubbles.forEach(function (bubble) {
+            const courseSubject = bubble.getAttribute("data-subject");
+            const checkbox = bubble.querySelector("input");
+
+            if (courseSubject === selectedSubject) {
+                bubble.style.display = "inline-flex";
+                visibleCourses++;
+            }
+            else {
+                bubble.style.display = "none";
+                if (checkbox) { checkbox.checked = false; }
+                bubble.classList.remove("selected");
+            }
+        });
+
+        if (noCoursesMessage) {
+            noCoursesMessage.style.display =
+                visibleCourses === 0 && selectedSubject !== "" ? "block" : "none";
+        }
+    }
+
     courseBubbles.forEach(function (bubble) {
-        const courseSubject = bubble.getAttribute("data-subject");
         const checkbox = bubble.querySelector("input");
-
-        if (courseSubject === selectedSubject) {
-            bubble.style.display = "inline-flex";
-            visibleCourses++;
-        }
-        else {
-            bubble.style.display = "none";
-            checkbox.checked = false; // Unselect courses that don't belong to the selected subject.
-            bubble.classList.remove("selected");
-        }
+        if (!checkbox) return;
+        if (checkbox.checked) { bubble.classList.add("selected"); }
+        bubble.addEventListener("click", function (event) {
+            if (event.target === checkbox) {
+                bubble.classList.toggle("selected", checkbox.checked);
+                return;
+            }
+            checkbox.checked = !checkbox.checked;
+            bubble.classList.toggle("selected", checkbox.checked);
+        });
     });
-
-    if (visibleCourses === 0 && selectedSubject !== "") {
-        noCoursesMessage.style.display = "block";
-    }
-    else {
-        noCoursesMessage.style.display = "none";
-    }
+    subjectSelect.addEventListener("change", updateCourses);
+    updateCourses();
 }
-
-
-// Change bubble appearance when selected
-courseBubbles.forEach(function (bubble) {
-    const checkbox = bubble.querySelector("input");
-    if (checkbox.checked) {
-        bubble.classList.add("selected");
-    }
-
-    bubble.addEventListener("click", function () {
-        checkbox.checked = !checkbox.checked;
-        if (checkbox.checked) {
-            bubble.classList.add("selected");
-        }
-        else {
-            bubble.classList.remove("selected");
-        }
-    });
-});
-// Update courses when subject changes
-subjectSelect.addEventListener("change", updateCourses);
-
-// Run when page loads
-updateCourses();
 
 
 //Student Dashboard search
@@ -335,3 +328,94 @@ function searchAdminStudents() {
             studentRows.length > 0 && visibleCount === 0 ? "" : "none";
     }
 }
+
+
+async function openTutorModal(url, modalId) {
+    try {
+        const response = await fetch(url, {
+            method: "GET",
+            credentials: "same-origin",
+            headers: {
+                "X-Requested-With": "XMLHttpRequest"
+            }
+        });
+
+        if (!response.ok) { throw new Error("Could not retrieve the tutor information."); }
+        const html = await response.text();
+        const parsedDocument = new DOMParser().parseFromString(html,
+            "text/html"
+        );
+
+        const modal = parsedDocument.getElementById(modalId);
+
+        if (!modal) {
+            throw new Error("The requested popup was not found. Check the tutor ID and login session.");
+        }
+        const existingModal = document.getElementById(modalId);
+        if (existingModal) { existingModal.remove(); }
+
+        const currentModal = document.importNode(modal, true);
+
+        currentModal.style.display = "flex";
+        currentModal.setAttribute("aria-hidden", "false");
+
+        document.body.appendChild(currentModal);
+        document.body.style.overflow = "hidden";
+
+        // Put keyboard focus inside the popup.
+        const firstInput = currentModal.querySelector(
+            "input:not([type='hidden']), button, select, textarea"
+        );
+
+        if (firstInput) {
+            firstInput.focus();
+        }
+    } catch (error) {
+        console.error("Tutor popup error:", error);
+        alert("Could not open the tutor popup. Please refresh the page and try again.");
+    }
+}
+
+function closeTutorModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {  modal.remove(); }
+    const tutorModalOpen = document.querySelector(".tutor-modal") !== null;
+    const otherModalIds = ["addSubjectModal", "editSubjectModal", "addCourseModal", "editCourseModal"];
+    const otherModalOpen = otherModalIds.some(function (id) {
+        const element = document.getElementById(id);
+        return element && window.getComputedStyle(element).display !== "none";
+    });
+    if (!tutorModalOpen && !otherModalOpen) {
+        document.body.style.overflow = "";
+    }
+}
+
+document.addEventListener("click", function (event) {
+    const modal = event.target.closest(".tutor-modal");
+    if (modal && event.target === modal) {
+        closeTutorModal(modal.id);
+    }
+});
+
+document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") {
+        document.querySelectorAll(".tutor-modal").forEach(function (modal) {
+            closeTutorModal(modal.id);
+        });
+    }
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+    const editModal = document.getElementById("editTutorModal");
+    const scheduleModal = document.getElementById("tutorScheduleModal");
+
+    if (editModal) {
+        editModal.style.display = "flex";
+        editModal.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+    } else if (scheduleModal) {
+        scheduleModal.style.display = "flex";
+        scheduleModal.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+    }
+});

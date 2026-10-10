@@ -153,12 +153,19 @@
                                 <td>@tutor.PhoneNumber</td>
                                 <td>
                                     <div class="table-actions">
-                                        <a asp-controller="Admin" asp-action="Dashboard" asp-route-editTutorId="@tutor.TutorId" class="small-action action-edit">Edit</a>
+                                        <button type="button" class="small-action action-edit" onclick="openTutorModal('@Url.Action("Dashboard", "Admin", new { editTutorId = tutor.TutorId })', 'editTutorModal')">
+                                            Edit
+                                        </button>
                                         <form asp-controller="Admin" asp-action="DeleteTutor" method="post" onsubmit="return confirm('Are you sure you want to delete this tutor?');">
+                                            @Html.AntiForgeryToken()
                                             <input type="hidden" name="id" value="@tutor.TutorId" />
-                                            <button type="submit" class="small-action action-delete">Delete</button>
+                                            <button type="submit" class="small-action action-delete">
+                                                Delete
+                                            </button>
                                         </form>
-                                        <a asp-controller="Admin" asp-action="Dashboard" asp-route-viewTutorId="@tutor.TutorId" class="small-action action-view">Schedule</a>
+                                        <button type="button" class="small-action action-view" onclick="openTutorModal('@Url.Action("Dashboard", "Admin", new { viewTutorId = tutor.TutorId })', 'tutorScheduleModal')">
+                                            Schedule
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -178,85 +185,132 @@
         </div>
     </section>
 
+    @* Edit Tutor popup *@
     @if (ViewBag.EditTutor != null)
     {
         var tutorToEdit = (Tutor)ViewBag.EditTutor;
-        <section class="dashboard-section detail-panel">
-            <div class="section-heading">
-                <div>
-                    <p class="section-kicker">ACCOUNT DETAILS</p>
-                    <h2>Edit Tutor Information</h2>
-                </div>
-             </div>
-            <form asp-controller="Admin" asp-action="UpdateTutor" method="post" class="admin-form">
-                <input type="hidden" name="tutorId" value="@tutorToEdit.TutorId" />
-                <div class="admin-form-grid">
-                    <div>
-                        <label class="admin-label">First Name</label>
-                        <input name="fName" value="@tutorToEdit.FName" class="admin-input" required />
-                    </div>
+        <div id="editTutorModal" class="tutor-modal" style="display:none;" aria-hidden="true">
+            <div class="tutor-modal-content" role="dialog" aria-modal="true" aria-labelledby="editTutorTitle">
+                <button type="button" class="tutor-modal-close" aria-label="Close Edit Tutor popup" onclick="closeTutorModal('editTutorModal')">
+                    &times;
+                </button>
 
-                    <div>
-                        <label class="admin-label">Last Name</label>
-                        <input name="lName" value="@tutorToEdit.LName" class="admin-input" required />
-                    </div>
+                <p class="section-kicker">ACCOUNT DETAILS</p>
+                <h2 id="editTutorTitle">Edit Tutor Information</h2>
+                <p class="modal-subtitle">
+                    Update the selected tutor's account information.
+                </p>
 
-                    <div>
-                        <label class="admin-label">Subject</label>
-                        <input name="subject" value="@tutorToEdit.Subject" class="admin-input" required />
+                <form asp-controller="Admin" asp-action="UpdateTutor" method="post" class="admin-form">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="tutorId" value="@tutorToEdit.TutorId" />
+                    <div class="admin-form-grid">
+                        <div>
+                            <label class="admin-label" for="editTutorFName">First Name </label>
+                            <input id="editTutorFName" name="fName" value="@tutorToEdit.FName" class="admin-input" required />
+                        </div>
+                        <div>
+                            <label class="admin-label" for="editTutorLName">Last Name </label>
+                            <input id="editTutorLName" name="lName" value="@tutorToEdit.LName" class="admin-input" required />
+                        </div>
+                        <div>
+                            <label class="admin-label" for="editTutorSubject">Subject </label>
+                            <input id="editTutorSubject" name="subject" value="@tutorToEdit.Subject" class="admin-input" required />
+                        </div>
+                        <div>
+                            <label class="admin-label" for="editTutorEmail">Email </label>
+                            <input id="editTutorEmail" name="email" type="email" value="@tutorToEdit.Email" class="admin-input" required />
+                        </div>
+                        <div>
+                            <label class="admin-label" for="editTutorPhone">Phone Number </label>
+                            <input id="editTutorPhone" name="phoneNumber" value="@tutorToEdit.PhoneNumber" class="admin-input" />
+                        </div>
                     </div>
-
-                    <div>
-                        <label class="admin-label">Email</label>
-                        <input name="email" type="email" value="@tutorToEdit.Email" class="admin-input" required />
+                    <div class="form-actions">
+                        <button type="submit" class="admin-primary-button">
+                            Save Changes
+                        </button>
+                        <button type="button" class="admin-secondary-button" onclick="closeTutorModal('editTutorModal')">
+                            Cancel
+                        </button>
                     </div>
-
-                    <div>
-                        <label class="admin-label">Phone Number</label>
-                        <input name="phoneNumber" value="@tutorToEdit.PhoneNumber" class="admin-input" />
-                    </div>
-                </div>
-                <div class="form-actions">
-                    <button type="submit" class="admin-primary-button">Save Changes</button>
-                    <a asp-controller="Admin" asp-action="Dashboard" class="admin-secondary-button">Cancel</a>
-                </div>
-            </form>
-        </section>
+                </form>
+            </div>
+        </div>
     }
 
+    @* Tutor Schedule popup *@
     @if (ViewBag.ViewTutorSchedules != null)
     {
-        var schedules = ViewBag.ViewTutorSchedules as List<Schedule> ?? new List<Schedule>();
+        var schedules = ViewBag.ViewTutorSchedules as List<Schedule>
+        ?? new List<Schedule>();
         var tutorName = ViewBag.ViewTutorName as string ?? "Tutor";
-        <section class="dashboard-section detail-panel">
-            <div class="section-heading">
-                <div><p class="section-kicker">AVAILABILITY</p><h2>Schedule for @tutorName</h2></div>
-                <a asp-controller="Admin" asp-action="Dashboard" class="admin-secondary-button">Close</a>
-            </div>
-            <div class="admin-table-wrap">
-                <table class="admin-table">
-                    <thead><tr><th>Date</th><th>Start Time</th><th>End Time</th><th>Action</th></tr></thead>
-                    <tbody>
-                        @if (schedules.Count > 0)
-                        {
-                            @foreach (var slot in schedules.OrderBy(s => s.Date).ThenBy(s => s.StartTime))
+
+        <div id="tutorScheduleModal" class="tutor-modal" style="display:none;" aria-hidden="true">
+            <div class="tutor-modal-content tutor-schedule-content" role="dialog" aria-modal="true" aria-labelledby="tutorScheduleTitle">
+                <button type="button" class="tutor-modal-close" aria-label="Close Schedule popup" onclick="closeTutorModal('tutorScheduleModal')">
+                    &times;
+                </button>
+
+                <p class="section-kicker">AVAILABILITY</p>
+                <h2 id="tutorScheduleTitle">Schedule for @tutorName</h2>
+                <p class="modal-subtitle">
+                    Review this tutor's available schedule slots.
+                </p>
+
+                <div class="admin-table-wrap tutor-schedule-table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Start Time</th>
+                                <th>End Time</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @if (schedules.Count > 0)
+                            {
+                                @foreach (var slot in schedules
+                                                        .OrderBy(s => s.Date)
+                                                        .ThenBy(s => s.StartTime))
+                                {
+                                    <tr>
+                                        <td>@slot.Date.ToString("MM/dd/yyyy")</td>
+                                        <td>@slot.StartTime.ToString(@"hh\:mm")</td>
+                                        <td>@slot.EndTime.ToString(@"hh\:mm")</td>
+                                        <td>
+                                            <form asp-controller="Admin" asp-action="DeleteScheduleSlot" method="post" onsubmit="return confirm('Delete this time slot?');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="scheduleId" value="@slot.ScheduleId" />
+                                                <button type="submit" class="small-action action-delete">
+                                                    Delete
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
                             {
                                 <tr>
-                                    <td>@slot.Date.ToString("MM/dd/yyyy")</td>
-                                    <td>@slot.StartTime.ToString(@"hh\:mm")</td>
-                                    <td>@slot.EndTime.ToString(@"hh\:mm")</td>
-                                    <td><form asp-controller="Admin" asp-action="DeleteScheduleSlot" method="post" onsubmit="return confirm('Delete this time slot?');"><input type="hidden" name="scheduleId" value="@slot.ScheduleId" /><button type="submit" class="small-action action-delete">Delete</button></form></td>
+                                    <td colspan="4" class="empty-state">
+                                        No schedule slots found for this tutor.
+                                    </td>
                                 </tr>
                             }
-                        }
-                        else
-                        {
-                            <tr><td colspan="4" class="empty-state">No schedule slots found.</td></tr>
-                        }
-                    </tbody>
-                </table>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="admin-secondary-button" onclick="closeTutorModal('tutorScheduleModal')">
+                        Close
+                    </button>
+                </div>
             </div>
-        </section>
+        </div>
     }
 
 

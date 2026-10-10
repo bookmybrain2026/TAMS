@@ -26,23 +26,27 @@ namespace TAMS.Controllers
             if (adminId == null) { return RedirectToAction("Login", "Login"); }
 
             ViewBag.AdminId = adminId;
-            ViewBag.Tutors = dBContext.Tutor .Find(_ => true) .ToList(); // Load all tutors.
-            ViewBag.Students = dBContext.Student .Find(_ => true) .ToList(); // Load all students.
+            ViewBag.Tutors = dBContext.Tutor.Find(_ => true).ToList();
+            ViewBag.Students = dBContext.Student.Find(_ => true).ToList();
 
-            // Load and sort appointments.
-            var appointments = dBContext.Appointments.Find(_ => true).SortBy(a => a.AppointmentDate).ToList();
+            var appointments = dBContext.Appointments
+                .Find(_ => true)
+                .SortBy(a => a.AppointmentDate)
+                .ToList();
 
-            // Load the tutor and student associated with each appointment.
             foreach (var appointment in appointments)
             {
                 appointment.Tutor = dBContext.Tutor
-                    .Find(t => t.TutorId == appointment.TutorId).FirstOrDefault();
+                    .Find(t => t.TutorId == appointment.TutorId)
+                    .FirstOrDefault();
+
                 appointment.Student = dBContext.Student
-                    .Find(s => s.StudentId == appointment.StudentId).FirstOrDefault();
+                    .Find(s => s.StudentId == appointment.StudentId)
+                    .FirstOrDefault();
             }
+
             ViewBag.Appointments = appointments;
 
-            // Load tutor information for editing.
             if (editTutorId.HasValue)
             {
                 var tutor = dBContext.Tutor
@@ -53,11 +57,11 @@ namespace TAMS.Controllers
                 {
                     ViewBag.EditTutor = tutor;
                     ViewBag.EditLogin = dBContext.Login
-                        .Find(l => l.UserId == editTutorId.Value).FirstOrDefault();
+                        .Find(l => l.UserId == editTutorId.Value)
+                        .FirstOrDefault();
                 }
             }
 
-            // Load schedules for a selected tutor.
             if (viewTutorId.HasValue)
             {
                 var tutor = dBContext.Tutor
@@ -67,13 +71,18 @@ namespace TAMS.Controllers
                 if (tutor != null)
                 {
                     var schedules = dBContext.Schedule
-                        .Find(s => s.TutorId == viewTutorId.Value).ToList()
-                        .OrderBy(s => s.Date).ThenBy(s => s.StartTime).ToList();
+                        .Find(s => s.TutorId == viewTutorId.Value)
+                        .ToList()
+                        .OrderBy(s => s.Date)
+                        .ThenBy(s => s.StartTime)
+                        .ToList();
+
                     ViewBag.ViewTutorSchedules = schedules;
                     ViewBag.ViewTutorName = $"{tutor.FName} {tutor.LName}";
                     ViewBag.CurrentTutorId = viewTutorId.Value;
                 }
             }
+
             return View("AdminDashboard");
         }
 
@@ -166,19 +175,37 @@ namespace TAMS.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public IActionResult UpdateTutor(int tutorId, string fName, string lName, string subject, string email, string phoneNumber)
         {
             var adminId = HttpContext.Session.GetInt32("AdminId");
-            if (adminId == null){ return RedirectToAction("Login", "Login"); }
+            if (adminId == null) { return RedirectToAction("Login", "Login"); }
 
             var tutor = dBContext.Tutor
-                .Find(t => t.TutorId == tutorId).FirstOrDefault();
+                .Find(t => t.TutorId == tutorId)
+                .FirstOrDefault();
 
-            if (tutor == null) { return NotFound(); }
+            if (tutor == null)
+            {
+                TempData["Error"] = "The selected tutor could not be found.";
+                return RedirectToAction("Dashboard");
+            }
 
-            // Check that another tutor is not using the email.
+            fName = fName?.Trim() ?? "";
+            lName = lName?.Trim() ?? "";
+            subject = subject?.Trim() ?? "";
+            email = email?.Trim() ?? "";
+            phoneNumber = phoneNumber?.Trim() ?? "";
+
+            if (string.IsNullOrWhiteSpace(fName) || string.IsNullOrWhiteSpace(lName) || string.IsNullOrWhiteSpace(subject) || string.IsNullOrWhiteSpace(email))
+            {
+                TempData["Error"] = "Please complete all required tutor fields.";
+                return RedirectToAction("Dashboard", new { editTutorId = tutorId });
+            }
+
             var duplicateEmail = dBContext.Tutor
-                .Find(t => t.Email == email && t.TutorId != tutorId).FirstOrDefault();
+                .Find(t => t.Email == email && t.TutorId != tutorId)
+                .FirstOrDefault();
 
             if (duplicateEmail != null)
             {
@@ -195,7 +222,8 @@ namespace TAMS.Controllers
 
             dBContext.Tutor.UpdateOne(t => t.TutorId == tutorId, update);
 
-            return RedirectToAction("Dashboard", new { editTutorId = tutorId });
+            TempData["Success"] = "Tutor information updated successfully.";
+            return RedirectToAction("Dashboard");
         }
 
         [HttpPost]
