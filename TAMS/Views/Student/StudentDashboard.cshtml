@@ -279,9 +279,7 @@
 
                                     <span class="text-muted">
                                         (@tutor.ReviewCount
-                                        @(tutor.ReviewCount == 1
-                                            ? "review"
-                                            : "reviews"))
+                                        @(tutor.ReviewCount == 1 ? "review" : "reviews"))
                                     </span>
                                 }
                                 else
@@ -337,7 +335,7 @@
 
                 @if (tutors.Any())
                 {
-                    <form asp-controller="Student" asp-action="Scheduler" method="get">
+                    <form asp-controller="Appointment" asp-action="Scheduler" method="get">
                         <input type="hidden" name="studentId" value="@Model.StudentId" />
                         <div class="mb-3">
                             <label for="tutorId" class="form-label"> Select a Tutor </label>
