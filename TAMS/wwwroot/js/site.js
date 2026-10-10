@@ -160,3 +160,42 @@ subjectSelect.addEventListener("change", updateCourses);
 
 // Run when page loads.
 updateCourses();
+
+
+//Student Dashboard search
+function searchTutors() {
+    const searchInput = document
+        .getElementById("tutorSearch")
+        .value
+        .trim()
+        .toLowerCase();
+
+    const tutorCards = document.querySelectorAll(
+        "#tutorResults .tutor-result-item"
+    );
+
+    const noResultsMessage = document.getElementById(
+        "noTutorsMatch"
+    );
+
+    let visibleTutors = 0;
+
+    tutorCards.forEach(function (card) {
+        const tutorInfo = card
+            .getAttribute("data-search")
+            .toLowerCase();
+
+        const matches = tutorInfo.includes(searchInput);
+
+        card.style.display = matches ? "" : "none";
+
+        if (matches) {
+            visibleTutors++;
+        }
+    });
+
+    if (noResultsMessage) {
+        noResultsMessage.style.display =
+            visibleTutors === 0 ? "block" : "none";
+    }
+}

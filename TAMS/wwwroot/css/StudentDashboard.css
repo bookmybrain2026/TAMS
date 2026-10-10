@@ -1,0 +1,570 @@
+﻿body {
+    min-height: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: #fff0cf;
+}
+
+.student-dashboard {
+    --bmb-cream: #fff0cf;
+    --bmb-yellow: #ffbd35;
+    --bmb-orange: #f4a51c;
+    --bmb-brown: #80451e;
+    --bmb-dark: #302014;
+    --bmb-white: #ffffff;
+    --bmb-muted: #8a7967;
+    --bmb-border: #e7d8bf;
+    --bmb-soft: #fffdf8;
+    min-height: 100vh;
+    padding: 28px;
+    background: var(--bmb-cream);
+    color: var(--bmb-dark);
+    font-family: "Segoe UI", Arial, sans-serif;
+    box-sizing: border-box;
+}
+
+.student-dashboard *, .student-dashboard *::before, .student-dashboard *::after {
+    box-sizing: border-box;
+}
+
+.student-dashboard .dashboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 24px 30px;
+    margin-bottom: 20px;
+    background: var(--bmb-yellow);
+    border: 1px solid rgba(128, 69, 30, 0.08);
+    border-radius: 16px;
+    box-shadow: 0 5px 18px rgba(93, 57, 20, 0.08);
+}
+
+.student-dashboard .dashboard-header h1 {
+    margin: 0;
+    color: var(--bmb-dark);
+    font-size: clamp(24px, 3vw, 34px);
+    font-weight: 800;
+    letter-spacing: -1px;
+    overflow-wrap: anywhere;
+}
+
+.student-dashboard .dashboard-header p {
+    margin: 6px 0 0;
+    color: var(--bmb-brown);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.student-dashboard .dashboard-tag {
+    flex-shrink: 0;
+    padding: 9px 16px;
+    background: rgba(255, 255, 255, 0.55);
+    border-radius: 30px;
+    color: var(--bmb-dark);
+    font-size: 12px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.student-dashboard .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 18px;
+    align-items: stretch;
+}
+
+.student-dashboard .dashboard-card {
+    min-width: 0;
+    min-height: 0;
+    padding: 20px;
+    background: var(--bmb-white);
+    border: 1px solid var(--bmb-border);
+    border-radius: 16px;
+    box-shadow: 0 5px 16px rgba(93, 57, 20, 0.05);
+}
+
+.student-dashboard .dashboard-section-title {
+    display: inline-block;
+    align-self: flex-start;
+    margin: 0 0 18px;
+    padding: 9px 16px;
+    background: var(--bmb-yellow);
+    border-radius: 30px;
+    color: var(--bmb-dark);
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1.4;
+}
+
+.student-dashboard .profile-card {
+    grid-column: span 4;
+}
+
+.student-dashboard .appointments-card {
+    grid-column: span 8;
+}
+
+.student-dashboard .reviews-card {
+    grid-column: 1 / -1;
+}
+
+.student-dashboard .tutors-card {
+    grid-column: span 7;
+    height: 420px;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.student-dashboard .booking-card {
+    grid-column: span 5;
+    height: 420px;
+}
+
+.student-dashboard .profile-detail {
+    padding: 11px 0;
+    border-bottom: 1px solid #f0e5d3;
+    overflow-wrap: anywhere;
+}
+
+.student-dashboard .profile-detail:last-of-type {
+    border-bottom: none;
+}
+
+.student-dashboard .profile-detail strong {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--bmb-muted);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.student-dashboard .profile-detail span {
+    color: var(--bmb-dark);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.student-dashboard .form-label, .student-dashboard label {
+    display: block;
+    margin-bottom: 7px;
+    color: var(--bmb-dark);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.student-dashboard .form-control, .student-dashboard .form-select {
+    width: 100%;
+    min-width: 0;
+    min-height: 43px;
+    padding: 10px 12px;
+    background-color: var(--bmb-soft);
+    border: 1px solid var(--bmb-border);
+    border-radius: 8px;
+    color: var(--bmb-dark);
+    font-size: 14px;
+}
+
+.student-dashboard textarea.form-control {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.student-dashboard .form-control:focus, .student-dashboard .form-select:focus {
+    background-color: var(--bmb-white);
+    border-color: var(--bmb-orange);
+    box-shadow: 0 0 0 3px rgba(244, 165, 28, 0.16);
+    outline: none;
+}
+
+.student-dashboard .btn {
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.student-dashboard .btn:focus-visible {
+    outline: 3px solid var(--bmb-brown);
+    outline-offset: 3px;
+}
+
+.student-dashboard .btn-primary, .student-dashboard .btn-info {
+    background: var(--bmb-yellow);
+    border-color: var(--bmb-yellow);
+    color: var(--bmb-dark);
+}
+
+.student-dashboard .btn-primary:hover, .student-dashboard .btn-info:hover {
+    background: var(--bmb-orange);
+    border-color: var(--bmb-orange);
+    color: var(--bmb-dark);
+    transform: translateY(-1px);
+}
+
+.student-dashboard .btn-success {
+    background: var(--bmb-brown);
+    border-color: var(--bmb-brown);
+    color: var(--bmb-white);
+}
+
+.student-dashboard .btn-success:hover {
+    background: var(--bmb-dark);
+    border-color: var(--bmb-dark);
+    color: var(--bmb-white);
+}
+
+
+.student-dashboard .btn-danger {
+    background: #c94c42;
+    border-color: #c94c42;
+    color: var(--bmb-white);
+}
+
+.student-dashboard .btn-danger:hover {
+    background: #a93830;
+    border-color: #a93830;
+    color: var(--bmb-white);
+}
+
+.student-dashboard .btn-secondary {
+    background: var(--bmb-muted);
+    border-color: var(--bmb-muted);
+    color: var(--bmb-white);
+}
+
+.student-dashboard .btn-secondary:hover {
+    background: var(--bmb-dark);
+    border-color: var(--bmb-dark);
+    color: var(--bmb-white);
+}
+
+
+.student-dashboard .table-responsive {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.student-dashboard .table {
+    margin-bottom: 0;
+    color: var(--bmb-dark);
+    font-size: 13px;
+    vertical-align: middle;
+}
+
+.student-dashboard .table thead th {
+    padding: 12px 10px;
+    background: #fff6e4;
+    color: var(--bmb-dark);
+    border-bottom: 2px solid var(--bmb-border);
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.student-dashboard .table tbody td {
+    padding: 12px 10px;
+}
+
+.student-dashboard .table > :not(caption) > * > * {
+    border-color: #f0e5d3;
+}
+
+.student-dashboard .table-warning > * > * {
+    --bs-table-bg: #fff1cf;
+}
+
+.student-dashboard .table-success > * > * {
+    --bs-table-bg: #f0f4e8;
+}
+
+.student-dashboard .table-danger > * > * {
+    --bs-table-bg: #fce9e5;
+}
+
+.student-dashboard .reviews-card {
+    width: 100%;
+}
+
+.student-dashboard .review-item {
+    height: auto;
+    padding: 18px;
+    margin-bottom: 14px;
+    background: var(--bmb-soft);
+    border: 1px solid var(--bmb-border);
+    border-radius: 12px;
+}
+
+.student-dashboard .review-item:last-child {
+    margin-bottom: 0;
+}
+
+.student-dashboard .review-item h5 {
+    margin-bottom: 14px;
+    color: var(--bmb-dark);
+    font-size: 16px;
+    font-weight: 800;
+}
+
+
+.student-dashboard .tutors-card > h2, .student-dashboard .tutors-card > p, .student-dashboard .tutors-card > form {
+    flex-shrink: 0;
+}
+
+.student-dashboard .tutors-card > p {
+    margin-bottom: 12px;
+    color: var(--bmb-muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+
+.student-dashboard .tutors-card > form {
+    margin-bottom: 12px;
+}
+
+
+.student-dashboard .tutors-card > .row {
+    flex: 1 1 0;
+    min-height: 0;
+    min-width: 0;
+    align-content: start;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0 6px 8px 0;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+
+.student-dashboard .tutor-card {
+    height: auto;
+    min-width: 0;
+    padding: 16px;
+    background: var(--bmb-soft);
+    border: 1px solid var(--bmb-border);
+    border-radius: 12px;
+    overflow-wrap: anywhere;
+}
+
+.student-dashboard .tutor-card h5 {
+    margin-bottom: 12px;
+    color: var(--bmb-dark);
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.student-dashboard .tutor-card p {
+    margin-bottom: 10px;
+    color: var(--bmb-dark);
+    font-size: 13px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.student-dashboard .tutor-card p strong {
+    color: var(--bmb-brown);
+}
+
+.student-dashboard .tutor-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.student-dashboard .tutor-actions .btn {
+    flex: 1 1 auto;
+}
+
+.student-dashboard .tutors-card > .row {
+    scrollbar-width: thin;
+    scrollbar-color: var(--bmb-border) #fff6e4;
+}
+
+.student-dashboard .tutors-card > .row::-webkit-scrollbar {
+    width: 7px;
+}
+
+.student-dashboard .tutors-card > .row::-webkit-scrollbar-thumb {
+    background: var(--bmb-border);
+    border-radius: 10px;
+}
+
+.student-dashboard .tutors-card > .row::-webkit-scrollbar-track {
+    background: #fff6e4;
+    border-radius: 10px;
+}
+
+.student-dashboard .booking-card > p {
+    margin-bottom: 20px;
+    color: var(--bmb-muted);
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+.student-dashboard .booking-card form {
+    width: 100%;
+}
+
+.student-dashboard .dashboard-empty {
+    padding: 20px 12px;
+    color: var(--bmb-muted);
+    font-size: 14px;
+    line-height: 1.7;
+    text-align: center;
+}
+
+.student-dashboard .dashboard-empty p:last-child {
+    margin-bottom: 0;
+}
+
+.student-dashboard .alert {
+    border-radius: 10px;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.student-dashboard .alert-info {
+    background: #fff6e4;
+    border-color: var(--bmb-border);
+    color: var(--bmb-brown);
+}
+
+.student-dashboard .text-muted {
+    color: var(--bmb-muted) !important;
+}
+
+.appointments-scroll {
+    max-height: 350px;
+    overflow-y: auto;
+    overflow-x: auto;
+}
+
+.appointments-scroll thead th {
+    position: sticky;
+    top: 0;
+    background-color: #f8f9fa;
+    z-index: 2;
+}
+
+@media (max-width: 1000px) {
+    .student-dashboard .profile-card {
+        grid-column: span 5;
+    }
+
+    .student-dashboard .appointments-card {
+        grid-column: span 7;
+    }
+
+    .student-dashboard .reviews-card {
+        grid-column: 1 / -1;
+    }
+
+    .student-dashboard .tutors-card {
+        grid-column: span 7;
+        height: 420px;
+    }
+
+    .student-dashboard .booking-card {
+        grid-column: span 5;
+        height: 420px;
+    }
+}
+
+@media (max-width: 700px) {
+    .student-dashboard {
+        padding: 16px;
+    }
+
+    .student-dashboard .dashboard-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 14px;
+    }
+
+    .student-dashboard .profile-card, .student-dashboard .appointments-card, 
+    .student-dashboard .reviews-card, .student-dashboard .tutors-card, 
+    .student-dashboard .booking-card {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+
+    .student-dashboard .dashboard-header {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 20px;
+        margin-bottom: 14px;
+    }
+
+    .student-dashboard .dashboard-header h1 {
+        font-size: 26px;
+    }
+
+    .student-dashboard .dashboard-card {
+        padding: 16px;
+    }
+
+    .student-dashboard .tutors-card {
+        height: 420px;
+    }
+
+    .student-dashboard .booking-card {
+        height: auto;
+        min-height: 230px;
+    }
+
+    .student-dashboard .table {
+        font-size: 12px;
+    }
+
+    .student-dashboard .table thead th,
+    .student-dashboard .table tbody td {
+        padding: 9px 8px;
+    }
+
+    .student-dashboard .dashboard-section-title {
+        font-size: 13px;
+    }
+}
+
+
+@media (max-width: 400px) {
+    .student-dashboard {
+        padding: 10px;
+    }
+
+    .student-dashboard .dashboard-header {
+        padding: 16px;
+    }
+
+    .student-dashboard .dashboard-header h1 {
+        font-size: 23px;
+    }
+
+    .student-dashboard .dashboard-card {
+        padding: 13px;
+    }
+
+    .student-dashboard .tutor-actions {
+        flex-direction: column;
+    }
+
+    .student-dashboard .tutor-actions .btn {
+        width: 100%;
+    }
+
+    .student-dashboard .input-group {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .student-dashboard .input-group .form-control {
+        width: 100%;
+        border-radius: 8px !important;
+    }
+
+    .student-dashboard .input-group .btn {
+        width: 100%;
+        border-radius: 8px !important;
+    }
+}
