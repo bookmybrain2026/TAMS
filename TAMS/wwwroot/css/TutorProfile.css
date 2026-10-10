@@ -1,0 +1,154 @@
+﻿.student-tutor-profile {
+    min-height: 100vh;
+    padding-bottom: 50px;
+    color: var(--bmb-dark);
+}
+
+.student-tutor-profile .tutors-heading h1 {
+    color: var(--bmb-dark);
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 10px;
+    overflow-wrap: anywhere;
+}
+
+.student-tutor-profile .tutors-heading p {
+    color: var(--bmb-muted);
+    font-size: 1.05rem;
+}
+
+.student-tutor-profile .tutor-card {
+    transition: none;
+}
+
+.student-tutor-profile .tutor-card:hover {
+    transform: none;
+    box-shadow: 0 4px 12px rgba(93, 57, 20, 0.07) !important;
+}
+
+.student-tutor-profile .tutor-profile-heading {
+    padding-top: 8px;
+}
+
+.student-tutor-profile .tutor-avatar {
+    flex-shrink: 0;
+}
+
+.student-tutor-profile .tutor-profile-heading .card-title {
+    color: var(--bmb-brown);
+    font-size: 1.5rem;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+
+.student-tutor-profile .tutor-detail-item {
+    height: 100%;
+    padding: 16px;
+    border: 1px solid var(--bmb-border);
+    border-radius: 10px;
+    background-color: var(--bmb-card-cream);
+}
+
+.student-tutor-profile .tutor-detail-label {
+    display: block;
+    margin-bottom: 7px;
+    color: var(--bmb-brown);
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.student-tutor-profile .tutor-detail-item p {
+    margin: 0;
+    color: var(--bmb-dark);
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+.student-tutor-profile .tutor-detail-rating {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 7px;
+}
+
+.student-tutor-profile .rating-score {
+    color: var(--bmb-brown);
+    font-weight: 800;
+}
+
+.student-tutor-profile .tutor-schedule-button {
+    display: inline-block;
+    padding: 12px 24px;
+    border: 1px solid var(--bmb-yellow);
+    border-radius: 9px;
+    background-color: var(--bmb-yellow);
+    color: var(--bmb-dark);
+    font-weight: 800;
+    text-decoration: none;
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.student-tutor-profile .tutor-schedule-button:hover {
+    background-color: var(--bmb-orange);
+    border-color: var(--bmb-orange);
+    color: var(--bmb-dark);
+    transform: translateY(-1px);
+}
+
+.student-tutor-profile .tutor-schedule-button:focus-visible {
+    outline: 3px solid rgba(128, 69, 30, 0.35);
+    outline-offset: 3px;
+}
+
+.student-tutor-profile .course-display-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.student-tutor-profile .course-display-bubble {
+    max-width: 100%;
+}
+
+.student-tutor-profile .tutor-review-card {
+    overflow-wrap: anywhere;
+}
+
+.student-tutor-profile .tutor-review-date {
+    display: block;
+    margin-top: 12px;
+    color: var(--bmb-muted);
+    font-size: 0.85rem;
+    letter-spacing: 0;
+}
+
+.student-tutor-profile .tutor-empty-state {
+    margin-top: 5px;
+}
+
+@media (max-width: 767px) {
+    .student-tutor-profile {
+        margin-top: 2rem !important;
+        padding-bottom: 30px;
+    }
+
+    .student-tutor-profile .tutors-heading h1 {
+        font-size: 2rem;
+    }
+
+    .student-tutor-profile .tutor-card .card-body {
+        padding: 20px;
+    }
+
+    .student-tutor-profile .tutor-detail-item {
+        padding: 14px;
+    }
+
+    .student-tutor-profile .course-display-bubble {
+        width: 100%;
+    }
+
+    .student-tutor-profile .tutor-schedule-button {
+        width: 100%;
+    }
+}

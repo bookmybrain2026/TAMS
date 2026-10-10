@@ -3,144 +3,263 @@
 @using TAMS.Models
 @using System.Linq
 
+@{
+    ViewData["Title"] = "Tutor Profile";
 
-<div class="d-flex justify-content-end">
-    <a class="btn btn-secondary"
-       href="@Url.Action("Dashboard", "Student", new { id = Context.Session.GetInt32("StudentId") })">
-        ← Back to Dashboard
-    </a>
-</div>
+    var courses = ViewBag.Courses as List<Course> ?? new List<Course>();
+}
 
-<h1>Tutor Profile</h1>
+<head>
+    <link href="~/css/Details.css" rel="stylesheet" />
+    <link href="~/css/OurTutors.css" rel="stylesheet" />
+    <link href="~/css/TutorProfile.css" rel="stylesheet" />
+</head>
 
-<hr />
+<div class="container mt-5 tutor-details-page student-tutor-profile">
+    <div class="mb-4">
+        <a class="btn btn-secondary tutor-back-button"
+           href="@Url.Action("Dashboard", "Student",
+                           new { id = Context.Session.GetInt32("StudentId") })">
+            &larr; Back to Dashboard
+        </a>
+    </div>
 
-<div class="card">
-    <div class="card-body">
-        <h2>
-            @Model.FName @Model.LName
-        </h2>
-        <p>
-            <strong>Average Rating:</strong>
-            @if (Model.ReviewCount > 0)
+    <div class="text-center mb-5 tutors-heading">
+        <h1>@Model.FName @Model.LName</h1>
+        <p>Tutor Profile</p>
+    </div>
+
+    <div class="card shadow-sm mb-4 tutor-card">
+        <div class="card-body">
+
+            <div class="tutor-profile-heading text-center mb-4">
+
+                <div class="tutor-avatar">
+                    @(
+                                        (Model.FName ?? "").FirstOrDefault().ToString().ToUpper()
+                                        +
+                                        (Model.LName ?? "").FirstOrDefault().ToString().ToUpper()
+                                        )
+                </div>
+
+                <h3 class="card-title mt-3 mb-1">
+                    @Model.FName @Model.LName
+                </h3>
+
+                <p class="text-muted mb-0">Tutor</p>
+            </div>
+
+            <hr />
+
+            <div class="row g-4 tutor-details-grid">
+                <div class="col-md-6">
+                    <div class="tutor-detail-item">
+                        <span class="tutor-detail-label">First Name</span>
+                        <p>@Model.FName</p>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="tutor-detail-item">
+                        <span class="tutor-detail-label">Last Name</span>
+                        <p>@Model.LName</p>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="tutor-detail-item">
+                        <span class="tutor-detail-label">Email</span>
+                        <p>
+                            @if (!string.IsNullOrWhiteSpace(Model.Email))
+                            {
+                                <a class="tutor-email-link"
+                                   href="mailto:@Model.Email">
+                                    @Model.Email
+                                </a>
+                            }
+                            else
+                            {
+                                <span>Not provided</span>
+                            }
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="tutor-detail-item">
+                        <span class="tutor-detail-label">Phone</span>
+                        <p>
+                            @(string.IsNullOrWhiteSpace(Model.PhoneNumber)
+                                                        ? "Not provided"
+                                                        : Model.PhoneNumber)
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="tutor-detail-item">
+                        <span class="tutor-detail-label">Subject</span>
+                        <p>
+                            @(string.IsNullOrWhiteSpace(Model.Subject)
+                                                        ? "Not provided"
+                                                        : Model.Subject)
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="tutor-detail-item">
+                        <span class="tutor-detail-label">Average Rating</span>
+
+                        <p class="tutor-detail-rating">
+                            @if (Model.ReviewCount > 0)
+                            {
+                                <span class="rating-score">
+                                    ★ @Model.AverageRating.ToString("0.0") / 5
+                                </span>
+
+                                <span class="review-count">
+                                    (@Model.ReviewCount
+                                    @(Model.ReviewCount == 1 ? "review" : "reviews"))
+                                </span>
+                             }
+                            else
+                            {
+                                <span class="no-rating">No ratings yet</span>
+                            }
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <a class="btn tutor-schedule-button" href="@Url.Action("Scheduler", "Appointment", new { tutorId = Model.TutorId })">
+                    View Schedule
+                </a>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4 tutor-card">
+        <div class="card-body">
+            <div class="tutor-section-heading">
+                <h3>Courses I Tutor</h3>
+                <p>Explore the courses this tutor can help you with.</p>
+            </div>
+
+            <hr />
+
+            @if (courses.Any())
             {
-                @for (int i = 1; i <= 5; i++)
-                {
-                    if (i <= Math.Round(Model.AverageRating))
+                <div class="course-display-list">
+
+                    @foreach (var course in courses)
                     {
-                        <span>⭐</span>
+                        <div class="course-display-bubble">
+                            <strong>@course.CourseCode</strong>
+
+                            @if (!string.IsNullOrWhiteSpace(course.CourseName))
+                            {
+                                <span>@course.CourseName</span>
+                            }
+                        </div>
                     }
-                    else
-                    {
-                        <span>☆</span>
-                    }
-                }
-                <strong>@Model.AverageRating.ToString("0.0")/5</strong>
-                <span class="text-muted">
-                    (@Model.ReviewCount @(Model.ReviewCount == 1 ? "review" : "reviews"))
-                </span>
+
+                </div>
             }
             else
             {
-                <span class="text-muted">No ratings yet</span>
+                <div class="tutor-empty-state">
+                    <h5>No Courses Listed</h5>
+                    <p>This tutor has not selected any courses yet.</p>
+                </div>
             }
-        </p>
-        <p>
-            <strong>Subject:</strong> @Model.Subject
-        </p>
 
-        <p>
-            <strong>Email:</strong> @Model.Email
-        </p>
+        </div>
+    </div>
 
-        <p>
-            <strong>Phone:</strong> @Model.PhoneNumber
-        </p>
+    <div class="card shadow-sm mb-5 tutor-card">
+        <div class="card-body">
 
-        <hr />
+            <div class="tutor-section-heading">
+                <h3>Student Reviews</h3>
+                <p>See what students think about this tutor.</p>
+            </div>
 
-        <h4>Courses Tutored</h4>
+            <hr />
 
-        @{
-            var courses = ViewBag.Courses as List<Course>
-            ?? new List<Course>();
-        }
+            <div class="tutor-review-summary text-center mb-4">
 
-        @if (courses.Any())
-        {
-            <ul>
-                @foreach (var course in courses)
+                @if (Model.ReviewCount > 0)
                 {
-                    <li>
-                        @course.CourseCode
-
-                        @if (!string.IsNullOrWhiteSpace(course.CourseName))
-                        {
-                            @: - @course.CourseName
-                        }
-                    </li>
+                    <div class="tutor-large-rating">
+                        <span class="tutor-stars">★</span>
+                        @Model.AverageRating.ToString("0.0")
+                        <span class="tutor-rating-out-of">/ 5</span>
+                    </div>
                 }
-            </ul>
-        }
-        else
-        {
-            <p class="text-muted">
-                No courses listed for this tutor.
-            </p>
-        }
+                else
+                {
+                    <div class="tutor-large-rating tutor-no-rating">
+                        Not rated yet
+                    </div>
+                }
 
-        <hr />
+                <p class="review-count mb-0">
+                    @Model.ReviewCount
+                    @(Model.ReviewCount == 1 ? "review" : "reviews")
+                </p>
 
-        <a class="btn btn-success"
-           href="@Url.Action("Scheduler","Appointment", new { tutorId = Model.TutorId })">
-            View Schedule
-        </a>
+            </div>
+
+            @if (Model.Reviews != null && Model.Reviews.Any())
+            {
+                @foreach (var review in Model.Reviews)
+                {
+                    <div class="tutor-review-card">
+
+                        <div class="tutor-review-rating">
+
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                if (i <= review.Rating)
+                                {
+                                    <span>★</span>
+                                }
+                                else
+                                {
+                                    <span class="empty-star">☆</span>
+                                }
+                            }
+
+                        <span class="tutor-review-score">
+                            @review.Rating / 5
+                        </span>
+                    </div>
+
+                    <p class="tutor-review-comment mb-0">
+                        @(string.IsNullOrWhiteSpace(review.Comment) ? "No written comment." : review.Comment)
+                    </p>
+
+                        <small class="tutor-review-date">
+                            Submitted on
+                            @review.CreatedAt.ToLocalTime().ToString("MMMM dd, yyyy")
+                        </small>
+
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="tutor-empty-state">
+                    <h5>No Reviews Yet</h5>
+                    <p>
+                        Reviews will appear here once students have reviewed
+                        this tutor.
+                    </p>
+                </div>
+            }
+        </div>
     </div>
 </div>
-
-<h4>Student Reviews</h4>
-@if (Model.Reviews != null && Model.Reviews.Any())
-{
-    foreach (var review in Model.Reviews)
-    {
-        <div class="card mb-3">
-            <div class="card-body">
-                @* <h5>
-                    @review.StudentName
-                </h5> *@
-                <p>
-                    <strong>Rating:</strong>
-                    @for (int i = 1; i <= 5; i++)
-                    {
-                        if (i <= review.Rating)
-                        {
-                            <span>⭐</span>
-                        }
-                        else
-                        {
-                            <span>☆</span>
-                        }
-                    }
-
-                    <span>
-                        (@review.Rating/5)
-                    </span>
-                </p>
-
-                <p>
-                    @review.Comment
-                </p>
-
-                <small class="text-muted">
-                    Submitted on @review.CreatedAt.ToLocalTime().ToString("MMMM dd, yyyy")
-                </small>
-            </div>
-        </div>
-    }
-}
-else
-{
-    <div class="alert alert-info">
-        No reviews have been submitted for this tutor yet.
-    </div>
-}

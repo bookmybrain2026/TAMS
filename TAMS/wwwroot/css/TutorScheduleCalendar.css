@@ -26,8 +26,6 @@ body {
     padding: 40px 0;
 }
 
-/* Header */
-
 .calendar-header {
     display: flex;
     align-items: center;
@@ -60,8 +58,6 @@ body {
     line-height: 1.6;
 }
 
-/* Buttons */
-
 .calendar-button {
     display: inline-flex;
     align-items: center;
@@ -83,11 +79,11 @@ body {
     color: var(--bmb-dark);
 }
 
-    .calendar-button-primary:hover {
-        background: var(--bmb-orange);
-        color: var(--bmb-dark);
-        transform: translateY(-1px);
-    }
+.calendar-button-primary:hover {
+    background: var(--bmb-orange);
+    color: var(--bmb-dark);
+    transform: translateY(-1px);
+}
 
 .calendar-button-secondary {
     width: 160px;
@@ -97,11 +93,11 @@ body {
     color: var(--bmb-brown);
 }
 
-    .calendar-button-secondary:hover {
-        border-color: var(--bmb-orange);
-        background: var(--bmb-cream);
-        color: var(--bmb-dark);
-    }
+.calendar-button-secondary:hover {
+    border-color: var(--bmb-orange);
+    background: var(--bmb-cream);
+    color: var(--bmb-dark);
+}
 
 .calendar-button:focus-visible {
     outline: 3px solid var(--bmb-brown);
@@ -145,9 +141,9 @@ body {
     border-bottom: 1px solid #f0e5d4;
 }
 
-    .calendar-toolbar > :last-child {
-        justify-self: end;
-    }
+.calendar-toolbar > :last-child {
+    justify-self: end;
+}
 
 .calendar-current-month {
     text-align: center;
