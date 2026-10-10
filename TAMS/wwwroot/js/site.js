@@ -163,7 +163,7 @@ updateCourses();
 
 
 //Student Dashboard search
-function searchTutors() {
+function searchStudentTutors() {
     const searchInput = document
         .getElementById("tutorSearch")
         .value
