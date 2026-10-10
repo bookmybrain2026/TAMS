@@ -199,3 +199,61 @@ function searchTutors() {
             visibleTutors === 0 ? "block" : "none";
     }
 }
+
+
+// Search the Admin Dashboard Tutor Directory
+function searchAdminTutors() {
+    const input = document.getElementById("adminTutorSearch");
+
+    if (!input) return;
+
+    const filter = input.value.trim().toLowerCase();
+    const tutorRows = document.querySelectorAll(".admin-tutor-row");
+    const noMatchMessage = document.getElementById("adminTutorNoMatch");
+
+    let visibleCount = 0;
+
+    tutorRows.forEach(function (row) {
+        const searchText = row.getAttribute("data-search") || "";
+        const matches = searchText.toLowerCase().includes(filter);
+
+        row.style.display = matches ? "" : "none";
+
+        if (matches) {
+            visibleCount++;
+        }
+    });
+
+    if (noMatchMessage) {
+        noMatchMessage.style.display =
+            tutorRows.length > 0 && visibleCount === 0 ? "" : "none";
+    }
+}
+
+function searchAdminStudents() {
+    const input = document.getElementById("adminStudentSearch");
+
+    if (!input) return;
+
+    const filter = input.value.trim().toLowerCase();
+    const studentRows = document.querySelectorAll(".admin-student-row");
+    const noMatchMessage = document.getElementById("adminStudentNoMatch");
+
+    let visibleCount = 0;
+
+    studentRows.forEach(function (row) {
+        const searchText = row.getAttribute("data-search") || "";
+        const matches = searchText.toLowerCase().includes(filter);
+
+        row.style.display = matches ? "" : "none";
+
+        if (matches) {
+            visibleCount++;
+        }
+    });
+
+    if (noMatchMessage) {
+        noMatchMessage.style.display =
+            studentRows.length > 0 && visibleCount === 0 ? "" : "none";
+    }
+}
