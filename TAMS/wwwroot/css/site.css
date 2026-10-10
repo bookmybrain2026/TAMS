@@ -40,6 +40,65 @@ body {
     display: block;
 }
 
+.course-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+/* Popup window */
+.course-modal-content {
+    position: relative;
+    background: #fff;
+    width: 100%;
+    max-width: 550px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.3);
+    animation: courseModalFadeIn 0.2s ease-out;
+}
+
+/* Close button */
+.course-modal-close {
+    position: absolute;
+    top: 10px;
+    right: 16px;
+    border: none;
+    background: transparent;
+    font-size: 30px;
+    cursor: pointer;
+    color: #555;
+}
+
+    .course-modal-close:hover {
+        color: #000;
+    }
+
+.course-modal-content h3 {
+    margin-bottom: 24px;
+    padding-right: 25px;
+}
+
+@keyframes courseModalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 
 
 

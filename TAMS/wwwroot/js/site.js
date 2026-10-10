@@ -1,10 +1,16 @@
-﻿// Show Add Subject form
+﻿// Show Add Subject 
 function showSubjectAddForm() {
     hideSubjectForms();
-    document.getElementById("addForm").style.display = "block";
+
+    const modal = document.getElementById("addSubjectModal");
+
+    if (modal) {
+        modal.style.display = "flex";
+        document.body.style.overflow = "hidden";
+    }
 }
 
-// Show Edit Subject form
+// Show Edit Subject 
 function showSubjectEditForm(subjectId, code, name) {
     hideSubjectForms();
 
@@ -12,14 +18,46 @@ function showSubjectEditForm(subjectId, code, name) {
     document.getElementById("EditCode").value = code;
     document.getElementById("EditName").value = name;
 
-    document.getElementById("editForm").style.display = "block";
+    const modal = document.getElementById("editSubjectModal");
+
+    if (modal) {
+        modal.style.display = "flex";
+        document.body.style.overflow = "hidden";
+    }
 }
 
-// Hide Subject forms
+// Hide Add and Edit Subject 
 function hideSubjectForms() {
-    document.getElementById("addForm").style.display = "none";
-    document.getElementById("editForm").style.display = "none";
+    const addModal = document.getElementById("addSubjectModal");
+    const editModal = document.getElementById("editSubjectModal");
+
+    if (addModal) {
+        addModal.style.display = "none";
+    }
+
+    if (editModal) {
+        editModal.style.display = "none";
+    }
+
+    document.body.style.overflow = "";
 }
+
+// Close Subject when clicking the dark background
+document.addEventListener("click", function (event) {
+    const addModal = document.getElementById("addSubjectModal");
+    const editModal = document.getElementById("editSubjectModal");
+
+    if (event.target === addModal || event.target === editModal) {
+        hideSubjectForms();
+    }
+});
+
+// Close Subject  with Escape
+document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") {
+        hideSubjectForms();
+    }
+});
 
 // Search Subjects
 function searchSubjects() {
@@ -42,13 +80,21 @@ function searchSubjects() {
     }
 }
 
-// Show Add Course form
+
+
+// Show Add Course 
 function showCourseAddForm() {
     hideCourseForms();
-    document.getElementById("addForm").style.display = "block";
+
+    const modal = document.getElementById("addCourseModal");
+
+    if (modal) {
+        modal.style.display = "flex";
+        document.body.style.overflow = "hidden";
+    }
 }
 
-// Show Edit Course form
+// Show Edit Course 
 function showCourseEditForm(courseId, subjectCode, courseCode, courseName) {
     hideCourseForms();
 
@@ -57,14 +103,48 @@ function showCourseEditForm(courseId, subjectCode, courseCode, courseName) {
     document.getElementById("EditCourseCode").value = courseCode;
     document.getElementById("EditCourseName").value = courseName;
 
-    document.getElementById("editForm").style.display = "block";
+    const modal = document.getElementById("editCourseModal");
+
+    if (modal) {
+        modal.style.display = "flex";
+        document.body.style.overflow = "hidden";
+    }
 }
 
-// Hide Course forms
+// Hide Add and Edit Course 
 function hideCourseForms() {
-    document.getElementById("addForm").style.display = "none";
-    document.getElementById("editForm").style.display = "none";
+    const addModal = document.getElementById("addCourseModal");
+    const editModal = document.getElementById("editCourseModal");
+
+    if (addModal) {
+        addModal.style.display = "none";
+    }
+
+    if (editModal) {
+        editModal.style.display = "none";
+    }
+
+    document.body.style.overflow = "";
 }
+
+// Close either by clicking its dark background
+document.addEventListener("click", function (event) {
+    const addModal = document.getElementById("addCourseModal");
+    const editModal = document.getElementById("editCourseModal");
+
+    if (event.target === addModal || event.target === editModal) {
+        hideCourseForms();
+    }
+});
+
+// Close either modal with Escape
+document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") {
+        hideCourseForms();
+    }
+});
+
+
 
 // Search Courses
 function searchCourses() {
@@ -200,8 +280,6 @@ function searchStudentTutors() {
     }
 }
 
-
-// Search the Admin Dashboard Tutor Directory
 function searchAdminTutors() {
     const input = document.getElementById("adminTutorSearch");
 
