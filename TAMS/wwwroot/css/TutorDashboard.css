@@ -31,6 +31,42 @@
     box-sizing: border-box;
 }
 
+.tutor-dashboard div.tutor-alert.tutor-alert-error {
+    display: block !important;
+    width: 100%;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    color: #842029 !important;
+    background: #fce9e5 !important;
+    border: 1px solid #e9b8b1 !important;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.6;
+    box-shadow: 0 3px 10px rgba(93, 57, 20, 0.08);
+}
+
+.tutor-dashboard div.tutor-alert.tutor-alert-success {
+    display: block !important;
+    width: 100%;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    color: #315d2b !important;
+    background: #edf4e8 !important;
+    border: 1px solid #c8d9bd !important;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.6;
+    box-shadow: 0 3px 10px rgba(93, 57, 20, 0.08);
+}
+
+.tutor-dashboard .tutor-alert-icon {
+    display: inline-block;
+    margin-right: 8px;
+    font-weight: 800;
+}
+
 .tutor-dashboard a {
     text-decoration: none;
 }
@@ -41,10 +77,6 @@
 .tutor-dashboard p {
     overflow-wrap: anywhere;
 }
-
-/* =========================================
-   HEADER
-   ========================================= */
 
 .tutor-dashboard-header {
     padding: 22px 30px 28px;

@@ -22,9 +22,25 @@
         .Count(a => a.Status == "Cancelled");
 }
 
-<link href="~/css/tutordashboard.css" rel="stylesheet" />
+<link rel="stylesheet" href="~/css/TutorDashboard.css" asp-append-version="true" />
 
 <div class="tutor-dashboard">
+    @if (TempData["Error"] != null)
+    {
+        <div class="tutor-alert tutor-alert-error" role="alert">
+            <span class="tutor-alert-icon">⚠</span>
+            <span>@TempData["Error"]</span>
+        </div>
+    }
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="tutor-alert tutor-alert-success" role="status">
+            <span class="tutor-alert-icon">✓</span>
+            <span>@TempData["Success"]</span>
+        </div>
+    }
+
     <header class="tutor-dashboard-header">
         <div class="tutor-header-top">
             <span class="tutor-dashboard-tag">TUTOR PORTAL</span>

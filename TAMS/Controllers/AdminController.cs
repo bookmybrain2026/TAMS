@@ -461,40 +461,50 @@ namespace TAMS.Controllers
             return RedirectToAction("Dashboard");
         }
 
+
+
+        // Deletes a tutor's available schedule slot (Admin)
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public IActionResult DeleteScheduleSlot(int scheduleId)
         {
             var adminId = HttpContext.Session.GetInt32("AdminId");
-
-            if (adminId == null)
-            {
-                return RedirectToAction("Login", "Login");
-            }
+            if (adminId == null) { return RedirectToAction("Login", "Login"); }
 
             var slot = dBContext.Schedule
                 .Find(s => s.ScheduleId == scheduleId)
                 .FirstOrDefault();
 
-            if (slot == null) { return NotFound(); }
-
-            var affectedAppointments = dBContext.Appointments
-                .Find(a =>
-                    a.TutorId == slot.TutorId &&
-                    a.AppointmentDate.Date == slot.Date.Date &&
-                    a.AppointmentDate.TimeOfDay >= slot.StartTime &&
-                    a.AppointmentDate.TimeOfDay < slot.EndTime &&
-                    a.Status == "Scheduled")
-                .ToList();
-
-            foreach (var appointment in affectedAppointments)
+            if (slot == null)
             {
-                var update = Builders<Appointment>.Update.Set(a => a.Status, "Cancelled");
-                dBContext.Appointments.UpdateOne(a => a.AppointmentId == appointment.AppointmentId, update);
+                TempData["Error"] = "Schedule slot not found.";
+                return RedirectToAction("Dashboard");
             }
 
             int tutorId = slot.TutorId;
+            var tutorAppointments = dBContext.Appointments
+                .Find(a => a.TutorId == tutorId)
+                .ToList();
 
-            dBContext.Schedule.DeleteOne(s => s.ScheduleId == scheduleId);
+            var hasAppointments = tutorAppointments.Any(a =>
+            {
+                if (a.Status != "Scheduled")
+                    return false;
+                var localAppointmentDate = a.AppointmentDate.AddHours(-5);
+                return localAppointmentDate.Date == slot.Date.Date && localAppointmentDate.TimeOfDay >= slot.StartTime && localAppointmentDate.TimeOfDay < slot.EndTime;
+            });
+
+            if (hasAppointments)
+            {
+                TempData["Error"] =
+                    "You cannot delete this schedule slot because it has a scheduled appointment. " +
+                    "Please cancel or remove the associated appointment first.";
+                return RedirectToAction("Dashboard", new { viewTutorId = tutorId });
+            }
+
+            dBContext.Schedule.DeleteOne(s => s.ScheduleId == scheduleId && s.TutorId == tutorId);
+
+            TempData["Success"] = "Schedule deleted successfully.";
             return RedirectToAction("Dashboard", new { viewTutorId = tutorId });
         }
 

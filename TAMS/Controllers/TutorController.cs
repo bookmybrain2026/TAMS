@@ -320,6 +320,7 @@ namespace TAMS.Controllers
             return RedirectToAction("Schedule", new {id = tutorId, month = date.Month, year = date.Year});
         }
 
+
         // Deletes a tutor's available schedule
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -333,14 +334,34 @@ namespace TAMS.Controllers
                 .FirstOrDefault();
 
             if (schedule == null) { return NotFound(); }
-
             if (schedule.TutorId != tutorId.Value) { return Unauthorized(); }
 
-            dBContext.Schedule.DeleteOne(s => s.ScheduleId == scheduleId);
+            var tutorAppointments = dBContext.Appointments
+                .Find(a => a.TutorId == tutorId.Value)
+                .ToList();
+
+            var hasAppointments = tutorAppointments.Any(a =>
+            {
+                if (a.Status != "Scheduled")
+                    return false;
+                var localAppointmentDate = a.AppointmentDate.AddHours(-5);
+
+                return localAppointmentDate.Date == schedule.Date.Date && localAppointmentDate.TimeOfDay >= schedule.StartTime && localAppointmentDate.TimeOfDay < schedule.EndTime;
+            });
+
+            if (hasAppointments)
+            {
+                TempData["Error"] =
+                    "You cannot delete this schedule slot because it has a scheduled appointment. " +
+                    "Please cancel or remove the associated appointment first.";
+                return RedirectToAction("Dashboard", new { id = tutorId.Value });
+            }
+            dBContext.Schedule.DeleteOne(s => s.ScheduleId == scheduleId && s.TutorId == tutorId.Value);
 
             TempData["Success"] = "Schedule deleted successfully.";
             return RedirectToAction("Dashboard", new { id = tutorId.Value });
         }
+
         [HttpGet]
         public IActionResult ScheduleCalendar(int id, int? month, int? year)
         {

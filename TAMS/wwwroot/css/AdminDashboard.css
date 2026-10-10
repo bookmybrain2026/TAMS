@@ -24,9 +24,44 @@
     font-family: "Segoe UI", Arial, sans-serif;
 }
 
-    .admin-dashboard * {
-        box-sizing: border-box;
-    }
+.admin-dashboard * {
+    box-sizing: border-box;
+}
+
+.admin-dashboard .admin-alert {
+    display: flex !important;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    border: 2px solid;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.6;
+    box-shadow: 0 3px 10px rgba(93, 57, 20, 0.08);
+}
+
+.admin-dashboard .admin-alert-error {
+    color: #842029 !important;
+    background-color: #fce9e5 !important;
+    border-color: #e9b8b1 !important;
+}
+
+.admin-dashboard .admin-alert-success {
+    color: #315d2b !important;
+    background-color: #edf4e8 !important;
+    border-color: #c8d9bd !important;
+}
+
+.admin-dashboard .admin-alert-icon {
+    flex-shrink: 0;
+    font-size: 17px;
+    font-weight: 800;
+}
+
 
 .dashboard-header {
     display: flex;
