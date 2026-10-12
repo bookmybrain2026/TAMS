@@ -83,7 +83,6 @@ function searchSubjects() {
     }
 }
 
-
 // Show Add Course 
 function showCourseAddForm() {
     hideCourseForms();
@@ -185,8 +184,6 @@ function searchTutors() {
         }
     });
 }
-
-
 
 const subjectSelect = document.getElementById("subjectSelect");
 const courseBubbles = document.querySelectorAll(".course-bubble");
@@ -331,6 +328,34 @@ function searchAdminStudents() {
     }
 }
 
+function searchAdminAppointments() {
+    const input = document.getElementById("adminAppointmentSearch");
+
+    if (!input) return;
+
+    const filter = input.value.trim().toLowerCase();
+    const appointmentRows = document.querySelectorAll(".admin-appointment-row");
+    const noMatchMessage = document.getElementById("adminAppointmentNoMatch");
+
+    let visibleCount = 0;
+
+    appointmentRows.forEach(function (row) {
+        const searchText = row.getAttribute("data-search") || "";
+        const matches = searchText.toLowerCase().includes(filter);
+
+        row.style.display = matches ? "" : "none";
+
+        if (matches) {
+            visibleCount++;
+        }
+    });
+
+    if (noMatchMessage) {
+        noMatchMessage.style.display =
+            appointmentRows.length > 0 && visibleCount === 0 ? "" : "none";
+    }
+}
+
 
 async function openTutorModal(url, modalId) {
     try {
@@ -421,3 +446,4 @@ document.addEventListener("DOMContentLoaded", function () {
         document.body.style.overflow = "hidden";
     }
 });
+

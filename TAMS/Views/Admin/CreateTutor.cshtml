@@ -4,6 +4,203 @@
     ViewData["Title"] = "Create Tutor Account";
 }
 
+@section Styles {
+    <link href="~/css/CreateTutor.css" rel="stylesheet" />
+}
+
+<div class="create-tutor-wrapper">
+    <div class="create-tutor-container">
+        <div class="create-tutor-panel">
+
+            <div class="create-tutor-brand">
+                BookMy<span>Brain</span>
+            </div>
+
+            <h1 class="create-tutor-heading">Create Tutor Account</h1>
+
+            <p class="create-tutor-subtitle">
+                Set up a new tutor profile and login credentials.
+            </p>
+
+            <form asp-controller="Admin"
+                  asp-action="CreateTutor"
+                  method="post">
+
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger mb-3">
+                </div>
+
+                <!-- Tutor Personal Information -->
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="FName" class="form-label">
+                            First Name
+                        </label>
+
+                        <input asp-for="FName"
+                               class="form-control"
+                               placeholder="Enter first name" />
+
+                        <span asp-validation-for="FName"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="LName" class="form-label">
+                            Last Name
+                        </label>
+
+                        <input asp-for="LName"
+                               class="form-control"
+                               placeholder="Enter last name" />
+
+                        <span asp-validation-for="LName"
+                              class="text-danger"></span>
+                    </div>
+                </div>
+
+                <!-- Subject / Specialty -->
+                <div class="mb-3">
+                    <label asp-for="Subject" class="form-label">
+                        Subject / Specialty
+                    </label>
+
+                    <select asp-for="Subject" class="form-select">
+                        <option value="">-- Select a Subject --</option>
+
+                        @if (ViewBag.Subjects != null)
+                        {
+                            foreach (var subject in ViewBag.Subjects)
+                            {
+                                <option value="@subject.Code">
+                                    @subject.Code - @subject.Name
+                                </option>
+                            }
+                        }
+                    </select>
+
+                    <span asp-validation-for="Subject"
+                          class="text-danger"></span>
+                </div>
+
+                <!-- Phone Number -->
+                <div class="mb-3">
+                    <label asp-for="PhoneNumber" class="form-label">
+                        Phone Number
+                    </label>
+
+                    <input asp-for="PhoneNumber"
+                           class="form-control"
+                           placeholder="Enter phone number" />
+
+                    <span asp-validation-for="PhoneNumber"
+                          class="text-danger"></span>
+                </div>
+
+                <!-- Email -->
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label">
+                        Email
+                    </label>
+
+                    <input asp-for="Email"
+                           type="email"
+                           class="form-control"
+                           placeholder="Enter email address"
+                           autocomplete="email" />
+
+                    <span asp-validation-for="Email"
+                          class="text-danger"></span>
+                </div>
+
+                <hr class="create-tutor-divider" />
+
+                <!-- Tutor Login Information -->
+                <h5 class="create-tutor-section-heading">
+                    Tutor Login Information
+                </h5>
+
+                <!-- Username -->
+                <div class="mb-3">
+                    <label asp-for="Username" class="form-label">
+                        Username
+                    </label>
+
+                    <input asp-for="Username"
+                           class="form-control"
+                           placeholder="Create a username"
+                           autocomplete="username" />
+
+                    <span asp-validation-for="Username"
+                          class="text-danger"></span>
+                </div>
+
+                <!-- Password -->
+                <div class="mb-3">
+                    <label asp-for="Password" class="form-label">
+                        Password
+                    </label>
+
+                    <input asp-for="Password"
+                           type="password"
+                           class="form-control"
+                           placeholder="Create a password"
+                           autocomplete="new-password" />
+
+                    <span asp-validation-for="Password"
+                          class="text-danger"></span>
+                </div>
+
+                <!-- Confirm Password -->
+                <div class="mb-3">
+                    <label asp-for="ConfirmPassword" class="form-label">
+                        Confirm Password
+                    </label>
+
+                    <input asp-for="ConfirmPassword"
+                           type="password"
+                           class="form-control"
+                           placeholder="Confirm password"
+                           autocomplete="new-password" />
+
+                    <span asp-validation-for="ConfirmPassword"
+                          class="text-danger"></span>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="create-tutor-actions d-grid gap-2">
+                    <button type="submit"
+                            class="btn create-tutor-submit">
+                        Create Tutor Account
+                    </button>
+
+                    <a asp-controller="Admin"
+                       asp-action="Dashboard"
+                       class="btn create-tutor-cancel">
+                        Cancel
+                    </a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
+@* @model TAMS.Models.TutorRegistration
+
+@{
+    ViewData["Title"] = "Create Tutor Account";
+}
+
+@section Styles {
+    <link href="~/css/CreateTutor.css" rel="stylesheet" />
+}
+
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-6">
@@ -90,4 +287,4 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
-}
+} *@

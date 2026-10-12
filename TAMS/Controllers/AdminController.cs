@@ -455,29 +455,21 @@ namespace TAMS.Controllers
             var update = Builders<Appointment>.Update.Set(a => a.Status, "Cancelled");
             dBContext.Appointments.UpdateOne(a => a.AppointmentId == appointmentId, update);
 
+            var studentName = $"{student.FName} {student.LName}";
+            var tutorName = $"{tutor.FName} {tutor.LName}";
             try
             {
                 // Notify the student.
                 if (!string.IsNullOrWhiteSpace(student.Email))
                 {
-                    await _emailService.SendAdminCancelledAppointmentAsync(
-                        student.Email,
-                        $"{student.FName} {student.LName}",
-                        $"{tutor.FName} {tutor.LName}",
-                        appointment.AppointmentDate,
-                        "Student"
+                    await _emailService.SendAdminCancelledAppointmentAsync(student.Email, studentName, tutorName, appointment.AppointmentDate, "Student"
                     );
                 }
 
                 // Notify the tutor.
                 if (!string.IsNullOrWhiteSpace(tutor.Email))
                 {
-                    await _emailService.SendAdminCancelledAppointmentAsync(
-                        tutor.Email,
-                        $"{tutor.FName} {tutor.LName}",
-                        $"{student.FName} {student.LName}",
-                        appointment.AppointmentDate,
-                        "Tutor"
+                    await _emailService.SendAdminCancelledAppointmentAsync(tutor.Email, tutorName, studentName, appointment.AppointmentDate, "Tutor"
                     );
                 }
             }
@@ -488,8 +480,6 @@ namespace TAMS.Controllers
             }
             return RedirectToAction("Dashboard");
         }
-
-
 
         // Deletes a tutor's available schedule slot (Admin)
         [HttpPost]

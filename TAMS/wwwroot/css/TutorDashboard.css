@@ -1,33 +1,4 @@
-﻿/*body {
-    min-height: 100%;
-    margin: 0;
-    padding: 0;
-    background-color: #fff0cf;
-}*/
-
-/*.tutor-dashboard {
-    --bmb-cream: #fff0cf;
-    --bmb-yellow: #ffbd35;
-    --bmb-orange: #f4a51c;
-    --bmb-brown: #80451e;
-    --bmb-dark: #302014;
-    --bmb-white: #ffffff;
-    --bmb-muted: #8a7967;
-    --bmb-border: #e7d8bf;
-    --bmb-soft: #fffdf8;
-    --bmb-pale: #fff6e4;
-    --bmb-green: #527b4b;
-    --bmb-green-soft: #edf4e8;
-    --bmb-red: #c94c42;
-    min-height: 100vh;
-    padding: 28px;
-    background: var(--bmb-cream);
-    color: var(--bmb-dark);
-    font-family: "Segoe UI", Arial, sans-serif;
-    box-sizing: border-box;
-}*/
-
-.tutor-dashboard {
+﻿.tutor-dashboard {
     --bmb-soft: #fffdf8;
     --bmb-pale: #fff6e4;
     --bmb-green: #527b4b;
@@ -664,10 +635,26 @@
 }
 
 .tutor-focus-panel {
+    height: 480px;
+    min-height: 0;
     display: flex;
     flex-direction: column;
-    min-width: 0;
+    overflow: hidden;
+    box-sizing: border-box;
 }
+
+.tutor-focus-panel > .tutor-panel-heading, .tutor-focus-panel > .tutor-today-date { flex-shrink: 0; }
+
+.tutor-focus-panel > .tutor-focus-section {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 8px;
+}
+
+.tutor-focus-panel > .tutor-focus-footer { flex-shrink: 0; }
+
 
 .tutor-today-date {
     display: flex;

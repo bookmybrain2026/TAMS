@@ -4,6 +4,200 @@
     ViewData["Title"] = "Student Registration";
 }
 
+@section Styles {
+    <link href="~/css/StudentRegistration.css" rel="stylesheet" />
+}
+
+<div class="student-registration-wrapper">
+    <div class="student-registration-container">
+        <div class="student-registration-panel">
+
+            <div class="student-registration-brand">
+                BookMy<span>Brain</span>
+            </div>
+
+            <h1 class="student-registration-heading">
+                Create Student Account
+            </h1>
+
+            <p class="student-registration-subtitle">
+                Join BookMyBrain and start your learning journey.
+            </p>
+
+            <form asp-controller="Student"
+                  asp-action="StudentRegistration"
+                  method="post">
+
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger mb-3">
+                </div>
+
+                <!-- Student Name -->
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="FName" class="form-label">
+                            First Name
+                        </label>
+
+                        <input asp-for="FName"
+                               class="form-control"
+                               placeholder="Enter first name"
+                               autocomplete="given-name" />
+
+                        <span asp-validation-for="FName"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="LName" class="form-label">
+                            Last Name
+                        </label>
+
+                        <input asp-for="LName"
+                               class="form-control"
+                               placeholder="Enter last name"
+                               autocomplete="family-name" />
+
+                        <span asp-validation-for="LName"
+                              class="text-danger"></span>
+                    </div>
+                </div>
+
+                <!-- Date of Birth -->
+                <div class="mb-3">
+                    <label asp-for="DOB" class="form-label">
+                        Date of Birth
+                    </label>
+
+                    <input asp-for="DOB"
+                           type="date"
+                           class="form-control" />
+
+                    <span asp-validation-for="DOB"
+                          class="text-danger"></span>
+                </div>
+
+                <!-- Phone Number -->
+                <div class="mb-3">
+                    <label asp-for="PhoneNumber" class="form-label">
+                        Phone Number
+                    </label>
+
+                    <input asp-for="PhoneNumber"
+                           class="form-control"
+                           placeholder="Enter phone number"
+                           autocomplete="tel" />
+
+                    <span asp-validation-for="PhoneNumber"
+                          class="text-danger"></span>
+                </div>
+
+                <!-- Email -->
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label">
+                        Email
+                    </label>
+
+                    <input asp-for="Email"
+                           type="email"
+                           class="form-control"
+                           placeholder="Enter email address"
+                           autocomplete="email" />
+
+                    <span asp-validation-for="Email"
+                          class="text-danger"></span>
+                </div>
+
+                <hr class="student-registration-divider" />
+
+                <!-- Login Information -->
+                <h5 class="student-registration-section-heading">
+                    Login Information
+                </h5>
+
+                <!-- Username -->
+                <div class="mb-3">
+                    <label asp-for="Username" class="form-label">
+                        Username
+                    </label>
+
+                    <input asp-for="Username"
+                           class="form-control"
+                           placeholder="Create a username"
+                           autocomplete="username" />
+
+                    <span asp-validation-for="Username"
+                          class="text-danger"></span>
+                </div>
+
+                <!-- Password -->
+                <div class="mb-3">
+                    <label asp-for="Password" class="form-label">
+                        Password
+                    </label>
+
+                    <input asp-for="Password"
+                           type="password"
+                           class="form-control"
+                           placeholder="Create a password"
+                           autocomplete="new-password" />
+
+                    <span asp-validation-for="Password"
+                          class="text-danger"></span>
+                </div>
+
+                <!-- Confirm Password -->
+                <div class="mb-3">
+                    <label asp-for="ConfirmPassword" class="form-label">
+                        Confirm Password
+                    </label>
+
+                    <input asp-for="ConfirmPassword"
+                           type="password"
+                           class="form-control"
+                           placeholder="Confirm your password"
+                           autocomplete="new-password" />
+
+                    <span asp-validation-for="ConfirmPassword"
+                          class="text-danger"></span>
+                </div>
+
+                <!-- Submit -->
+                <div class="student-registration-actions d-grid">
+                    <button type="submit"
+                            class="btn student-registration-submit">
+                        Create Student Account
+                    </button>
+                </div>
+
+            </form>
+
+            <!-- Existing Account Link -->
+            <div class="student-registration-login">
+                Already have an account?
+                <a asp-controller="Login"
+                   asp-action="Login"
+                   class="student-registration-login-link">
+                    Log In
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
+
+@* @model TAMS.Models.StudentRegistration
+
+@{
+    ViewData["Title"] = "Student Registration";
+}
+
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-6">
@@ -89,4 +283,4 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
-}
+} *@

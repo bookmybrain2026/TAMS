@@ -282,53 +282,55 @@ namespace TAMS.Controllers
             return RedirectToAction("Login", "Login");
         }
 
+
         [HttpPost]
-        public async Task<IActionResult> CancelAppointment(int appointmentId) 
+        public async Task<IActionResult> CancelAppointment(int appointmentId)
         {
             var appointment = 
-                dBContext.Appointments                                          
-                .Find(a => a.AppointmentId == appointmentId).FirstOrDefault();  
+                dBContext.Appointments
+                .Find(a => a.AppointmentId == appointmentId).FirstOrDefault();
 
-            if (appointment == null) { return NotFound(); } 
+            if (appointment == null) { return NotFound(); }
 
-            var student = dBContext.Student
-                .Find(s => s.StudentId == appointment.StudentId)
-                .FirstOrDefault();
-
-            var tutor = dBContext.Tutor
-                .Find(t => t.TutorId == appointment.TutorId)
-                .FirstOrDefault();
-
-            if (student == null || tutor == null)
+            // Prevent cancelling an appointment that is already cancelled
+            if (appointment.Status == "Cancelled")
             {
-                return NotFound();
+                return RedirectToAction("Dashboard", new { id = appointment.StudentId });
             }
 
-            var update = 
-                Builders<Appointment>.Update                                                    
-                .Set(a => a.Status, "Cancelled");                                               
-            dBContext.Appointments.UpdateOne(a => a.AppointmentId == appointmentId, update);    
+            var student = dBContext.Student
+                .Find(s => s.StudentId == appointment.StudentId).FirstOrDefault();
+
+            var tutor = dBContext.Tutor
+                .Find(t => t.TutorId == appointment.TutorId).FirstOrDefault();
+
+            if (student == null || tutor == null) { return NotFound(); }
+
+            var update = Builders<Appointment>.Update.Set(a => a.Status, "Cancelled");
+
+            var result = dBContext.Appointments.UpdateOne(a => a.AppointmentId == appointmentId, update);
+
+            // Verify that the appointment was updated
+            if (result.ModifiedCount == 0)
+            {
+                return RedirectToAction("Dashboard", new { id = appointment.StudentId });
+            }
+
+            var studentName = $"{student.FName} {student.LName}";
+            var tutorName = $"{tutor.FName} {tutor.LName}";
 
             try
             {
+                // Send cancellation confirmation to the student
                 if (!string.IsNullOrWhiteSpace(student.Email))
                 {
-                    await _emailService.SendAppointmentCancellationAsync(
-                        student.Email,
-                        $"{student.FName} {student.LName}",
-                        $"{tutor.FName} {tutor.LName}",
-                        appointment.AppointmentDate
-                        );
+                    await _emailService.SendStudentAppointmentCancellationAsync(student.Email, studentName, tutorName, appointment.AppointmentDate);
                 }
 
+                // Notify the tutor that the student cancelled
                 if (!string.IsNullOrWhiteSpace(tutor.Email))
                 {
-                    await _emailService.SendTutorAppointmentCancellationAsync(
-                        tutor.Email,
-                        $"{tutor.FName} {tutor.LName}",
-                        $"{student.FName} {student.LName}",
-                        appointment.AppointmentDate
-                        );
+                    await _emailService.SendTutorAppointmentCancellationAsync(tutor.Email, tutorName,  studentName, appointment.AppointmentDate);
                 }
             }
             catch (Exception ex)
@@ -336,8 +338,8 @@ namespace TAMS.Controllers
                 Console.WriteLine($"Cancellation email failed: {ex.Message}");
             }
 
-            return RedirectToAction("Dashboard", new { id = appointment.StudentId });
-        }
+            return RedirectToAction( "Dashboard", new { id = appointment.StudentId });
+        }     
 
         [HttpGet]
         public IActionResult Scheduler(int tutorId, int studentId, int? month, int? year)
@@ -458,27 +460,20 @@ namespace TAMS.Controllers
                 //AppointmentDate = TimeZoneHelper.ToUtc(appointmentDate),StudentId = studentId,TutorId = tutorId,Status = "Scheduled" //temp fix as well
                 Status = "Scheduled"
             };
-            dBContext.Appointments.InsertOne(appointment);  
+            dBContext.Appointments.InsertOne(appointment);
 
-            
+            var studentName = $"{student.FName} {student.LName}";
+            var tutorName = $"{tutor.FName} {tutor.LName}";
             try  
             {
                 if (!string.IsNullOrWhiteSpace(student.Email)) 
                 { 
-                    await _emailService.SendAppointmentConfirmationAsync( 
-                        student.Email,
-                        $"{student.FName} {student.LName}",
-                        $"{tutor.FName} {tutor.LName}",
-                        appointmentDate);
+                    await _emailService.SendStudentAppointmentConfirmationAsync(student.Email, studentName, tutorName, appointmentDate);
                 }
 
                 if (!string.IsNullOrWhiteSpace(tutor.Email)) 
                 {
-                    await _emailService.SendTutorAppointmentNotificationAsync( 
-                        tutor.Email,
-                        $"{tutor.FName} {tutor.LName}",
-                        $"{student.FName} {student.LName}",
-                        appointmentDate);
+                    await _emailService.SendTutorAppointmentNotificationAsync(tutor.Email, tutorName, studentName, appointmentDate);
                 }
             }
             catch (Exception ex)

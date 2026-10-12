@@ -403,58 +403,60 @@ namespace TAMS.Controllers
             return View("ScheduleCalendar");
         }
 
+
         [HttpPost]
         public async Task<IActionResult> CancelAppointment(int appointmentId)
         {
-            var appointment = 
-                dBContext.Appointments                                          
-                .Find(a => a.AppointmentId == appointmentId).FirstOrDefault();  
+            var appointment = dBContext.Appointments
+                .Find(a => a.AppointmentId == appointmentId)
+                .FirstOrDefault();
 
             if (appointment == null) { return NotFound(); }
 
+            if (appointment.Status == "Cancelled")
+            {
+                return RedirectToAction( "Dashboard", "Tutor",  new { id = appointment.TutorId });
+            }
+
             var student = dBContext.Student
-                .Find(s => s.StudentId == appointment.StudentId)
-                .FirstOrDefault();
+                .Find(s => s.StudentId == appointment.StudentId).FirstOrDefault();
 
             var tutor = dBContext.Tutor
-                .Find(d => d.TutorId == appointment.TutorId)
-                .FirstOrDefault();
+                .Find(t => t.TutorId == appointment.TutorId).FirstOrDefault();
 
-            if (student == null || tutor == null) { return NotFound();}
+            if (student == null || tutor == null) { return NotFound(); }
 
-            var update = 
-                Builders<Appointment>.                                                          
-                Update.Set(a => a.Status, "Cancelled");                                        
-            dBContext.Appointments.UpdateOne(a => a.AppointmentId == appointmentId, update);    
+            var update = Builders<Appointment>.Update.Set(a => a.Status, "Cancelled");
+
+            var result = dBContext.Appointments.UpdateOne(a => a.AppointmentId == appointmentId, update);
+
+            // Verify that the appointment was updated
+            if (result.ModifiedCount == 0)
+            {
+                return RedirectToAction("Dashboard", "Tutor", new { id = appointment.TutorId });
+            }
+
+            var studentName = $"{student.FName} {student.LName}";
+            var tutorName = $"{tutor.FName} {tutor.LName}";
 
             try
             {
+                // Notify the student that the tutor cancelled
                 if (!string.IsNullOrWhiteSpace(student.Email))
                 {
-                    await _emailService.SendAppointmentCancellationAsync(
-                        student.Email,
-                        $"{student.FName} {student.LName}",
-                        $"{tutor.FName} {tutor.LName}",
-                        appointment.AppointmentDate
-                        );
+                    await _emailService.SendStudentAppointmentCancelledByTutorAsync(student.Email, studentName, tutorName, appointment.AppointmentDate);
                 }
 
+                // Confirm the cancellation to the tutor
                 if (!string.IsNullOrWhiteSpace(tutor.Email))
                 {
-                    await _emailService.SendTutorAppointmentCancellationAsync(
-                        tutor.Email,
-                        $"{tutor.FName} {tutor.LName}",
-                        $"{student.FName} {student.LName}",
-                        appointment.AppointmentDate
-                        );
+                    await _emailService.SendTutorCancellationConfirmationAsync(tutor.Email, tutorName, studentName, appointment.AppointmentDate);
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Cancellation email failed: {ex.Message}");
             }
-
-
             return RedirectToAction("Dashboard", "Tutor", new { id = appointment.TutorId });
         }
 
@@ -471,49 +473,42 @@ namespace TAMS.Controllers
 
             if (appointment.Status != "Completed")
             {
-                var update =
-                    Builders<Appointment>
-                    .Update.Set(a => a.Status, "Completed");
+                var update = Builders<Appointment> .Update.Set(a => a.Status, "Completed");
 
-                dBContext.Appointments.UpdateOne(
-                    a => a.AppointmentId == appointmentId,
-                    update);
+                dBContext.Appointments.UpdateOne(a => a.AppointmentId == appointmentId, update);
 
                 // Find and delete the associated schedule slot.
                 var localAppointmentDate = appointment.AppointmentDate.AddHours(-5);
                 var appointmentDate = localAppointmentDate.Date; 
-                var appointmentTime = localAppointmentDate.TimeOfDay; 
+                var appointmentTime = localAppointmentDate.TimeOfDay;
+                
                 var schedule = dBContext.Schedule 
                     .Find(s => s.TutorId == appointment.TutorId) 
                     .ToList() .FirstOrDefault(s => s.Date.Date == appointmentDate 
                     && appointmentTime >= s.StartTime && appointmentTime < s.EndTime); 
+
                 if (schedule != null) 
                 { 
                     dBContext.Schedule.DeleteOne(s => s.ScheduleId == schedule.ScheduleId && s.TutorId == appointment.TutorId); 
                 }
 
+
                 try
                 {
-                    var student = dBContext.Student
-                        .Find(p => p.StudentId == appointment.StudentId)
-                        .FirstOrDefault();
+                    var student = dBContext.Student.Find(p => p.StudentId == appointment.StudentId).FirstOrDefault();
+                    var tutor = dBContext.Tutor.Find(d => d.TutorId == appointment.TutorId).FirstOrDefault();
 
-                    var tutor = dBContext.Tutor
-                        .Find(d => d.TutorId == appointment.TutorId)
-                        .FirstOrDefault();
+                    var studentName = $"{student.FName} {student.LName}";
+                    var tutorName = $"{tutor.FName} {tutor.LName}";
 
                     if (student != null && tutor != null && !string.IsNullOrWhiteSpace(student.Email))
                     {
-                        await _emailService.SendReviewReminderAsync(
-                            student.Email,
-                            $"{student.FName} {student.LName}",
-                            $"{tutor.FName} {tutor.LName}");
+                        await _emailService.SendReviewReminderAsync(student.Email, studentName, tutorName);
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(
-                        $"Review reminder email failed: {ex.Message}");
+                    Console.WriteLine($"Review reminder email failed: {ex.Message}");
                 }
             }
             return RedirectToAction("Dashboard", "Tutor", new { id = appointment.TutorId });

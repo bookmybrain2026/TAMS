@@ -130,7 +130,7 @@
                        aria-label="Search tutor directory" autocomplete="off" oninput="searchAdminTutors()" />
             </div>
 
-            <div class="admin-table-wrap">
+            <div class="admin-table-wrap directory-table-wrap">
                 <table class="admin-table">
                     <thead>
                         <tr>
@@ -332,7 +332,7 @@
                        aria-label="Search student directory" autocomplete="off" oninput="searchAdminStudents()" />
             </div>
 
-            <div class="admin-table-wrap">
+            <div class="admin-table-wrap directory-table-wrap">
                 <table class="admin-table">
                     <thead>
                         <tr>
@@ -377,14 +377,19 @@
         <section class="dashboard-section">
             <div class="section-heading">
                 <div><p class="section-kicker">SCHEDULING</p><h2>All Appointments</h2></div>
+              
                 <div class="status-summary">
                     <span><i class="status-dot dot-scheduled"></i>@scheduledCount Scheduled</span>
                     <span><i class="status-dot dot-completed"></i>@completedCount Completed</span>
                     <span><i class="status-dot dot-cancelled"></i>@cancelledCount Cancelled</span>
                 </div>
             </div>
-
-            <div class="admin-table-wrap">
+            <div class="directory-search">
+                <span class="directory-search-icon" aria-hidden="true">⌕</span>
+                <input type="text" id="adminAppointmentSearch" class="admin-input directory-search-input" placeholder="Search appointments by ID, date, time, tutor, student, or status..."
+                       aria-label="Search appointments" autocomplete="off" oninput="searchAdminAppointments()" />
+            </div>
+            <div class="admin-table-wrap directory-table-wrap">
                 <table class="admin-table">
                     <thead>
                         <tr>
@@ -410,7 +415,9 @@
                                     "Scheduled" => "status-scheduled", 
                                     _ => "status-other" };
 
-                                <tr>
+
+                                <tr class="admin-appointment-row" data-search="@($"{appt.AppointmentId} {appt.AppointmentDate.ToString("MM/dd/yyyy")}{appt.AppointmentDate.AddHours(-5).ToString("hh:mm tt")} {(appt.Tutor != null ? $"{appt.Tutor.FName} {appt.Tutor.LName}" : "Tutor unavailable")} {(appt.Student != null ? $"{appt.Student.FName} {appt.Student.LName}" : "Student unavailable")} {status}")">
+
                                     <td class="table-id">@appt.AppointmentId</td>
                                     <td>@appt.AppointmentDate.ToString("MM/dd/yyyy")</td>
                                     <td>@appt.AppointmentDate.AddHours(-5).ToString("hh:mm tt")</td>
@@ -432,6 +439,9 @@
                                     </td>
                                 </tr>
                             }
+                            <tr id="adminAppointmentNoMatch" style="display: none;">
+                                <td colspan="7" class="empty-state"> No appointments match your search. </td>
+                            </tr>
                         }
                         else
                         {

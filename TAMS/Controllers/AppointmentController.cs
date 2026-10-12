@@ -127,25 +127,17 @@ namespace TAMS.Controllers
                 };
             dBContext.Appointments.InsertOne(newAppointment);
 
+            var studentName = $"{student.FName} {student.LName}";
+            var tutorName = $"{tutor.FName} {tutor.LName}";
             try
             {
                 if (!string.IsNullOrWhiteSpace(student.Email))
                 {
-                    await _emailService
-                        .SendAppointmentConfirmationAsync(
-                            student.Email,
-                            $"{student.FName} {student.LName}",
-                            $"{tutor.FName} {tutor.LName}",
-                            appointmentDate);
+                    await _emailService.SendStudentAppointmentConfirmationAsync(student.Email, studentName, tutorName, appointmentDate);
                 }
                 if (!string.IsNullOrWhiteSpace(tutor.Email))
                 {
-                    await _emailService
-                        .SendTutorAppointmentNotificationAsync(
-                            tutor.Email,
-                            $"{tutor.FName} {tutor.LName}",
-                            $"{student.FName} {student.LName}",
-                            appointmentDate);
+                    await _emailService.SendTutorAppointmentNotificationAsync(tutor.Email,tutorName, studentName, appointmentDate);
                 }
             }
             catch (Exception ex)
