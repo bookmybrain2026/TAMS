@@ -1,21 +1,4 @@
-﻿
-:root {
-    --bmb-cream: #fff0cf;
-    --bmb-yellow: #ffbd35;
-    --bmb-orange: #f4a51c;
-    --bmb-brown: #80451e;
-    --bmb-dark: #302014;
-    --bmb-white: #ffffff;
-    --bmb-muted: #8a7967;
-    --bmb-border: #e7d8bf;
-    --bmb-light: #fffdf8;
-    --bmb-shadow: 0 15px 45px rgba(93, 57, 20, 0.12);
-}
-
-body {
-    min-height: 100%;
-    margin: 0;
-    background: var(--bmb-cream);
+﻿body {
     font-family: "Segoe UI", Arial, sans-serif;
     color: var(--bmb-dark);
 }
@@ -141,13 +124,9 @@ body {
     border-bottom: 1px solid #f0e5d4;
 }
 
-.calendar-toolbar > :last-child {
-    justify-self: end;
-}
+.calendar-toolbar > :last-child { justify-self: end; }
 
-.calendar-current-month {
-    text-align: center;
-}
+.calendar-current-month { text-align: center; }
 
 .calendar-month-label {
     color: var(--bmb-muted);
@@ -180,17 +159,11 @@ body {
     border-radius: 50%;
 }
 
-.legend-dot:first-child {
-    margin-left: 0;
-}
+.legend-dot:first-child { margin-left: 0; }
 
-.legend-dot-active {
-    background: var(--bmb-orange);
-}
+.legend-dot-active { background: var(--bmb-orange); }
 
-.legend-dot-cancelled {
-    background: #b8aaa0;
-}
+.legend-dot-cancelled { background: #b8aaa0; }
 
 .calendar-table-wrapper {
     width: 100%;
@@ -297,8 +270,7 @@ body {
     opacity: 0.8;
 }
 
-.appointment-cancelled .appointment-time,
-.appointment-cancelled .appointment-student {
+.appointment-cancelled .appointment-time, .appointment-cancelled .appointment-student {
     color: var(--bmb-muted);
     text-decoration: line-through;
 }
@@ -317,9 +289,7 @@ body {
     font-size: 12px;
 }
 
-.calendar-footer strong {
-    color: var(--bmb-brown);
-}
+.calendar-footer strong { color: var(--bmb-brown); }
 
 @media (max-width: 700px) {
     .schedule-calendar {
@@ -344,9 +314,7 @@ body {
         grid-row: 1;
     }
 
-    .calendar-toolbar > :last-child {
-        justify-self: end;
-    }
+    .calendar-toolbar > :last-child { justify-self: end; }
 
     .calendar-button {
         min-height: 40px;
@@ -354,22 +322,15 @@ body {
         font-size: 12px;
     }
 
-    .calendar-table-wrapper {
-        padding: 0 10px 14px;
-    }
+    .calendar-table-wrapper { padding: 0 10px 14px; }
 
-    .calendar-legend {
-        padding: 14px;
-    }
+    .calendar-legend { padding: 14px; }
 }
 
 @media (max-width: 400px) {
-    .calendar-current-month h2 {
-        font-size: 20px;
-    }
+    .calendar-current-month h2 { font-size: 20px; }
 
-    .calendar-toolbar {
-        gap: 12px 6px;
+    .calendar-toolbar { gap: 12px 6px; }
     }
 
     .calendar-button {

@@ -26,244 +26,189 @@
     if (nextMonth > 12) { nextMonth = 1; nextYear++; }
 }
 
-<link rel="stylesheet" href="~/css/AdminScheduler.css" asp-append-version="true" />
+@section Styles {
+    <link rel="stylesheet" href="~/css/AdminScheduler.css" asp-append-version="true" />
+    <link href="~/css/site.css" rel="stylesheet" />
+}
 
-<div class="admin-scheduler">
-
-    <header class="admin-scheduler-header">
-        <div class="admin-scheduler-heading">
-            <span class="admin-scheduler-eyebrow">
-                TAMS • ADMIN PORTAL
-            </span>
-
-            <h1>Appointment Scheduler</h1>
-
-            <p>
-                Manage tutor availability and review appointment time slots.
-            </p>
-        </div>
-
-        <div class="admin-scheduler-header-actions">
-            <a class="admin-scheduler-button admin-scheduler-button-secondary" asp-controller="Admin" asp-action="Dashboard">
-                ← Back to Dashboard
-            </a>
-        </div>
-    </header>
-
-    <section class="admin-scheduler-card">
-
-        <div class="admin-scheduler-toolbar">
-            <a class="admin-scheduler-button admin-scheduler-button-secondary month-nav-button"
-               asp-controller="Admin" asp-action="Scheduler" asp-route-month="@prevMonth" asp-route-year="@prevYear">
-                ← Previous Month
-            </a>
-
-            <div class="admin-scheduler-current-month">
-                <span class="admin-scheduler-month-label">
-                    SCHEDULE OVERVIEW
-                </span>
-
-                <h2>@firstDay.ToString("MMMM yyyy")</h2>
+<body>
+    <div class="admin-scheduler">
+        <header class="admin-scheduler-header">
+            <div class="admin-scheduler-heading">
+                <span class="admin-scheduler-eyebrow"> TAMS &#8901; ADMIN PORTAL </span>
+                <h1>Appointment Scheduler</h1>
+                <p> Manage tutor availability and review appointment time slots. </p>
             </div>
 
-            <a class="admin-scheduler-button admin-scheduler-button-secondary month-nav-button"
-               asp-controller="Admin" asp-action="Scheduler" asp-route-month="@nextMonth" asp-route-year="@nextYear">
-                Next Month →
-            </a>
-        </div>
+            <div class="admin-scheduler-header-actions">
+                <a class="admin-scheduler-button admin-scheduler-button-secondary" asp-controller="Admin" asp-action="Dashboard">
+                    &larr; Back to Dashboard
+                </a>
+            </div>
+        </header>
 
-        <div class="admin-scheduler-legend">
-            <span class="status-indicator status-available"></span>
-            <span>Available</span>
+        <section class="admin-scheduler-card">
+            <div class="admin-scheduler-toolbar">
+                <a class="admin-scheduler-button admin-scheduler-button-secondary month-nav-button"
+                   asp-controller="Admin" asp-action="Scheduler" asp-route-month="@prevMonth" asp-route-year="@prevYear">
+                    &larr; Previous Month
+                </a>
 
-            <span class="status-indicator status-booked"></span>
-            <span>Booked</span>
+                <div class="admin-scheduler-current-month">
+                    <span class="admin-scheduler-month-label"> SCHEDULE OVERVIEW </span>
+                    <h2>@firstDay.ToString("MMMM yyyy")</h2>
+                </div>
 
-            <span class="status-indicator status-completed"></span>
-            <span>Completed</span>
+                <a class="admin-scheduler-button admin-scheduler-button-secondary month-nav-button"
+                   asp-controller="Admin" asp-action="Scheduler" asp-route-month="@nextMonth" asp-route-year="@nextYear">
+                    Next Month &rarr;
+                </a>
+            </div>
 
-            <span class="status-indicator status-expired"></span>
-            <span>Expired</span>
-        </div>
+            <div class="admin-scheduler-legend">
+                <span class="status-indicator status-available"></span>
+                <span>Available</span>
 
-        <div class="admin-scheduler-table-wrapper">
-            <table class="admin-scheduler-table">
-                <thead>
-                    <tr>
-                        @foreach (var weekday in new[]
-                                                {
-                                                "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
-                                                })
-                        {
-                            <th>@weekday</th>
-                        }
-                    </tr>
-                </thead>
+                <span class="status-indicator status-booked"></span>
+                <span>Booked</span>
 
-                <tbody>
-                    @for (int week = 0; week < weeks; week++)
-                    {
+                <span class="status-indicator status-completed"></span>
+                <span>Completed</span>
+
+                <span class="status-indicator status-expired"></span>
+                <span>Expired</span>
+            </div>
+
+            <div class="admin-scheduler-table-wrapper">
+                <table class="admin-scheduler-table">
+                    <thead>
                         <tr>
-                            @for (int dow = 0; dow < 7; dow++)
+                            @foreach (var weekday in new[] { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" })
                             {
-                                if ((week == 0 && dow < startDayOfWeek) || day > daysInMonth)
-                                {
-                                    <td class="admin-scheduler-empty-cell"></td>
-                                }
-                                else
-                                {
-                                    var currentDate = new DateTime(year, month, day);
-
-                                    var dayAppointments = appointments
-                                    .Where(a =>
-                                    a.AppointmentDate.Date == currentDate.Date)
-                                    .OrderBy(a => a.AppointmentDate.TimeOfDay)
-                                    .ToList();
-
-                                    var daySchedules = schedules
-                                    .Where(s => s.Date.Date == currentDate.Date)
-                                    .OrderBy(s => s.StartTime)
-                                    .ToList();
-
-                                    <td class="admin-scheduler-day-cell">
-                                        <div class="admin-scheduler-day-heading">
-                                            <span class="admin-scheduler-day-number">
-                                                @day
-                                            </span>
-
-                                            <span class="admin-scheduler-day-name">
-                                                @currentDate.ToString("ddd")
-                                            </span>
-                                        </div>
-
-                                        <div class="admin-scheduler-slots">
-                                            @if (daySchedules.Any())
-                                            {
-                                                @foreach (var slot in daySchedules)
-                                                {
-                                                    var slotDateTime = slot.Date.Date.Add(slot.StartTime);
-
-                                                    var slotCompleted = dayAppointments.Any(a =>
-                                                    a.Status?.Trim() == "Completed" &&
-                                                    a.AppointmentDate.TimeOfDay >= slot.StartTime &&
-                                                    a.AppointmentDate.TimeOfDay < slot.EndTime);
-
-                                                    var slotBooked = dayAppointments.Any(a =>
-                                                    a.Status?.Trim() == "Scheduled" &&
-                                                    a.AppointmentDate.TimeOfDay >= slot.StartTime &&
-                                                    a.AppointmentDate.TimeOfDay < slot.EndTime);
-
-                                                    var slotExpired = !slotCompleted && !slotBooked && slotDateTime < now;
-
-                                                    var tutorName = slot.Tutor != null ? $"{slot.Tutor.FName} {slot.Tutor.LName}" : "Tutor unavailable";
-
-                                                    if (slotCompleted)
-                                                    {
-                                                        <div class="admin-slot admin-slot-completed">
-                                                            <strong class="admin-slot-time">
-                                                                @slot.StartTime.ToString(@"hh\:mm") -
-                                                                @slot.EndTime.ToString(@"hh\:mm")
-                                                            </strong>
-                                                            <span class="admin-slot-status">
-                                                                Completed
-                                                            </span>
-                                                            <span class="admin-slot-tutor">
-                                                                @tutorName
-                                                            </span>
-                                                        </div>
-                                                    }
-                                                    else if (slotBooked)
-                                                    {
-                                                        <div class="admin-slot admin-slot-booked">
-                                                            <strong class="admin-slot-time">
-                                                                @slot.StartTime.ToString(@"hh\:mm") -
-                                                                @slot.EndTime.ToString(@"hh\:mm")
-                                                            </strong>
-                                                            <span class="admin-slot-status">
-                                                                Booked
-                                                            </span>
-                                                            <span class="admin-slot-tutor">
-                                                                @tutorName
-                                                            </span>
-                                                        </div>
-                                                    }
-                                                    else if (slotExpired)
-                                                    {
-                                                        <div class="admin-slot admin-slot-expired">
-                                                            <strong class="admin-slot-time">
-                                                                @slot.StartTime.ToString(@"hh\:mm") -
-                                                                @slot.EndTime.ToString(@"hh\:mm")
-                                                            </strong>
-                                                            <span class="admin-slot-status">
-                                                                Expired
-                                                            </span>
-                                                            <span class="admin-slot-tutor">
-                                                                @tutorName
-                                                            </span>
-                                                        </div>
-                                                    }
-                                                    else
-                                                    {
-                                                        <div class="admin-slot admin-slot-available">
-                                                            <strong class="admin-slot-time">
-                                                                @slot.StartTime.ToString(@"hh\:mm") -
-                                                                @slot.EndTime.ToString(@"hh\:mm")
-                                                            </strong>
-                                                            <span class="admin-slot-status">
-                                                                Available
-                                                            </span>
-                                                            <span class="admin-slot-tutor">
-                                                                @tutorName
-                                                            </span>
-                                                        </div>
-                                                    }
-                                                }
-                                            }
-                                            else
-                                            {
-                                                <p class="admin-scheduler-no-slots">
-                                                    No time slots
-                                                </p>
-                                            }
-                                        </div>
-
-                                        <form asp-controller="Admin" asp-action="AddSlot" method="post" class="admin-scheduler-add-form">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="date" value="@currentDate.ToString("yyyy-MM-dd")" />
-                                            <label class="admin-scheduler-label"> Tutor </label>
-                                            <select name="tutorId" class="admin-scheduler-input" required>
-                                                <option value="">Select Tutor</option>
-
-                                                @foreach (var tutor in tutors)
-                                                {
-                                                    <option value="@tutor.TutorId">
-                                                        @tutor.FName @tutor.LName
-                                                    </option>
-                                                }
-                                            </select>
-                                            <label class="admin-scheduler-label"> Start time </label>
-                                            <input type="time" name="startTime" class="admin-scheduler-input" required />
-                                            <label class="admin-scheduler-label"> End time  </label>
-                                            <input type="time" name="endTime" class="admin-scheduler-input" required />
-                                            <button type="submit" class="admin-scheduler-add-button">
-                                                + Add Slot
-                                            </button>
-                                        </form>
-                                    </td>
-
-                                    day++;
-                                }
+                                <th>@weekday</th>
                             }
                         </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
+                    </thead>
 
-        <footer class="admin-scheduler-footer">
-            Managing tutor availability for
-            <strong>@firstDay.ToString("MMMM yyyy")</strong>
-        </footer>
+                    <tbody>
+                        @for (int week = 0; week < weeks; week++)
+                        {
+                            <tr>
+                                @for (int dow = 0; dow < 7; dow++)
+                                {
+                                    if ((week == 0 && dow < startDayOfWeek) || day > daysInMonth)
+                                    {
+                                        <td class="admin-scheduler-empty-cell"></td>
+                                    }
+                                    else
+                                    {
+                                        var currentDate = new DateTime(year, month, day);
+                                        var dayAppointments = appointments.Where(a => a.AppointmentDate.Date == currentDate.Date).OrderBy(a => a.AppointmentDate.TimeOfDay).ToList();
+                                        var daySchedules = schedules.Where(s => s.Date.Date == currentDate.Date).OrderBy(s => s.StartTime).ToList();
 
-    </section>
-</div>
+                                        <td class="admin-scheduler-day-cell">
+                                            <div class="admin-scheduler-day-heading">
+                                                <span class="admin-scheduler-day-number"> @day </span>
+                                                <span class="admin-scheduler-day-name"> @currentDate.ToString("ddd") </span>
+                                            </div>
+
+                                            <div class="admin-scheduler-slots">
+                                                @if (daySchedules.Any())
+                                                {
+                                                    @foreach (var slot in daySchedules)
+                                                    {
+                                                        var slotDateTime = slot.Date.Date.Add(slot.StartTime);
+                                                        var slotCompleted = dayAppointments.Any(a => a.Status?.Trim() == "Completed" &&
+                                                        a.AppointmentDate.TimeOfDay >= slot.StartTime && a.AppointmentDate.TimeOfDay < slot.EndTime);
+                                                        var slotBooked = dayAppointments.Any(a => a.Status?.Trim() == "Scheduled" &&
+                                                        a.AppointmentDate.TimeOfDay >= slot.StartTime && a.AppointmentDate.TimeOfDay < slot.EndTime);
+                                                        var slotExpired = !slotCompleted && !slotBooked && slotDateTime < now;
+                                                        var tutorName = slot.Tutor != null ? $"{slot.Tutor.FName} {slot.Tutor.LName}" : "Tutor unavailable";
+
+                                                        if (slotCompleted)
+                                                        {
+                                                            <div class="admin-slot admin-slot-completed">
+                                                                <strong class="admin-slot-time">
+                                                                    @DateTime.Today.Add(slot.StartTime).ToString("h:mm tt") - @DateTime.Today.Add(slot.EndTime).ToString("h:mm tt")
+                                                                </strong>
+                                                                <span class="admin-slot-status"> Completed </span>
+                                                                <span class="admin-slot-tutor"> @tutorName </span>
+                                                            </div>
+                                                        }
+                                                        else if (slotBooked)
+                                                        {
+                                                            <div class="admin-slot admin-slot-booked">
+                                                                <strong class="admin-slot-time">
+                                                                    @DateTime.Today.Add(slot.StartTime).ToString("h:mm tt") - @DateTime.Today.Add(slot.EndTime).ToString("h:mm tt")
+                                                                </strong>
+                                                                <span class="admin-slot-status"> Booked </span>
+                                                                <span class="admin-slot-tutor"> @tutorName </span>
+                                                            </div>
+                                                        }
+                                                        else if (slotExpired)
+                                                        {
+                                                            <div class="admin-slot admin-slot-expired">
+                                                                <strong class="admin-slot-time">
+                                                                    @DateTime.Today.Add(slot.StartTime).ToString("h:mm tt") - @DateTime.Today.Add(slot.EndTime).ToString("h:mm tt")
+                                                                </strong>
+                                                                <span class="admin-slot-status"> Expired </span>
+                                                                <span class="admin-slot-tutor"> @tutorName </span>
+                                                            </div>
+                                                        }
+                                                        else
+                                                        {
+                                                            <div class="admin-slot admin-slot-available">
+                                                                <strong class="admin-slot-time">
+                                                                    @DateTime.Today.Add(slot.StartTime).ToString("h:mm tt") - @DateTime.Today.Add(slot.EndTime).ToString("h:mm tt")
+                                                                </strong>
+                                                                <span class="admin-slot-status"> Available </span>
+                                                                <span class="admin-slot-tutor"> @tutorName </span>
+                                                            </div>
+                                                        }
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <p class="admin-scheduler-no-slots"> No time slots </p>
+                                                }
+                                            </div>
+
+                                            <form asp-controller="Admin" asp-action="AddSlot" method="post" class="admin-scheduler-add-form">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="date" value="@currentDate.ToString("yyyy-MM-dd")" />
+                                                <label class="admin-scheduler-label"> Tutor </label>
+                                                <select name="tutorId" class="admin-scheduler-input" required>
+                                                    <option value="">Select Tutor</option>
+
+                                                    @foreach (var tutor in tutors)
+                                                    {
+                                                        <option value="@tutor.TutorId"> @tutor.FName @tutor.LName </option>
+                                                    }
+                                                </select>
+                                                <label class="admin-scheduler-label"> Start time </label>
+                                                <input type="time" name="startTime" class="admin-scheduler-input" required />
+                                                <label class="admin-scheduler-label"> End time  </label>
+                                                <input type="time" name="endTime" class="admin-scheduler-input" required />
+                                                <button type="submit" class="admin-scheduler-add-button">
+                                                    &#43; Add Slot
+                                                </button>
+                                            </form>
+                                        </td>
+
+                                        day++;
+                                    }
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <footer class="admin-scheduler-footer">
+                Managing tutor availability for
+                <strong>@firstDay.ToString("MMMM yyyy")</strong>
+            </footer>
+
+        </section>
+    </div>
+</body>

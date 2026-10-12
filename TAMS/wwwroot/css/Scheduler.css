@@ -24,12 +24,9 @@
     margin-bottom: 28px;
 }
 
-.tutor-booking-page .scheduler-heading {
-    min-width: 0;
-}
+.tutor-booking-page .scheduler-heading { min-width: 0; }
 
-.tutor-booking-page .scheduler-eyebrow,
-.tutor-booking-page .scheduler-section-kicker {
+.tutor-booking-page .scheduler-eyebrow, .tutor-booking-page .scheduler-section-kicker {
     margin: 0 0 8px;
     color: #a17b32;
     font-size: 0.76rem;
@@ -52,9 +49,7 @@
     line-height: 1.6;
 }
 
-    .tutor-booking-page .scheduler-subtitle strong {
-        color: var(--scheduler-brown);
-    }
+.tutor-booking-page .scheduler-subtitle strong { color: var(--scheduler-brown); }
 
 .tutor-booking-page .scheduler-header-actions {
     display: flex;
@@ -64,12 +59,9 @@
     flex-wrap: wrap;
 }
 
-    .tutor-booking-page .scheduler-header-actions form {
-        margin: 0;
-    }
+.tutor-booking-page .scheduler-header-actions form { margin: 0; }
 
-.tutor-booking-page .scheduler-back-button,
-.tutor-booking-page .scheduler-logout-button {
+.tutor-booking-page .scheduler-back-button, .tutor-booking-page .scheduler-logout-button {
     display: inline-flex;
     justify-content: center;
     align-items: center;
@@ -89,11 +81,11 @@
     color: var(--scheduler-brown);
 }
 
-    .tutor-booking-page .scheduler-back-button:hover {
-        background: var(--scheduler-gold-light);
-        color: var(--scheduler-brown);
-        transform: translateY(-1px);
-    }
+.tutor-booking-page .scheduler-back-button:hover {
+    background: var(--scheduler-gold-light);
+    color: var(--scheduler-brown);
+    transform: translateY(-1px);
+}
 
 .tutor-booking-page .scheduler-logout-button {
     border: 1px solid #a74444;
@@ -102,9 +94,7 @@
     cursor: pointer;
 }
 
-    .tutor-booking-page .scheduler-logout-button:hover {
-        background: #883535;
-    }
+.tutor-booking-page .scheduler-logout-button:hover { background: #883535; }
 
 .tutor-booking-page .scheduler-alert {
     display: flex;
@@ -137,9 +127,7 @@
     box-shadow: 0 12px 34px rgba(73, 55, 40, 0.07);
 }
 
-.tutor-booking-page .scheduler-calendar-heading {
-    padding: 26px 28px 18px;
-}
+.tutor-booking-page .scheduler-calendar-heading { padding: 26px 28px 18px; }
 
 .tutor-booking-page .scheduler-calendar-heading h2 {
     margin: 0;
@@ -183,9 +171,7 @@
     transition: all 0.2s ease;
 }
 
-.tutor-booking-page .scheduler-month-button:last-child {
-    justify-self: end;
-}
+.tutor-booking-page .scheduler-month-button:last-child { justify-self: end; }
 
 .tutor-booking-page .scheduler-month-button:hover {
     border-color: var(--scheduler-gold);
@@ -225,23 +211,13 @@
     border-radius: 50%;
 }
 
-.tutor-booking-page .available-dot {
-    background: var(--scheduler-green);
-}
+.tutor-booking-page .available-dot { background: var(--scheduler-green); }
 
-.tutor-booking-page .booked-dot {
-    background: #8d929a;
-}
+.tutor-booking-page .booked-dot { background: #8d929a; }
 
-.tutor-booking-page .completed-dot {
-    background: #6c7f9d;
-}
+.tutor-booking-page .completed-dot { background: #6c7f9d; }
 
-.tutor-booking-page .expired-dot {
-    background: #c77a7a;
-}
-
-/* Calendar table */
+.tutor-booking-page .expired-dot { background: #c77a7a; }
 
 .tutor-booking-page .scheduler-calendar-scroll {
     overflow-x: auto;
@@ -278,9 +254,7 @@
     vertical-align: top;
 }
 
-.tutor-booking-page .scheduler-calendar-table .scheduler-empty-cell {
-    background: transparent;
-}
+.tutor-booking-page .scheduler-calendar-table .scheduler-empty-cell { background: transparent; }
 
 .tutor-booking-page .scheduler-day-card {
     height: 100%;
@@ -365,9 +339,7 @@
     text-align: left;
 }
 
-.tutor-booking-page button.scheduler-slot {
-    cursor: pointer;
-}
+.tutor-booking-page button.scheduler-slot { cursor: pointer; }
 
 .tutor-booking-page .scheduler-slot-time {
     font-size: 0.78rem;
@@ -387,11 +359,11 @@
     transition: all 0.2s ease;
 }
 
-    .tutor-booking-page .scheduler-slot-available:hover {
-        border-color: var(--scheduler-green);
-        background: #d9eddf;
-        transform: translateY(-1px);
-    }
+.tutor-booking-page .scheduler-slot-available:hover {
+    border-color: var(--scheduler-green);
+    background: #d9eddf;
+    transform: translateY(-1px);
+}
 
 .tutor-booking-page .scheduler-slot-booked {
     border-color: #e4e5e8;
@@ -423,93 +395,70 @@
     font-size: 0.8rem;
 }
 
-    .tutor-booking-page .scheduler-calendar-footer strong {
-        color: var(--scheduler-brown);
-    }
+.tutor-booking-page .scheduler-calendar-footer strong { color: var(--scheduler-brown); }
 
 @media (max-width: 900px) {
-    .tutor-booking-page {
-        padding: 18px;
+    .tutor-booking-page { padding: 18px; }
+
+    .tutor-booking-page .scheduler-page-header {
+        align-items: flex-start;
+        flex-direction: column;
     }
 
-        .tutor-booking-page .scheduler-page-header {
-            align-items: flex-start;
-            flex-direction: column;
-        }
+    .tutor-booking-page .scheduler-header-actions { justify-content: flex-start; }
 
-        .tutor-booking-page .scheduler-header-actions {
-            justify-content: flex-start;
-        }
+    .tutor-booking-page .scheduler-calendar-heading { padding: 22px 20px 16px; }
 
-        .tutor-booking-page .scheduler-calendar-heading {
-            padding: 22px 20px 16px;
-        }
+    .tutor-booking-page .scheduler-calendar-toolbar { margin: 0 20px; }
 
-        .tutor-booking-page .scheduler-calendar-toolbar {
-            margin: 0 20px;
-        }
+    .tutor-booking-page .scheduler-legend {
+        padding: 16px 20px;
+        gap: 12px;
+    }
 
-        .tutor-booking-page .scheduler-legend {
-            padding: 16px 20px;
-            gap: 12px;
-        }
-
-        .tutor-booking-page .scheduler-calendar-footer {
-            align-items: flex-start;
-            flex-direction: column;
-            padding: 16px 20px;
-        }
+    .tutor-booking-page .scheduler-calendar-footer {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 16px 20px;
+    }
 }
 
 @media (max-width: 520px) {
-    .tutor-booking-page {
-        padding: 12px;
+    .tutor-booking-page { padding: 12px; }
+
+    .tutor-booking-page .scheduler-heading h1 { font-size: 1.75rem; }
+
+    .tutor-booking-page .scheduler-header-actions { width: 100%; }
+
+    .tutor-booking-page .scheduler-back-button, .tutor-booking-page .scheduler-logout-button {
+        padding: 9px 12px;
+        font-size: 0.8rem;
     }
 
-        .tutor-booking-page .scheduler-heading h1 {
-            font-size: 1.75rem;
-        }
+    .tutor-booking-page .scheduler-calendar-toolbar {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
 
-        .tutor-booking-page .scheduler-header-actions {
-            width: 100%;
-        }
+    .tutor-booking-page .scheduler-current-month {
+        grid-column: 1 / -1;
+        grid-row: 1;
+    }
 
-        .tutor-booking-page .scheduler-back-button,
-        .tutor-booking-page .scheduler-logout-button {
-            padding: 9px 12px;
-            font-size: 0.8rem;
-        }
+    .tutor-booking-page .scheduler-month-button {
+        width: 100%;
+        padding: 9px 7px;
+        font-size: 0.78rem;
+    }
 
-        .tutor-booking-page .scheduler-calendar-toolbar {
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
+    .tutor-booking-page .scheduler-month-button:last-child { justify-self: stretch; }
 
-        .tutor-booking-page .scheduler-current-month {
-            grid-column: 1 / -1;
-            grid-row: 1;
-        }
+    .tutor-booking-page .scheduler-calendar-scroll {
+        padding-right: 10px;
+        padding-left: 10px;
+    }
 
-        .tutor-booking-page .scheduler-month-button {
-            width: 100%;
-            padding: 9px 7px;
-            font-size: 0.78rem;
-        }
+    .tutor-booking-page .scheduler-calendar-table { border-spacing: 5px; }
 
-        .tutor-booking-page .scheduler-month-button:last-child {
-            justify-self: stretch;
-        }
-
-        .tutor-booking-page .scheduler-calendar-scroll {
-            padding-right: 10px;
-            padding-left: 10px;
-        }
-
-        .tutor-booking-page .scheduler-calendar-table {
-            border-spacing: 5px;
-        }
-
-        .tutor-booking-page .scheduler-legend {
-            gap: 10px 14px;
-        }
+    .tutor-booking-page .scheduler-legend { gap: 10px 14px; }
 }

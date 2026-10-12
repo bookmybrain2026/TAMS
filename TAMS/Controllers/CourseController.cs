@@ -19,15 +19,8 @@ namespace TAMS.Controllers
         public IActionResult Index()
         {
             var adminId = HttpContext.Session.GetInt32("AdminId");
-
-            if (adminId == null)
-            {
-                return RedirectToAction("Login", "Login");
-            }
-
-            var courses = 
-                dBContext.Course.Find(_ => true)
-                .SortBy(c => c.CourseCode).ToList();
+            if (adminId == null) { return RedirectToAction("Login", "Login"); }
+            var courses = dBContext.Course.Find(_ => true).SortBy(c => c.CourseCode).ToList();
             LoadSubjects();
             return View(courses);
         }
@@ -38,7 +31,7 @@ namespace TAMS.Controllers
         {
             ViewBag.Subjects = 
                 dBContext.Subject.Find(_ => true)
-                .SortBy(s => s.Name).ToList();
+                .SortBy(s => s.Code).ToList();
         }
 
 
@@ -48,26 +41,18 @@ namespace TAMS.Controllers
         public IActionResult Create(Course model)
         {
             var adminId = HttpContext.Session.GetInt32("AdminId");
-
-            if (adminId == null)
-            {
-                return RedirectToAction("Login", "Login");
-            }
+            if (adminId == null) { return RedirectToAction("Login", "Login"); }
 
             if (!ModelState.IsValid)
             {
                 LoadSubjects();
-                var courses = 
-                    dBContext.Course .Find(_ => true)
-                    .SortBy(c => c.CourseCode) .ToList();
+                var courses = dBContext.Course.Find(_ => true).SortBy(c => c.CourseCode).ToList();
                 ViewBag.Action = "Create";
                 return View("Index", courses);
             }
 
             // Check whether the course code already exists
-            var existingCourse = 
-                dBContext.Course
-                .Find(c => c.CourseCode == model.CourseCode).FirstOrDefault();
+            var existingCourse =  dBContext.Course.Find(c => c.CourseCode == model.CourseCode).FirstOrDefault();
 
             if (existingCourse != null)
             {
@@ -76,9 +61,7 @@ namespace TAMS.Controllers
             }
 
             // Check whether the selected subject exists
-            var subjectExists = 
-                dBContext.Subject
-                .Find(s => s.Code == model.SubjectCode).Any();
+            var subjectExists = dBContext.Subject.Find(s => s.Code == model.SubjectCode).Any();
 
             if (!subjectExists)
             {
@@ -99,11 +82,7 @@ namespace TAMS.Controllers
         public IActionResult Edit(string id, Course model)
         {
             var adminId = HttpContext.Session.GetInt32("AdminId");
-
-            if (adminId == null)
-            {
-                return RedirectToAction("Login", "Login");
-            }
+            if (adminId == null) { return RedirectToAction("Login", "Login"); }
 
             if (!ModelState.IsValid)
             {
@@ -111,18 +90,13 @@ namespace TAMS.Controllers
                 return RedirectToAction(nameof(Index));
             }
             // Find the existing course
-            var existingCourse = 
-                dBContext.Course
-                .Find(c => c.CourseId == id).FirstOrDefault();
+            var existingCourse = dBContext.Course.Find(c => c.CourseId == id).FirstOrDefault();
 
             if (existingCourse == null) { return NotFound(); }
 
 
             // Check whether another course already uses this course code
-            var duplicateCourse = 
-                dBContext.Course.Find(c =>
-                    c.CourseCode == model.CourseCode &&
-                    c.CourseId != id).FirstOrDefault();
+            var duplicateCourse = dBContext.Course.Find(c => c.CourseCode == model.CourseCode && c.CourseId != id).FirstOrDefault();
 
             if (duplicateCourse != null)
             {
@@ -130,11 +104,8 @@ namespace TAMS.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-
             // Check whether the selected subject exists
-            var subjectExists = 
-                dBContext.Subject
-                .Find(s => s.Code == model.SubjectCode).Any();
+            var subjectExists = dBContext.Subject.Find(s => s.Code == model.SubjectCode).Any();
 
             if (!subjectExists)
             {
@@ -161,14 +132,9 @@ namespace TAMS.Controllers
         public IActionResult Delete(string id)
         {
             var adminId = HttpContext.Session.GetInt32("AdminId");
+            if (adminId == null) { return RedirectToAction("Login", "Login"); }
 
-            if (adminId == null)
-            {
-                return RedirectToAction("Login", "Login");
-            }
-            var course = 
-                dBContext.Course
-                .Find(c => c.CourseId == id).FirstOrDefault();
+            var course = dBContext.Course.Find(c => c.CourseId == id).FirstOrDefault();
 
             if (course == null) { return NotFound(); }
             // Delete the course

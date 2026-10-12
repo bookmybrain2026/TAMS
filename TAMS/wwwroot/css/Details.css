@@ -9,9 +9,9 @@
     overflow-wrap: anywhere;
 }
 
-.tutor-details-page .tutors-heading p {
+/*.tutor-details-page .tutors-heading p {
     font-size: 1.05rem;
-}
+}*/
 
 .tutor-back-button {
     background-color: var(--bmb-card-cream);
@@ -23,20 +23,20 @@
     transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
-    .tutor-back-button:hover {
-        background-color: #ffedc2;
-        border-color: var(--bmb-orange);
-        color: var(--bmb-dark);
-        transform: translateY(-1px);
-    }
+.tutor-back-button:hover {
+    background-color: #ffedc2;
+    border-color: var(--bmb-orange);
+    color: var(--bmb-dark);
+    transform: translateY(-1px);
+}
 
-.tutor-details-page .tutor-card {
+/*.tutor-details-page .tutor-card {
     background-color: var(--bmb-soft-cream);
     border: 1px solid var(--bmb-border);
     border-radius: 16px;
     overflow: hidden;
     box-shadow: 0 4px 12px rgba(93, 57, 20, 0.07) !important;
-}
+}*/
 
 .tutor-details-page .tutor-card .card-body {
     padding: 28px;
@@ -142,7 +142,7 @@
     gap: 12px;
 }
 
-.course-display-bubble {
+.course-display-list .course-display-bubble {
     display: inline-flex;
     align-items: center;
     flex-wrap: wrap;
@@ -157,10 +157,10 @@
     overflow-wrap: anywhere;
 }
 
-    .course-display-bubble strong {
-        color: var(--bmb-brown);
-        font-weight: 800;
-    }
+.course-display-bubble strong {
+    color: var(--bmb-brown);
+    font-weight: 800;
+}
 
 .tutor-review-summary {
     padding: 22px 16px;
@@ -175,9 +175,7 @@
     font-weight: 800;
 }
 
-.tutor-stars {
-    color: var(--bmb-orange);
-}
+.tutor-stars { color: var(--bmb-orange); }
 
 .tutor-rating-out-of {
     color: var(--bmb-muted);
@@ -185,13 +183,9 @@
     font-weight: 600;
 }
 
-.tutor-no-rating {
-    font-size: 1.35rem;
-}
+.tutor-no-rating { font-size: 1.35rem; }
 
-.tutor-review-summary .review-count {
-    margin-top: 5px;
-}
+.tutor-review-summary .review-count { margin-top: 5px; }
 
 .tutor-review-card {
     margin-bottom: 16px;
@@ -202,9 +196,7 @@
     transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-.tutor-review-card:last-child {
-    margin-bottom: 0;
-}
+.tutor-review-card:last-child { margin-bottom: 0; }
 
 .tutor-review-card:hover {
     border-color: #dfc69e;
@@ -218,9 +210,7 @@
     letter-spacing: 1px;
 }
 
-.tutor-review-rating .empty-star {
-    color: #c5b7a5;
-}
+.tutor-review-rating .empty-star { color: #c5b7a5; }
 
 .tutor-review-score {
     margin-left: 8px;
@@ -256,33 +246,25 @@
     line-height: 1.6;
 }
 
+/*.tutor-section-heading .course-display-bubble {
+    background-color: #ffedc2;
+}*/
+
 @media (max-width: 767px) {
     .tutor-details-page {
         margin-top: 2rem !important;
         padding-bottom: 30px;
     }
 
-    .tutor-details-page .tutors-heading h1 {
-        font-size: 2rem;
-    }
+    .tutor-details-page .tutors-heading h1 { font-size: 2rem; }
 
-    .tutor-details-page .tutor-card .card-body {
-        padding: 20px;
-    }
+    .tutor-details-page .tutor-card .card-body { padding: 20px; }
 
-    .tutor-detail-item {
-        padding: 14px;
-    }
+    .tutor-detail-item { padding: 14px; }
 
-    .tutor-section-heading h3 {
-        font-size: 1.25rem;
-    }
+    .tutor-section-heading h3 { font-size: 1.25rem; }
 
-    .tutor-large-rating {
-        font-size: 1.7rem;
-    }
+    .tutor-large-rating { font-size: 1.7rem; }
 
-    .course-display-bubble {
-        width: 100%;
-    }
+    .course-display-bubble { width: 100%; }
 }

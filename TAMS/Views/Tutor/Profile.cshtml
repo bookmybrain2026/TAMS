@@ -10,10 +10,11 @@
     var selectedCourses = Model.TutoringCourseIds ?? new List<string>();
 }
 
-<head>
-    <link href="~/css/OurTutors.css" rel="stylesheet" />
-    <link href="~/css/Profile.css" rel="stylesheet" />
-</head>
+@section Styles {
+    <link href="~/css/OurTutors.css" rel="stylesheet" asp-append-version="true" />
+    <link href="~/css/Profile.css" rel="stylesheet" asp-append-version="true" />
+
+}
 
 <div class="container mt-5 tutor-profile-page">
     <div class="tutors-heading text-center mb-5">
@@ -171,7 +172,7 @@
                     Save Changes
                 </button>
                 <a asp-controller="Tutor" asp-action="Dashboard" asp-route-id="@Context.Session.GetInt32("TutorId")" class="btn btn-secondary profile-back-button">
-                    Back to Dashboard
+                    ← Back to Dashboard
                 </a>
             </div>
 

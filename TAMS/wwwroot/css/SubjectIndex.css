@@ -1,23 +1,4 @@
-﻿:root {
-    --bmb-cream: #fff0cf;
-    --bmb-yellow: #ffbd35;
-    --bmb-orange: #f4a51c;
-    --bmb-brown: #80451e;
-    --bmb-dark: #302014;
-    --bmb-white: #fff;
-    --admin-muted: #8a7967;
-    --admin-border: #eee0c8;
-    --admin-shadow: 0 10px 30px rgba(93, 57, 20, .08);
-}
-
-body {
-    min-height: 100%;
-    margin: 0;
-    padding: 0;
-    background: var(--bmb-cream);
-}
-
-.subject-dashboard {
+﻿.subject-dashboard {
     max-width: 1500px;
     margin: 0 auto;
     padding: 34px clamp(16px, 3vw, 42px) 24px;
@@ -25,10 +6,7 @@ body {
     font-family: "Segoe UI", Arial, sans-serif;
 }
 
-.subject-dashboard * {
-    box-sizing: border-box;
-}
-
+.subject-dashboard * { box-sizing: border-box; }
 
 .dashboard-header {
     display: flex;
@@ -38,8 +16,7 @@ body {
     margin-bottom: 30px;
 }
 
-.dashboard-eyebrow,
-.section-kicker {
+.dashboard-eyebrow, .section-kicker {
     margin: 0 0 7px;
     color: var(--bmb-brown);
     font-size: 10px;
@@ -67,8 +44,7 @@ body {
     gap: 10px;
 }
 
-.subject-primary-button,
-.subject-secondary-button {
+.subject-primary-button, .subject-secondary-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -91,11 +67,11 @@ body {
     box-shadow: 0 5px 12px rgba(244, 165, 28, .16);
 }
 
-    .subject-primary-button:hover {
-        background: var(--bmb-orange);
-        color: var(--bmb-dark);
-        transform: translateY(-1px);
-    }
+.subject-primary-button:hover {
+    background: var(--bmb-orange);
+    color: var(--bmb-dark);
+    transform: translateY(-1px);
+}
 
 .subject-secondary-button {
     background: #fff8e9;
@@ -179,9 +155,7 @@ body {
     background: var(--bmb-brown);
 }
 
-.dashboard-section {
-    margin-bottom: 37px;
-}
+.dashboard-section { margin-bottom: 37px; }
 
 .section-heading {
     display: flex;
@@ -265,14 +239,12 @@ body {
     box-shadow: 0 0 0 3px rgba(244, 165, 28, .16);
 }
 
-.directory-search-input {
-    padding-left: 42px;
-}
+.directory-search-input { padding-left: 42px; }
 
-    .directory-search-input::placeholder {
-        color: #a3927d;
-        font-size: 12px;
-    }
+.directory-search-input::placeholder {
+    color: #a3927d;
+    font-size: 12px;
+}
 
 .subject-table-wrap {
     width: 100%;
@@ -310,13 +282,9 @@ body {
     vertical-align: middle;
 }
 
-.subject-table tbody tr:last-child td {
-    border-bottom: 0;
-}
+.subject-table tbody tr:last-child td { border-bottom: 0; }
 
-.subject-table tbody tr:hover {
-    background: #fffcf6;
-}
+.subject-table tbody tr:hover { background: #fffcf6; }
 
 .subject-pill {
     display: inline-block;
@@ -365,9 +333,7 @@ body {
     color: #7a321c;
 }
 
-.small-action:hover {
-    filter: brightness(.97);
-}
+.small-action:hover { filter: brightness(.97); }
 
 .empty-state {
     padding: 28px !important;
@@ -430,13 +396,9 @@ body {
     cursor: pointer;
 }
 
-.subject-modal-close:hover {
-    background: #ffe3a0;
-}
+.subject-modal-close:hover { background: #ffe3a0; }
 
-.subject-form-group {
-    margin-bottom: 17px;
-}
+.subject-form-group { margin-bottom: 17px; }
 
 .subject-form-group label {
     display: block;
@@ -468,9 +430,7 @@ body {
 }
 
 @media (max-width: 600px) {
-    .subject-dashboard {
-        padding: 24px 13px;
-    }
+    .subject-dashboard { padding: 24px 13px; }
 
     .dashboard-header {
         align-items: flex-start;
@@ -483,22 +443,13 @@ body {
         align-items: stretch;
     }
 
-    .header-actions a,
-    .header-actions button {
-        width: 100%;
-    }
+    .header-actions a, .header-actions button { width: 100%; }
 
-    .subject-summary {
-        grid-template-columns: 1fr;
-    }
+    .subject-summary { grid-template-columns: 1fr; }
 
-    .subject-summary-card {
-        min-height: 145px;
-    }
+    .subject-summary-card { min-height: 145px; }
 
-    .directory-search {
-        max-width: 100%;
-    }
+    .directory-search { max-width: 100%; }
 
     .subject-modal {
         align-items: flex-start;
@@ -510,11 +461,7 @@ body {
         padding: 24px 18px;
     }
 
-    .form-actions {
-        flex-direction: column;
-    }
+    .form-actions { flex-direction: column; }
 
-    .form-actions button {
-        width: 100%;
-    }
+    .form-actions button { width: 100%; }
 }

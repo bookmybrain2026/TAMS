@@ -20,7 +20,7 @@ namespace TAMS.Controllers
 
         // Public Tutor Directory
         [HttpGet]
-        public IActionResult Index()
+        public IActionResult OurTutors()
         {
             var tutors = dBContext.Tutor
                 .Find(_ => true).SortBy(t => t.LName)
@@ -242,7 +242,6 @@ namespace TAMS.Controllers
             var tutorId = HttpContext.Session.GetInt32("TutorId");
             if (tutorId == null) {return RedirectToAction("Login", "Login");}
 
-            // Prevent a tutor from viewing another tutor's schedule
             if (tutorId.Value != id) {return Unauthorized();}
 
             var tutor = dBContext.Tutor
@@ -263,6 +262,7 @@ namespace TAMS.Controllers
             ViewBag.TutorId = id;
             ViewBag.Month = targetMonth;
             ViewBag.Year = targetYear;
+            ViewBag.StudentId = HttpContext.Session.GetInt32("StudentId");
 
             return View(schedules);
         }
@@ -478,6 +478,19 @@ namespace TAMS.Controllers
                 dBContext.Appointments.UpdateOne(
                     a => a.AppointmentId == appointmentId,
                     update);
+
+                // Find and delete the associated schedule slot.
+                var localAppointmentDate = appointment.AppointmentDate.AddHours(-5);
+                var appointmentDate = localAppointmentDate.Date; 
+                var appointmentTime = localAppointmentDate.TimeOfDay; 
+                var schedule = dBContext.Schedule 
+                    .Find(s => s.TutorId == appointment.TutorId) 
+                    .ToList() .FirstOrDefault(s => s.Date.Date == appointmentDate 
+                    && appointmentTime >= s.StartTime && appointmentTime < s.EndTime); 
+                if (schedule != null) 
+                { 
+                    dBContext.Schedule.DeleteOne(s => s.ScheduleId == schedule.ScheduleId && s.TutorId == appointment.TutorId); 
+                }
 
                 try
                 {

@@ -19,21 +19,20 @@
     if (nextMonth > 12) { nextMonth = 1; nextYear++; }
 }
 
-<link href="~/css/tutorschedule.css" rel="stylesheet" />
+@section Styles {
+    <link href="~/css/TutorSchedule.css" rel="stylesheet" asp-append-version="true" />
+    <link href="~/css/site.css" rel="stylesheet" asp-append-version="true" />
+}
 
 <div class="schedule-page">
     @if (TempData["Error"] != null)
     {
-        <div class="schedule-alert schedule-alert-error">
-            @TempData["Error"]
-        </div>
+        <div class="schedule-alert schedule-alert-error">@TempData["Error"]</div>
     }
 
     @if (TempData["Success"] != null)
     {
-        <div class="schedule-alert schedule-alert-success">
-            @TempData["Success"]
-        </div>
+        <div class="schedule-alert schedule-alert-success">@TempData["Success"]</div>
     }
 
     <header class="schedule-header">
@@ -44,15 +43,14 @@
         </div>
 
         <a class="schedule-button schedule-button-primary" href="@Url.Action("Dashboard", "Tutor", new { id = tutorId })">
-            ← Back to Dashboard
+            &larr; Back to Dashboard
         </a>
     </header>
 
     <section class="schedule-card">
-
         <div class="schedule-toolbar">
             <a class="schedule-button schedule-button-secondary" href="@Url.Action("Schedule", "Tutor", new { id = tutorId, month = prevMonth, year = prevYear })">
-                ← Previous Month
+                &larr; Previous Month
             </a>
 
             <div class="schedule-current-month">
@@ -61,7 +59,7 @@
             </div>
 
             <a class="schedule-button schedule-button-secondary" href="@Url.Action("Schedule", "Tutor", new { id = tutorId, month = nextMonth, year = nextYear })">
-                Next Month →
+                Next Month &rarr;
             </a>
         </div>
 
@@ -102,10 +100,7 @@
                                     else
                                     {
                                         var currentDate = new DateTime(year, month, day);
-
-                                        var daySchedules = Model
-                                        .Where(s => s.Date.Date == currentDate.Date)
-                                        .ToList();
+                                        var daySchedules = Model .Where(s => s.Date.Date == currentDate.Date) .ToList();
 
                                         <td class="schedule-day-cell">
                                             <div class="schedule-day-heading">
@@ -120,7 +115,10 @@
                                                     {
                                                         <div class="schedule-slot">
                                                             <span class="schedule-slot-dot"></span>
-                                                            <span> @s.StartTime - @s.EndTime </span>
+                                                            <span>
+                                                                @DateTime.Today.Add(s.StartTime).ToString("h:mm tt") -
+                                                                @DateTime.Today.Add(s.EndTime).ToString("h:mm tt")
+                                                            </span>
                                                         </div>
                                                     }
                                                 }
@@ -140,9 +138,7 @@
                                                 <input type="time" name="startTime" class="schedule-time-input" required />
                                                 <label class="schedule-input-label"> End time </label>
                                                 <input type="time" name="endTime" class="schedule-time-input" required />
-                                                <button type="submit" class="schedule-add-button">
-                                                    + Add Schedule
-                                                </button>
+                                                <button type="submit" class="schedule-add-button"> &#43; Add Schedule </button>
                                             </form>
                                         </td>
 
@@ -157,9 +153,8 @@
         </div>
 
         <footer class="schedule-footer">
-            Managing availability for
-            <strong>@firstDay.ToString("MMMM yyyy")</strong>
+            Managing availability for <strong>@firstDay.ToString("MMMM yyyy")</strong>
         </footer>
-
     </section>
+
 </div>

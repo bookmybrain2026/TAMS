@@ -17,22 +17,16 @@
     font-size: 1.05rem;
 }
 
-.student-tutor-profile .tutor-card {
-    transition: none;
-}
+.student-tutor-profile .tutor-card { transition: none; }
 
 .student-tutor-profile .tutor-card:hover {
     transform: none;
     box-shadow: 0 4px 12px rgba(93, 57, 20, 0.07) !important;
 }
 
-.student-tutor-profile .tutor-profile-heading {
-    padding-top: 8px;
-}
+.student-tutor-profile .tutor-profile-heading { padding-top: 8px; }
 
-.student-tutor-profile .tutor-avatar {
-    flex-shrink: 0;
-}
+.student-tutor-profile .tutor-avatar { flex-shrink: 0; }
 
 .student-tutor-profile .tutor-profile-heading .card-title {
     color: var(--bmb-brown);
@@ -106,13 +100,9 @@
     gap: 12px;
 }
 
-.student-tutor-profile .course-display-bubble {
-    max-width: 100%;
-}
+.student-tutor-profile .course-display-bubble { max-width: 100%; }
 
-.student-tutor-profile .tutor-review-card {
-    overflow-wrap: anywhere;
-}
+.student-tutor-profile .tutor-review-card { overflow-wrap: anywhere; }
 
 .student-tutor-profile .tutor-review-date {
     display: block;
@@ -132,23 +122,13 @@
         padding-bottom: 30px;
     }
 
-    .student-tutor-profile .tutors-heading h1 {
-        font-size: 2rem;
-    }
+    .student-tutor-profile .tutors-heading h1 { font-size: 2rem; }
 
-    .student-tutor-profile .tutor-card .card-body {
-        padding: 20px;
-    }
+    .student-tutor-profile .tutor-card .card-body { padding: 20px; }
 
-    .student-tutor-profile .tutor-detail-item {
-        padding: 14px;
-    }
+    .student-tutor-profile .tutor-detail-item { padding: 14px; }
 
-    .student-tutor-profile .course-display-bubble {
-        width: 100%;
-    }
+    .student-tutor-profile .course-display-bubble { width: 100%; }
 
-    .student-tutor-profile .tutor-schedule-button {
-        width: 100%;
-    }
+    .student-tutor-profile .tutor-schedule-button { width: 100%; }
 }

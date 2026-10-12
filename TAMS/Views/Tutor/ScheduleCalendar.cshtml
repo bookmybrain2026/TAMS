@@ -18,7 +18,11 @@
     if (nextMonth > 12) { nextMonth = 1; nextYear++; }
 }
 
-<link rel="stylesheet" href="~/css/TutorScheduleCalendar.css" asp-append-version="true" />
+@section Styles {
+    <link rel="stylesheet" href="~/css/TutorScheduleCalendar.css" asp-append-version="true" />
+    <link href="~/css/site.css" rel="stylesheet" asp-append-version="true" />
+}
+
 <body>
     <div class="schedule-calendar">
 
@@ -39,31 +43,25 @@
         <header class="calendar-header">
             <div class="calendar-heading">
                 <span class="calendar-eyebrow">TAMS • TUTOR PORTAL</span>
-
                 <h1>Tutor Appointments</h1>
-
                 <p>View your scheduled appointments and student sessions.</p>
             </div>
-
             <a class="calendar-button calendar-button-primary" href="@Url.Action("Dashboard", "Tutor", new { id = tutorId })">
-                ← Back to Dashboard
+                &larr; Back to Dashboard
             </a>
         </header>
 
         <section class="calendar-card">
-
             <div class="calendar-toolbar">
                 <a class="calendar-button calendar-button-secondary" href="@Url.Action("ScheduleCalendar", "Tutor",  new { id = tutorId, month = prevMonth, year = prevYear })">
-                    ← Previous Month
+                    &larr; Previous Month
                 </a>
-
                 <div class="calendar-current-month">
                     <span class="calendar-month-label">CURRENT VIEW</span>
                     <h2>@firstDay.ToString("MMMM yyyy")</h2>
                 </div>
-
                 <a class="calendar-button calendar-button-secondary" href="@Url.Action("ScheduleCalendar", "Tutor", new { id = tutorId, month = nextMonth, year = nextYear })">
-                    Next Month →
+                    Next Month &rarr;
                 </a>
             </div>
 
@@ -94,7 +92,6 @@
                             int day = 1;
                             int totalCells = daysInMonth + startDayOfWeek;
                             int weeks = (int)Math.Ceiling(totalCells / 7.0);
-
                             for (int week = 0; week < weeks; week++)
                             {
                                 <tr>
@@ -107,20 +104,15 @@
                                         else
                                         {
                                             var currentDate = new DateTime(year, month, day);
-
                                             var dayAppointments = appointments
                                             .Where(a => a.AppointmentDate.Date == currentDate.Date)
                                             .OrderBy(a => a.AppointmentDate.TimeOfDay)
                                             .ToList();
 
                                             <td class="calendar-day-cell">
-                                                <div class="calendar-day-number">
-                                                    @day
-                                                </div>
+                                                <div class="calendar-day-number"> @day </div>
 
-                                                <div class="calendar-day-name">
-                                                    @currentDate.ToString("ddd")
-                                                </div>
+                                                <div class="calendar-day-name"> @currentDate.ToString("ddd") </div>
 
                                                 <ul class="calendar-appointments">
                                                     @foreach (var appt in dayAppointments)
@@ -128,29 +120,16 @@
                                                         if (appt.Status == "Cancelled")
                                                         {
                                                             <li class="appointment-item appointment-cancelled">
-                                                                <span class="appointment-time">
-                                                                    @appt.AppointmentDate.AddHours(-5).ToString("hh:mm tt")
-                                                                </span>
-
-                                                                <span class="appointment-student">
-                                                                    @appt.Student.FName @appt.Student.LName
-                                                                </span>
-
-                                                                <span class="appointment-status">
-                                                                    Cancelled
-                                                                </span>
+                                                                <span class="appointment-time"> @appt.AppointmentDate.AddHours(-5).ToString("hh:mm tt") </span>
+                                                                <span class="appointment-student"> @appt.Student.FName @appt.Student.LName </span>
+                                                                <span class="appointment-status"> Cancelled </span>
                                                             </li>
                                                         }
                                                         else
                                                         {
                                                             <li class="appointment-item appointment-active">
-                                                                <span class="appointment-time">
-                                                                    @appt.AppointmentDate.AddHours(-5).ToString("hh:mm tt")
-                                                                </span>
-
-                                                                <span class="appointment-student">
-                                                                    @appt.Student.FName @appt.Student.LName
-                                                                </span>
+                                                                <span class="appointment-time"> @appt.AppointmentDate.AddHours(-5).ToString("hh:mm tt") </span>
+                                                                <span class="appointment-student"> @appt.Student.FName @appt.Student.LName </span>
                                                             </li>
                                                         }
                                                     }
@@ -168,8 +147,7 @@
             </div>
 
             <footer class="calendar-footer">
-                Showing appointments for
-                <strong>@firstDay.ToString("MMMM yyyy")</strong>
+                Showing appointments for <strong>@firstDay.ToString("MMMM yyyy")</strong>
             </footer>
 
         </section>

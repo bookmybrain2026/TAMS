@@ -1,21 +1,5 @@
 ﻿
-:root {
-    --bmb-cream: #fff0cf;
-    --bmb-yellow: #ffbd35;
-    --bmb-orange: #f4a51c;
-    --bmb-brown: #80451e;
-    --bmb-dark: #302014;
-    --bmb-white: #ffffff;
-    --bmb-muted: #8a7967;
-    --bmb-border: #e7d8bf;
-    --bmb-light: #fffdf8;
-    --bmb-shadow: 0 15px 45px rgba(93, 57, 20, 0.12);
-}
-
 body {
-    min-height: 100%;
-    margin: 0;
-    background: var(--bmb-cream);
     font-family: "Segoe UI", Arial, sans-serif;
     color: var(--bmb-dark);
 }
@@ -66,9 +50,7 @@ body {
     gap: 10px;
 }
 
-.admin-scheduler-header-actions form {
-    margin: 0;
-}
+.admin-scheduler-header-actions form { margin: 0; }
 
 .admin-scheduler-button {
     display: inline-flex;
@@ -120,8 +102,7 @@ body {
     color: var(--bmb-white);
 }
 
-.admin-scheduler-button:focus-visible,
-.admin-scheduler-add-button:focus-visible {
+.admin-scheduler-button:focus-visible, .admin-scheduler-add-button:focus-visible {
     outline: 3px solid var(--bmb-brown);
     outline-offset: 3px;
 }
@@ -187,25 +168,15 @@ body {
     border-radius: 50%;
 }
 
-.status-indicator:first-child {
-    margin-left: 0;
-}
+.status-indicator:first-child { margin-left: 0; }
 
-.status-available {
-    background: #4e9460;
-}
+.status-available { background: #4e9460; }
 
-.status-booked {
-    background: var(--bmb-orange);
-}
+.status-booked { background: var(--bmb-orange); }
 
-.status-completed {
-    background: var(--bmb-brown);
-}
+.status-completed { background: var(--bmb-brown); }
 
-.status-expired {
-    background: #b8aaa0;
-}
+.status-expired { background: #b8aaa0; }
 
 .admin-scheduler-table-wrapper {
     width: 100%;
@@ -398,9 +369,7 @@ body {
     transition: background-color 0.2s ease;
 }
 
-.admin-scheduler-add-button:hover {
-    background: var(--bmb-orange);
-}
+.admin-scheduler-add-button:hover { background: var(--bmb-orange); }
 
 .admin-scheduler-footer {
     padding: 16px 24px;
@@ -410,9 +379,7 @@ body {
     font-size: 12px;
 }
 
-.admin-scheduler-footer strong {
-    color: var(--bmb-brown);
-}
+.admin-scheduler-footer strong { color: var(--bmb-brown); }
 
 @media (max-width: 700px) {
     .admin-scheduler {
@@ -426,9 +393,7 @@ body {
         gap: 18px;
     }
 
-    .admin-scheduler-header-actions {
-        width: 100%;
-    }
+    .admin-scheduler-header-actions { width: 100%; }
 
     .admin-scheduler-toolbar {
         grid-template-columns: 1fr 1fr;
@@ -441,9 +406,7 @@ body {
         grid-row: 1;
     }
 
-    .admin-scheduler-toolbar > :last-child {
-        justify-self: end;
-    }
+    .admin-scheduler-toolbar > :last-child { justify-self: end; }
 
     .month-nav-button {
         width: 145px;
@@ -458,23 +421,15 @@ body {
         font-size: 12px;
     }
 
-    .admin-scheduler-table-wrapper {
-        padding: 0 10px 14px;
-    }
+    .admin-scheduler-table-wrapper { padding: 0 10px 14px; }
 
-    .admin-scheduler-legend {
-        padding: 14px;
-    }
+    .admin-scheduler-legend { padding: 14px; }
 }
 
 @media (max-width: 400px) {
-    .admin-scheduler-current-month h2 {
-        font-size: 20px;
-    }
+    .admin-scheduler-current-month h2 { font-size: 20px; }
 
-    .admin-scheduler-toolbar {
-        gap: 12px 6px;
-    }
+    .admin-scheduler-toolbar { gap: 12px 6px; }
 
     .month-nav-button {
         width: 125px;

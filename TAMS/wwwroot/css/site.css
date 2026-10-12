@@ -1,15 +1,36 @@
-html {
-  font-size: 14px;
+:root {
+    --bmb-cream: #fff0cf;
+    --bmb-yellow: #ffbd35;
+    --bmb-orange: #f4a51c;
+    --bmb-brown: #80451e;
+    --bmb-dark: #302014;
+    --bmb-white: #ffffff;
+    --bmb-muted: #8a7967;
+    --bmb-border: #e7d8bf;
+    --bmb-light: #fffdf8;
+    --bmb-shadow: 0 15px 45px rgba(93, 57, 20, 0.12);
+    --admin-muted: #8a7967;
+    --admin-border: #eee0c8;
+    --admin-shadow: 0 10px 30px rgba(93, 57, 20, 0.08);
+    --bmb-soft-cream: #fff8e8;
+    --bmb-card-cream: #fffdf8;
+}
+
+html { font-size: 14px; }
+
+body {
+    min-height: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: var(--bmb-cream);
 }
 
 @media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
+  html { font-size: 16px; }
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus { 
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb; 
 }
 
 html {
@@ -17,22 +38,13 @@ html {
   min-height: 100%;
 }
 
-body {
-    margin-bottom: 60px;
-}
+body { margin-bottom: 60px; }
 
-.navbar {
-    background-color: #fff0cf !important;
-}
+.navbar { background-color: #fff0cf !important; }
 
-.navbar .navbar-brand,
-.navbar .nav-link {
-    color: #302014 !important;
-}
+.navbar .navbar-brand, .navbar .nav-link { color: #302014 !important; }
 
-.navbar .nav-link:hover {
-    color: #f4a51c !important;
-}
+.navbar .nav-link:hover { color: #f4a51c !important; }
 
 .navbar-logo {
     height: 30px;
@@ -52,7 +64,6 @@ body {
     overflow-y: auto;
 }
 
-/* Popup window */
 .course-modal-content {
     position: relative;
     background: #fff;
@@ -66,7 +77,6 @@ body {
     animation: courseModalFadeIn 0.2s ease-out;
 }
 
-/* Close button */
 .course-modal-close {
     position: absolute;
     top: 10px;
@@ -78,9 +88,7 @@ body {
     color: #555;
 }
 
-    .course-modal-close:hover {
-        color: #000;
-    }
+.course-modal-close:hover { color: #000; }
 
 .course-modal-content h3 {
     margin-bottom: 24px;
@@ -99,10 +107,6 @@ body {
     }
 }
 
-
-
-
-
 .course-bubble {
     display: inline-flex;
     align-items: center;
@@ -115,9 +119,7 @@ body {
     user-select: none;
 }
 
-.course-bubble input { 
-    display: none;
-}
+.course-bubble input { display: none; }
 
 .course-bubble:hover {
     border-color: #0d6efd;
@@ -130,10 +132,7 @@ body {
     color: white;
 }
 
-.course-bubble small {
-    font-size: 0.8rem;
-
-}
+.course-bubble small { font-size: 0.8rem; }
 
 .tutor-card {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -145,9 +144,7 @@ body {
      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.10);
 }
 
-.tutor-card .card-title {
-    font-weight: 700;
-}
+.tutor-card .card-title { font-weight: 700; }
 
 .course-display-bubble {
     display: inline-flex;
@@ -158,8 +155,6 @@ body {
     background-color: #f8f9fa;
 }
 
-
-
 .appointments-section {
     background-color: white;
     padding: 25px;
@@ -168,31 +163,29 @@ body {
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
-    .appointments-section h2 {
-        margin-top: 0;
-        margin-bottom: 20px;
-    }
+.appointments-section h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+}
 
 .appointment-table {
     width: 100%;
     border-collapse: collapse;
 }
 
-    .appointment-table th {
-        background-color: #34495e;
-        color: white;
-        padding: 12px;
-        text-align: left;
-    }
+.appointment-table th {
+    background-color: #34495e;
+    color: white;
+    padding: 12px;
+    text-align: left;
+}
 
-    .appointment-table td {
-        padding: 12px;
-        border-bottom: 1px solid #ddd;
-    }
+.appointment-table td {
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+}
 
-    .appointment-table tr:hover {
-        background-color: #f8f9fa;
-    }
+.appointment-table tr:hover { background-color: #f8f9fa; }
 
 .status {
     padding: 5px 10px;
@@ -224,17 +217,12 @@ body {
     cursor: pointer;
 }
 
-    .cancel-button:hover {
-        background-color: #c0392b;
-    }
+.cancel-button:hover { background-color: #c0392b; }
 
 .no-appointments {
     color: #777;
     font-style: italic;
 }
-
-
-
 
 .student-reviews-card {
     background: #ffffff;
@@ -251,12 +239,12 @@ body {
     margin-bottom: 16px;
 }
 
-    .reviews-header h3 {
-        margin: 0;
-        font-size: 20px;
-        font-weight: 600;
-        color: #1f2937;
-    }
+.reviews-header h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #1f2937;
+}
 
 .reviews-subtitle {
     margin: 4px 0 0;
@@ -311,13 +299,9 @@ body {
     border-bottom: 1px solid #f0f0f0;
 }
 
-.student-review:first-child {
-    padding-top: 0;
-}
+.student-review:first-child { padding-top: 0; }
 
-.student-review:last-child {
-    border-bottom: none;
-}
+.student-review:last-child { border-bottom: none; }
 
 .review-rating {
     margin-bottom: 8px;
@@ -348,9 +332,7 @@ body {
     font-size: 14px;
 }
 
-.student-reviews-list::-webkit-scrollbar {
-    width: 6px;
-}
+.student-reviews-list::-webkit-scrollbar { width: 6px; }
 
 .student-reviews-list::-webkit-scrollbar-track {
     background: #f3f4f6;
@@ -362,6 +344,4 @@ body {
     border-radius: 10px;
 }
 
-    .student-reviews-list::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8;
-    }
+.student-reviews-list::-webkit-scrollbar-thumb:hover { background: #94a3b8; }

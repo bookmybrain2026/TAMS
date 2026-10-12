@@ -78,9 +78,7 @@
     font-weight: 700;
 }
 
-.profile-input,
-.tutor-profile-page .form-control,
-.tutor-profile-page .form-select {
+.profile-input, .tutor-profile-page .form-control, .tutor-profile-page .form-select {
     min-height: 46px;
     padding: 11px 14px;
     border: 1px solid var(--bmb-border);
@@ -92,8 +90,7 @@
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.tutor-profile-page .form-control:focus,
-.tutor-profile-page .form-select:focus {
+.tutor-profile-page .form-control:focus, .tutor-profile-page .form-select:focus {
     border-color: var(--bmb-orange);
     background-color: var(--bmb-card-cream);
     color: var(--bmb-dark);
@@ -195,9 +192,7 @@
     transform: translateY(-50%);
 }
 
-.tutor-profile-page .course-bubble:has(input:checked) .course-checkmark {
-    opacity: 1;
-}
+.tutor-profile-page .course-bubble:has(input:checked) .course-checkmark { opacity: 1; }
 
 .profile-empty-message {
     margin-top: 18px;
@@ -279,13 +274,9 @@
     color: #8c2929;
 }
 
-.tutor-profile-page .validation-summary-valid {
-    display: none;
-}
+.tutor-profile-page .validation-summary-valid { display: none; }
 
-.tutor-profile-page .validation-summary-errors {
-    display: block;
-}
+.tutor-profile-page .validation-summary-errors { display: block; }
 
 
 @media (max-width: 767px) {
@@ -294,13 +285,9 @@
         padding-bottom: 25px;
     }
 
-    .tutor-profile-page .tutors-heading h1 {
-        font-size: 2rem;
-    }
+    .tutor-profile-page .tutors-heading h1 { font-size: 2rem; }
 
-    .tutor-profile-page .tutor-card .card-body {
-        padding: 20px;
-    }
+    .tutor-profile-page .tutor-card .card-body { padding: 20px; }
 
     .profile-section-heading {
         align-items: flex-start;
@@ -313,20 +300,14 @@
         font-size: 1.25rem;
     }
 
-    .profile-section-heading h3 {
-        font-size: 1.2rem;
-    }
+    .profile-section-heading h3 { font-size: 1.2rem; }
 
     .tutor-profile-page .course-bubble {
         width: 100%;
         min-width: 0;
     }
 
-    .profile-actions {
-        flex-direction: column;
-    }
+    .profile-actions { flex-direction: column; }
 
-    .profile-actions .btn {
-        width: 100%;
-    }
+    .profile-actions .btn { width: 100%; }
 }

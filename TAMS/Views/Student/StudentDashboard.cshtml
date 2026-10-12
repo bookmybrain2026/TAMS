@@ -4,7 +4,10 @@
 @using System.Linq
 @using System.Collections.Generic
 
-<link rel="stylesheet"href="~/css/StudentDashboard.css"asp-append-version="true" />
+@section Styles {
+    <link rel="stylesheet" href="~/css/StudentDashboard.css" asp-append-version="true" />
+    <link href="~/css/site.css" rel="stylesheet" asp-append-version="true" />
+}
 
 @{
     var tutors = ViewBag.Tutors as List<Tutor>?? new List<Tutor>();
@@ -18,11 +21,9 @@
                 <p>Your tutoring journey, all in one place.</p>
             </div>
             <span class="dashboard-tag">STUDENT PORTAL</span>
-
         </header>
 
         <div class="dashboard-grid">
-
             <section class="dashboard-card profile-card">
                 <h2 class="dashboard-section-title">Personal Information</h2>
 
@@ -100,8 +101,7 @@
                     <div class="dashboard-empty">
                         <p>No appointments found.</p>
                         <p>
-                            Search for a tutor below to schedule
-                            your first tutoring session.
+                            Search for a tutor below to schedule your first tutoring session.
                         </p>
                     </div>
                 }
@@ -204,8 +204,14 @@
                         <div class="reviews-vertical-track">
                             @foreach (var review in Model.AwaitingReviews)
                             {
+
                                 <div class="review-item">
                                     <h5>@review.TutorName</h5>
+
+                                    <p class="review-appointment-date">
+                                        <strong>Appointment Date:</strong>
+                                        @review.AppointmentDate.AddHours(-5).ToString("MMM dd, yyyy h:mm tt")
+                                    </p>
 
                                     <form asp-controller="Student" asp-action="SubmitReview" method="post">
                                         @Html.AntiForgeryToken()
@@ -227,9 +233,7 @@
                                             <textarea id="comment-@review.AppointmentId" name="comment" class="form-control" rows="4" placeholder="Write your review..." required></textarea>
                                         </div>
 
-                                        <button type="submit" class="btn btn-primary">
-                                            Submit Review
-                                        </button>
+                                        <button type="submit" class="btn btn-primary"> Submit Review </button>
                                     </form>
                                 </div>
                             }
@@ -238,100 +242,87 @@
                 }
                 else
                 {
-                    <div class="alert alert-info mb-0">
-                        You do not have any appointments awaiting review.
+                    <div class="alert alert-info mb-0"> You do not have any appointments awaiting review. </div>
+                }
+            </section>
+
+            <section class="dashboard-card tutors-card">
+                <h2 class="dashboard-section-title">Find a Tutor</h2>
+                <p> Search by tutor name or subject to find the right tutor for you. </p>
+                <div class="input-group mb-3">
+                    <input type="text" id="tutorSearch" class="form-control" placeholder="Search by tutor name or subject..."
+                           aria-label="Search tutors by name or subject" autocomplete="off" oninput="searchStudentTutors()" />
+                </div>
+                @if (tutors.Any())
+                {
+                    <div class="row" id="tutorResults">
+                        @foreach (var tutor in tutors)
+                        {
+                            <div class="col-md-6 mb-3 tutor-result-item" data-search="@($"{tutor.FName} {tutor.LName} {tutor.Subject}")">
+                                <div class="tutor-card">
+                                    <h5> @tutor.FName @tutor.LName</h5>
+                                    <p>
+                                        <strong>Subject:</strong> @tutor.Subject
+                                    </p>
+
+                                    <p>
+                                        <strong>Rating:</strong>
+                                        @if (tutor.ReviewCount > 0)
+                                        {
+                                            <span style="color: #f4a51c;">
+                                                ★ @tutor.AverageRating.ToString("0.0") / 5
+                                            </span>
+
+                                            <span class="text-muted">
+                                                (@tutor.ReviewCount @(tutor.ReviewCount == 1 ? "review" : "reviews"))
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">No ratings yet </span>
+                                        }
+                                    </p>
+
+                                    <p>
+                                        <strong>Email:</strong> @tutor.Email
+                                    </p>
+
+                                    <p>
+                                        <strong>Phone:</strong> @tutor.PhoneNumber
+                                    </p>
+
+                                    <div class="tutor-actions mt-3">
+
+                                        <a class="btn btn-info" href="@Url.Action("TutorProfile", "Student", new { tutorId = tutor.TutorId })">
+                                            View Profile
+                                        </a>
+
+                                        <a class="btn btn-success" href="@Url.Action("Scheduler", "Appointment", new {tutorId = tutor.TutorId, studentId = Model.StudentId  })">
+                                            View Schedule
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                    </div>
+
+                    <div id="noTutorsMatch" class="dashboard-empty" style="display: none;">
+                        <p>No tutors found matching your search.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="dashboard-empty">
+                        <p>No tutors are currently available.</p>
                     </div>
                 }
             </section>
 
-    <section class="dashboard-card tutors-card">
-        <h2 class="dashboard-section-title">Find a Tutor</h2>
-        <p>
-            Search by tutor name or subject to find
-            the right tutor for you.
-        </p>
-        <div class="input-group mb-3">
-            <input type="text" id="tutorSearch" class="form-control" placeholder="Search by tutor name or subject..."
-                   aria-label="Search tutors by name or subject" autocomplete="off" oninput="searchStudentTutors()" />
-        </div>
-        @if (tutors.Any())
-        {
-            <div class="row" id="tutorResults">
-
-                @foreach (var tutor in tutors)
-                {
-                    <div class="col-md-6 mb-3 tutor-result-item" data-search="@($"{tutor.FName} {tutor.LName} {tutor.Subject}")">
-                        <div class="tutor-card">
-                            <h5> @tutor.FName @tutor.LName</h5>
-
-                            <p>
-                                <strong>Subject:</strong>
-                                @tutor.Subject
-                            </p>
-
-                            <p>
-                                <strong>Rating:</strong>
-
-                                @if (tutor.ReviewCount > 0)
-                                {
-                                    <span style="color: #f4a51c;">
-                                        ★ @tutor.AverageRating.ToString("0.0") / 5
-                                    </span>
-
-                                    <span class="text-muted">
-                                        (@tutor.ReviewCount
-                                        @(tutor.ReviewCount == 1 ? "review" : "reviews"))
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="text-muted">No ratings yet </span>
-                                }
-                            </p>
-
-                            <p>
-                                <strong>Email:</strong>
-                                @tutor.Email
-                            </p>
-
-                            <p>
-                                <strong>Phone:</strong>
-                                @tutor.PhoneNumber
-                            </p>
-
-                            <div class="tutor-actions mt-3">
-
-                                <a class="btn btn-info" href="@Url.Action("TutorProfile", "Student", new { tutorId = tutor.TutorId })">
-                                    View Profile
-                                </a>
-
-                                <a class="btn btn-success" href="@Url.Action("Scheduler", "Appointment", new {tutorId = tutor.TutorId, studentId = Model.StudentId  })">
-                                    View Schedule
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                }
-
-            </div>
-
-            <div id="noTutorsMatch" class="dashboard-empty" style="display: none;">
-                <p>No tutors found matching your search.</p>
-            </div>
-        }
-        else
-        {
-            <div class="dashboard-empty">
-                <p>No tutors are currently available.</p>
-            </div>
-        }
-    </section>
             <section class="dashboard-card booking-card">
-
                 <h2 class="dashboard-section-title">Book an Appointment</h2>
                 <p>
-                    Select a tutor to view their schedule
-                    and find an available tutoring session.
+                    Select a tutor to view their schedule and find an available tutoring session.
                 </p>
 
                 @if (tutors.Any())
@@ -350,23 +341,17 @@
                                 }
                             </select>
                         </div>
-
-                        <button type="submit" class="btn btn-success mt-2">
-                            View Schedule
-                        </button>
-
+                        <button type="submit" class="btn btn-success mt-2"> View Schedule </button>
                     </form>
                 }
                 else
                 {
                     <div class="alert alert-info">
-                        No tutors are currently available to select.
-                        Try searching for a tutor first.
+                        No tutors are currently available to select. Try searching for a tutor first.
                     </div>
                 }
             </section>
-
         </div>
-    </div>
 
+    </div>
 </body>

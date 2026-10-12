@@ -23,8 +23,13 @@
     var weekdays = new[] { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
 }
 
-<link rel="stylesheet" href="~/css/TutorScheduleCalendar.css" asp-append-version="true" />
-<link rel="stylesheet" href="~/css/Scheduler.css" asp-append-version="true" />
+@section Styles {
+    <!--<link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />-->
+    <link rel="stylesheet" href="~/css/TutorScheduleCalendar.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/Scheduler.css" asp-append-version="true" />
+}
+
+
 
 <div class="student-schedule-calendar tutor-booking-page">
 
@@ -39,17 +44,10 @@
         </div>
 
         <div class="scheduler-header-actions">
-            <a class="scheduler-back-button"
-               href="@Url.Action("Dashboard", "Student", new { id = studentId })">
-                <span aria-hidden="true">←</span> Back to Dashboard
-            </a>
 
-            <form asp-controller="Login" asp-action="Logout" method="post">
-                @Html.AntiForgeryToken()
-                <button type="submit" class="scheduler-logout-button">
-                    Logout
-                </button>
-            </form>
+            <a class="btn btn-secondary scheduler-back-button" href="@Url.Action("Dashboard", "Student", new { id = Context.Session.GetInt32("StudentId") })">
+                &larr; Back to Dashboard
+            </a>
         </div>
     </header>
 
@@ -145,18 +143,13 @@
                                 {
                                     var selectedDay = currentDay;
                                     var selectedDate = firstDay.AddDays(selectedDay - 1);
-
                                     var daySchedules = schedules
                                         .Where(s => s.Date.Date == selectedDate.Date)
-                                        .OrderBy(s => s.StartTime)
-                                        .ToList();
+                                        .OrderBy(s => s.StartTime).ToList();
 
                                     var dayAppointments = appointments
-                                        .Where(a =>
-                                            a.AppointmentDate.AddHours(-5).Date == selectedDate.Date &&
-                                            (a.Status == "Scheduled" || a.Status == "Completed"))
-                                        .OrderBy(a => a.AppointmentDate.AddHours(-5).TimeOfDay)
-                                        .ToList();
+                                        .Where(a => a.AppointmentDate.AddHours(-5).Date == selectedDate.Date && (a.Status == "Scheduled" || a.Status == "Completed"))
+                                        .OrderBy(a => a.AppointmentDate.AddHours(-5).TimeOfDay).ToList();
 
                                     var isToday = selectedDate.Date == now.Date;
 
@@ -175,9 +168,7 @@
                                             <div class="scheduler-day-slots">
                                                 @if (!daySchedules.Any())
                                                 {
-                                                    <p class="scheduler-no-slots">
-                                                        No schedule
-                                                    </p>
+                                                    <p class="scheduler-no-slots"> No schedule </p>
                                                 }
                                                 else
                                                 {
@@ -204,8 +195,9 @@
                                                         });
 
                                                         var slotExpired = !slotCompleted && !slotBooked && slotDateTime < now;
-
-                                                        var slotLabel = $"{s.StartTime.ToString(@"hh\:mm")} - {s.EndTime.ToString(@"hh\:mm")}";
+                                                        var startTime = DateTime.Today.Add(s.StartTime).ToString("h:mm tt");
+                                                        var endTime = DateTime.Today.Add(s.EndTime).ToString("h:mm tt");
+                                                        var slotLabel = $"{startTime} - {endTime}";
 
                                                         if (slotCompleted)
                                                         {

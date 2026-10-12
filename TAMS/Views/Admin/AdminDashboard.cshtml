@@ -12,434 +12,447 @@
     var cancelledCount = appointments.Count(a => string.Equals(a.Status?.Trim(), "Cancelled", StringComparison.OrdinalIgnoreCase));
 }
 
-<link rel="stylesheet" href="~/css/AdminDashboard.css" asp-append-version="true" />
+@section Styles {
+    <link rel="stylesheet" href="~/css/AdminDashboard.css" asp-append-version="true" />
+    <link href="~/css/site.css" rel="stylesheet" asp-append-version="true" />
+}
 
-<div class="admin-dashboard">
-    @if (TempData["Error"] != null)
-    {
-        <div class="admin-alert admin-alert-error" role="alert">
-            <span class="admin-alert-icon" aria-hidden="true">⚠</span>
-            <span>@TempData["Error"]</span>
-        </div>
-    }
-
-    @if (TempData["Success"] != null)
-    {
-        <div class="admin-alert admin-alert-success" role="status">
-            <span class="admin-alert-icon" aria-hidden="true">✓</span>
-            <span>@TempData["Success"]</span>
-        </div>
-    }
-    <header class="dashboard-header">
-        <div>
-            <p class="dashboard-eyebrow">TAMS · ADMINISTRATION</p>
-            <h1>Dashboard</h1>
-            <p class="dashboard-subtitle">Welcome to your tutoring appointment management workspace.</p>
-        </div>
-        <a asp-controller="Admin" asp-action="CreateTutor" class="admin-primary-button">
-            <span aria-hidden="true">＋</span> Create Tutor Account
-        </a>
-    </header>
-
-    <section class="dashboard-summary" aria-label="System overview">
-        <article class="summary-card summary-card-cream">
-            <div class="summary-card-top">
-                <span class="summary-label">Registered Tutors</span>
-                <span class="summary-icon" aria-hidden="true">♙</span>
+<body>
+    <div class="admin-dashboard">
+        @if (TempData["Error"] != null)
+        {
+            <div class="admin-alert admin-alert-error" role="alert">
+                <span class="admin-alert-icon" aria-hidden="true">⚠</span><span>@TempData["Error"]</span>
             </div>
+        }
 
-            <div class="summary-number">@tutors.Count</div>
-            <p class="summary-note">Tutor accounts in the system</p>
-
-            <div class="summary-bottom-line">
-                <span style="width:100%"></span>
+        @if (TempData["Success"] != null)
+        {
+            <div class="admin-alert admin-alert-success" role="status">
+                <span class="admin-alert-icon" aria-hidden="true">✓</span><span>@TempData["Success"]</span>
             </div>
-        </article>
-
-        <article class="summary-card summary-card-yellow">
-            <div class="summary-card-top">
-                <span class="summary-label">Registered Students</span>
-                <span class="summary-icon" aria-hidden="true">♧</span>
-            </div>
-            <div class="summary-number">@students.Count</div>
-            <p class="summary-note">Student accounts in the system</p>
-            <div class="summary-bottom-line">
-                <span style="width:100%"></span>
-            </div>
-        </article>
-        <article class="summary-card summary-card-orange">
-            <div class="summary-card-top">
-                <span class="summary-label">All Appointments</span>
-                <span class="summary-icon" aria-hidden="true">▦</span>
-            </div>
-            <div class="summary-number">@appointments.Count</div>
-            <p class="summary-note">Appointments recorded</p>
-            <div class="summary-bottom-line"><span style="width:100%"></span></div>
-        </article>
-    </section>
-
-    <section class="dashboard-section">
-        <div class="section-heading">
+        }
+        <header class="dashboard-header">
             <div>
-                <p class="section-kicker">QUICK ACCESS</p>
-                <h2>System Management</h2>
+                <p class="dashboard-eyebrow">TAMS · ADMINISTRATION</p>
+                <h1>Dashboard</h1>
+                <p class="dashboard-subtitle">Welcome to your tutoring appointment management workspace.</p>
             </div>
-            <span class="section-description">Manage the core parts of TAMS</span>
-        </div>
-        <div class="management-grid">
-            <article class="management-card">
-                <div class="management-icon icon-cream" aria-hidden="true">▤</div>
-                <h3>Subject Management</h3>
-                <p>Add, edit, and delete tutoring subjects.</p>
-                <a asp-controller="Subject" asp-action="Index" class="admin-text-link">Manage Subjects <span aria-hidden="true">→</span></a>
+            <a asp-controller="Admin" asp-action="CreateTutor" class="admin-primary-button">
+                <span aria-hidden="true">&#43;</span> Create Tutor Account
+            </a>
+        </header>
+
+        <section class="dashboard-summary" aria-label="System overview">
+            <article class="summary-card summary-card-cream">
+                <div class="summary-card-top">
+                    <span class="summary-label">Registered Tutors</span>
+                    <span class="summary-icon" aria-hidden="true">♙</span>
+                </div>
+                <div class="summary-number"> @tutors.Count </div>
+                <p class="summary-note">Tutor accounts in the system</p>
+                <div class="summary-bottom-line">
+                    <span style="width:100%"></span>
+                </div>
             </article>
 
-            <article class="management-card">
-                <div class="management-icon icon-yellow" aria-hidden="true">▣</div>
-                <h3>Course Management</h3>
-                <p>Add, edit, and delete courses.</p>
-                <a asp-controller="Course" asp-action="Index" class="admin-text-link">Manage Courses <span aria-hidden="true">→</span></a>
+            <article class="summary-card summary-card-yellow">
+                <div class="summary-card-top">
+                    <span class="summary-label">Registered Students</span>
+                    <span class="summary-icon" aria-hidden="true">♧</span>
+                </div>
+                <div class="summary-number"> @students.Count </div>
+                <p class="summary-note">Student accounts in the system</p>
+                <div class="summary-bottom-line">
+                    <span style="width:100%"></span>
+                </div>
             </article>
 
-            <article class="management-card">
-                <div class="management-icon icon-orange" aria-hidden="true">◷</div>
-                <h3>Appointment Management</h3>
-                <p>Review scheduled sessions and manage appointment statuses.</p>
-                <a asp-controller="Admin" asp-action="Scheduler" class="admin-text-link">View Scheduler <span aria-hidden="true">→</span></a>
+            <article class="summary-card summary-card-orange">
+                <div class="summary-card-top">
+                    <span class="summary-label">All Appointments</span>
+                    <span class="summary-icon" aria-hidden="true">▦</span>
+                </div>
+                <div class="summary-number"> @appointments.Count </div>
+                <p class="summary-note">Appointments recorded</p>
+                <div class="summary-bottom-line">
+                    <span style="width:100%"></span>
+                </div>
             </article>
-        </div>
-    </section>
+        </section>
 
-
-    <section class="dashboard-section">
-        <div class="section-heading">
-            <div>
-                <p class="section-kicker">PEOPLE</p>
-                <h2>Tutor Directory</h2>
+        <section class="dashboard-section">
+            <div class="section-heading">
+                <div>
+                    <p class="section-kicker">QUICK ACCESS</p>
+                    <h2>System Management</h2>
+                </div>
+                <span class="section-description">Manage the core parts of TAMS</span>
             </div>
-            <span class="count-pill">@tutors.Count tutors</span>
-        </div>
 
-        <div class="directory-search">
-            <span class="directory-search-icon" aria-hidden="true">⌕</span>
-            <input type="text" id="adminTutorSearch" class="admin-input directory-search-input" placeholder="Search tutors by ID, name, subject, email, or phone..."
-                   aria-label="Search tutor directory" autocomplete="off" oninput="searchAdminTutors()" />
-        </div>
+            <div class="management-grid">
+                <article class="management-card">
+                    <div class="management-icon icon-cream" aria-hidden="true">▤</div>
+                    <h3>Subject Management</h3>
+                    <p>Add, edit, and delete tutoring subjects.</p>
+                    <a asp-controller="Subject" asp-action="Index" class="admin-text-link">Manage Subjects <span aria-hidden="true">→</span></a>
+                </article>
 
-        <div class="admin-table-wrap">
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>Tutor ID</th>
-                        <th>First Name</th>
-                        <th>Last Name</th>
-                        <th>Subject</th>
-                        <th>Email</th>
-                        <th>Phone Number</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (tutors.Count > 0)
-                    {
-                        @foreach (var tutor in tutors)
-                        {
-                            <tr class="admin-tutor-row" data-search="@($"{tutor.TutorId} {tutor.FName} {tutor.LName} {tutor.Subject} {tutor.Email} {tutor.PhoneNumber}")">
-                                <td class="table-id">@tutor.TutorId</td>
-                                <td>@tutor.FName</td>
-                                <td>@tutor.LName</td>
-                                <td><span class="subject-pill">@tutor.Subject</span></td>
-                                <td>@tutor.Email</td>
-                                <td>@tutor.PhoneNumber</td>
-                                <td>
-                                    <div class="table-actions">
-                                        <button type="button" class="small-action action-edit" onclick="openTutorModal('@Url.Action("Dashboard", "Admin", new { editTutorId = tutor.TutorId })', 'editTutorModal')">
-                                            Edit
-                                        </button>
-                                        <form asp-controller="Admin" asp-action="DeleteTutor" method="post" onsubmit="return confirm('Are you sure you want to delete this tutor?');">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="id" value="@tutor.TutorId" />
-                                            <button type="submit" class="small-action action-delete">
-                                                Delete
-                                            </button>
-                                        </form>
-                                        <button type="button" class="small-action action-view" onclick="openTutorModal('@Url.Action("Dashboard", "Admin", new { viewTutorId = tutor.TutorId })', 'tutorScheduleModal')">
-                                            Schedule
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        }
-                        <tr id="adminTutorNoMatch" style="display: none;">
-                            <td colspan="7" class="empty-state">
-                                No tutors match your search.
-                            </td>
+                <article class="management-card">
+                    <div class="management-icon icon-yellow" aria-hidden="true">▣</div>
+                    <h3>Course Management</h3>
+                    <p>Add, edit, and delete courses.</p>
+                    <a asp-controller="Course" asp-action="Index" class="admin-text-link">Manage Courses <span aria-hidden="true">→</span></a>
+                </article>
+
+                <article class="management-card">
+                    <div class="management-icon icon-orange" aria-hidden="true">◷</div>
+                    <h3>Appointment Management</h3>
+                    <p>Review scheduled sessions and manage appointment statuses.</p>
+                    <a asp-controller="Admin" asp-action="Scheduler" class="admin-text-link">View Scheduler <span aria-hidden="true">→</span></a>
+                </article>
+            </div>
+        </section>
+
+
+        <section class="dashboard-section">
+            <div class="section-heading">
+                <div>
+                    <p class="section-kicker">PEOPLE</p>
+                    <h2>Tutor Directory</h2>
+                </div>
+                <span class="count-pill">@tutors.Count tutors</span>
+            </div>
+
+            <div class="directory-search">
+                <span class="directory-search-icon" aria-hidden="true">⌕</span>
+                <input type="text" id="adminTutorSearch" class="admin-input directory-search-input" placeholder="Search tutors by ID, name, subject, email, or phone..."
+                       aria-label="Search tutor directory" autocomplete="off" oninput="searchAdminTutors()" />
+            </div>
+
+            <div class="admin-table-wrap">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Tutor ID</th>
+                            <th>First Name</th>
+                            <th>Last Name</th>
+                            <th>Subject</th>
+                            <th>Email</th>
+                            <th>Phone Number</th>
+                            <th>Actions</th>
                         </tr>
-                    }
-                    else
-                    {
-                        <tr><td colspan="7" class="empty-state">No tutors found.</td></tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </section>
-
-    @* Edit Tutor popup *@
-    @if (ViewBag.EditTutor != null)
-    {
-        var tutorToEdit = (Tutor)ViewBag.EditTutor;
-        <div id="editTutorModal" class="tutor-modal" style="display:none;" aria-hidden="true">
-            <div class="tutor-modal-content" role="dialog" aria-modal="true" aria-labelledby="editTutorTitle">
-                <button type="button" class="tutor-modal-close" aria-label="Close Edit Tutor popup" onclick="closeTutorModal('editTutorModal')">
-                    &times;
-                </button>
-
-                <p class="section-kicker">ACCOUNT DETAILS</p>
-                <h2 id="editTutorTitle">Edit Tutor Information</h2>
-                <p class="modal-subtitle">
-                    Update the selected tutor's account information.
-                </p>
-
-                <form asp-controller="Admin" asp-action="UpdateTutor" method="post" class="admin-form">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="tutorId" value="@tutorToEdit.TutorId" />
-                    <div class="admin-form-grid">
-                        <div>
-                            <label class="admin-label" for="editTutorFName">First Name </label>
-                            <input id="editTutorFName" name="fName" value="@tutorToEdit.FName" class="admin-input" required />
-                        </div>
-                        <div>
-                            <label class="admin-label" for="editTutorLName">Last Name </label>
-                            <input id="editTutorLName" name="lName" value="@tutorToEdit.LName" class="admin-input" required />
-                        </div>
-                        <div>
-                            <label class="admin-label" for="editTutorSubject">Subject </label>
-                            <input id="editTutorSubject" name="subject" value="@tutorToEdit.Subject" class="admin-input" required />
-                        </div>
-                        <div>
-                            <label class="admin-label" for="editTutorEmail">Email </label>
-                            <input id="editTutorEmail" name="email" type="email" value="@tutorToEdit.Email" class="admin-input" required />
-                        </div>
-                        <div>
-                            <label class="admin-label" for="editTutorPhone">Phone Number </label>
-                            <input id="editTutorPhone" name="phoneNumber" value="@tutorToEdit.PhoneNumber" class="admin-input" />
-                        </div>
-                    </div>
-                    <div class="form-actions">
-                        <button type="submit" class="admin-primary-button">
-                            Save Changes
-                        </button>
-                        <button type="button" class="admin-secondary-button" onclick="closeTutorModal('editTutorModal')">
-                            Cancel
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    }
-
-    @* Tutor Schedule popup *@
-    @if (ViewBag.ViewTutorSchedules != null)
-    {
-        var schedules = ViewBag.ViewTutorSchedules as List<Schedule>
-        ?? new List<Schedule>();
-        var tutorName = ViewBag.ViewTutorName as string ?? "Tutor";
-
-        <div id="tutorScheduleModal" class="tutor-modal" style="display:none;" aria-hidden="true">
-            <div class="tutor-modal-content tutor-schedule-content" role="dialog" aria-modal="true" aria-labelledby="tutorScheduleTitle">
-                <button type="button" class="tutor-modal-close" aria-label="Close Schedule popup" onclick="closeTutorModal('tutorScheduleModal')">
-                    &times;
-                </button>
-
-                <p class="section-kicker">AVAILABILITY</p>
-                <h2 id="tutorScheduleTitle">Schedule for @tutorName</h2>
-                <p class="modal-subtitle">
-                    Review this tutor's available schedule slots.
-                </p>
-
-                <div class="admin-table-wrap tutor-schedule-table-wrap">
-                    <table class="admin-table">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Start Time</th>
-                                <th>End Time</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            @if (schedules.Count > 0)
+                    </thead>
+                    <tbody>
+                        @if (tutors.Count > 0)
+                        {
+                            @foreach (var tutor in tutors)
                             {
-                                @foreach (var slot in schedules
-                                                        .OrderBy(s => s.Date)
-                                                        .ThenBy(s => s.StartTime))
-                                {
-                                    <tr>
-                                        <td>@slot.Date.ToString("MM/dd/yyyy")</td>
-                                        <td>@slot.StartTime.ToString(@"hh\:mm")</td>
-                                        <td>@slot.EndTime.ToString(@"hh\:mm")</td>
-                                        <td>
-                                            <form asp-controller="Admin" asp-action="DeleteScheduleSlot" method="post" onsubmit="return confirm('Delete this time slot?');">
+                                <tr class="admin-tutor-row" data-search="@($"{tutor.TutorId} {tutor.FName} {tutor.LName} {tutor.Subject} {tutor.Email} {tutor.PhoneNumber}")">
+                                    <td class="table-id">@tutor.TutorId</td>
+                                    <td>@tutor.FName</td>
+                                    <td>@tutor.LName</td>
+                                    <td>
+                                        <span class="subject-pill">@tutor.Subject</span>
+                                    </td>
+                                    <td>@tutor.Email</td>
+                                    <td>@tutor.PhoneNumber</td>
+                                    <td>
+                                        <div class="table-actions">
+                                            <button type="button" class="small-action action-edit" onclick="openTutorModal('@Url.Action("Dashboard", "Admin", new { editTutorId = tutor.TutorId })', 'editTutorModal')">
+                                                Edit
+                                            </button>
+
+                                            <form asp-controller="Admin" asp-action="DeleteTutor" method="post" onsubmit="return confirm('Are you sure you want to delete this tutor?');">
                                                 @Html.AntiForgeryToken()
-                                                <input type="hidden" name="scheduleId" value="@slot.ScheduleId" />
+                                                <input type="hidden" name="id" value="@tutor.TutorId" />
                                                 <button type="submit" class="small-action action-delete">
                                                     Delete
                                                 </button>
                                             </form>
-                                        </td>
-                                    </tr>
-                                }
-                            }
-                            else
-                            {
-                                <tr>
-                                    <td colspan="4" class="empty-state">
-                                        No schedule slots found for this tutor.
+
+                                            <button type="button" class="small-action action-view" onclick="openTutorModal('@Url.Action("Dashboard", "Admin", new { viewTutorId = tutor.TutorId })', 'tutorScheduleModal')">
+                                                Schedule
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             }
-                        </tbody>
-                    </table>
-                </div>
+                            <tr id="adminTutorNoMatch" style="display: none;">
+                                <td colspan="7" class="empty-state"> No tutors match your search. </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            <tr><td colspan="7" class="empty-state">No tutors found.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
 
-                <div class="form-actions">
-                    <button type="button" class="admin-secondary-button" onclick="closeTutorModal('tutorScheduleModal')">
-                        Close
+        @* Edit Tutor popup *@
+        @if (ViewBag.EditTutor != null)
+        {
+            var tutorToEdit = (Tutor)ViewBag.EditTutor;
+            <div id="editTutorModal" class="tutor-modal" style="display:none;" aria-hidden="true">
+                <div class="tutor-modal-content" role="dialog" aria-modal="true" aria-labelledby="editTutorTitle">
+                    <button type="button" class="tutor-modal-close" aria-label="Close Edit Tutor popup" onclick="closeTutorModal('editTutorModal')">
+                        &times;
                     </button>
+
+                    <p class="section-kicker">ACCOUNT DETAILS</p>
+                    <h2 id="editTutorTitle">Edit Tutor Information</h2>
+                    <p class="modal-subtitle">
+                        Update the selected tutor's account information.
+                    </p>
+
+                    <form asp-controller="Admin" asp-action="UpdateTutor" method="post" class="admin-form">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="tutorId" value="@tutorToEdit.TutorId" />
+                        <div class="admin-form-grid">
+                            <div>
+                                <label class="admin-label" for="editTutorFName">First Name </label>
+                                <input id="editTutorFName" name="fName" value="@tutorToEdit.FName" class="admin-input" required />
+                            </div>
+
+                            <div>
+                                <label class="admin-label" for="editTutorLName">Last Name </label>
+                                <input id="editTutorLName" name="lName" value="@tutorToEdit.LName" class="admin-input" required />
+                            </div>
+
+                            <div>
+                                <label class="admin-label" for="editTutorSubject">Subject </label>
+                                <input id="editTutorSubject" name="subject" value="@tutorToEdit.Subject" class="admin-input" required />
+                            </div>
+
+                            <div>
+                                <label class="admin-label" for="editTutorEmail">Email </label>
+                                <input id="editTutorEmail" name="email" type="email" value="@tutorToEdit.Email" class="admin-input" required />
+                            </div>
+
+                            <div>
+                                <label class="admin-label" for="editTutorPhone">Phone Number </label>
+                                <input id="editTutorPhone" name="phoneNumber" value="@tutorToEdit.PhoneNumber" class="admin-input" />
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="admin-primary-button">
+                                Save Changes
+                            </button>
+                            <button type="button" class="admin-secondary-button" onclick="closeTutorModal('editTutorModal')">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
-        </div>
-    }
+        }
 
+        @* Tutor Schedule popup *@
+        @if (ViewBag.ViewTutorSchedules != null)
+        {
+            var schedules = ViewBag.ViewTutorSchedules as List<Schedule> ?? new List<Schedule>();
+            var tutorName = ViewBag.ViewTutorName as string ?? "Tutor";
 
-    <section class="dashboard-section">
-        <div class="section-heading">
-            <div>
-                <p class="section-kicker">PEOPLE</p>
-                <h2>Student Directory</h2>
+            <div id="tutorScheduleModal" class="tutor-modal" style="display:none;" aria-hidden="true">
+                <div class="tutor-modal-content tutor-schedule-content" role="dialog" aria-modal="true" aria-labelledby="tutorScheduleTitle">
+                    <button type="button" class="tutor-modal-close" aria-label="Close Schedule popup" onclick="closeTutorModal('tutorScheduleModal')">
+                        &times;
+                    </button>
+
+                    <p class="section-kicker">AVAILABILITY</p>
+                    <h2 id="tutorScheduleTitle">Schedule for @tutorName</h2>
+                    <p class="modal-subtitle"> Review this tutor's available schedule slots. </p>
+
+                    <div class="admin-table-wrap tutor-schedule-table-wrap">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Start Time</th>
+                                    <th>End Time</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @if (schedules.Count > 0)
+                                {
+                                    @foreach (var slot in schedules.OrderBy(s => s.Date).ThenBy(s => s.StartTime))
+                                    {
+                                        <tr>
+                                            <td>@slot.Date.ToString("MM/dd/yyyy")</td>
+                                            <td>@DateTime.Today.Add(slot.StartTime).ToString("h:mm tt")</td>
+                                            <td>@DateTime.Today.Add(slot.EndTime).ToString("h:mm tt")</td>
+                                            <td>
+                                                <form asp-controller="Admin" asp-action="DeleteScheduleSlot" method="post" onsubmit="return confirm('Delete this time slot?');">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="scheduleId" value="@slot.ScheduleId" />
+                                                    <button type="submit" class="small-action action-delete">
+                                                        Delete
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="4" class="empty-state"> No schedule slots found for this tutor. </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="admin-secondary-button" onclick="closeTutorModal('tutorScheduleModal')">
+                            Close
+                        </button>
+                    </div>
+                </div>
             </div>
-            <span class="count-pill">@students.Count students</span>
-        </div>
+        }
 
-        <div class="directory-search">
-            <span class="directory-search-icon" aria-hidden="true">⌕</span>
-            <input type="text" id="adminStudentSearch" class="admin-input directory-search-input" placeholder="Search students by ID, name, email, or phone..."
-                   aria-label="Search student directory" autocomplete="off" oninput="searchAdminStudents()" />
-        </div>
 
-        <div class="admin-table-wrap">
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>Student ID</th>
-                        <th>First Name</th>
-                        <th>Last Name</th>
-                        <th>Date of Birth</th>
-                        <th>Email</th>
-                        <th>Phone Number</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (students.Count > 0)
-                    {
-                        @foreach (var student in students)
-                        {
-                            <tr class="admin-student-row" data-search="@($"{student.StudentId} {student.FName} {student.LName} {student.DOB.ToString("MM/dd/yyyy")} {student.Email} {student.PhoneNumber}")">
-                                <td class="table-id">@student.StudentId</td>
-                                <td>@student.FName</td>
-                                <td>@student.LName</td>
-                                <td>@student.DOB.ToString("MM/dd/yyyy")</td>
-                                <td>@student.Email</td>
-                                <td>@student.PhoneNumber</td>
-                                <td><form asp-controller="Admin" asp-action="DeleteStudent" method="post" onsubmit="return confirm('Are you sure you want to delete this student? Their login account will also be deleted, and their scheduled appointments will be cancelled.');"><input type="hidden" name="id" value="@student.StudentId" /><button type="submit" class="small-action action-delete">Delete</button></form></td>
-                            </tr>
-                        }
-                        <tr id="adminStudentNoMatch" style="display: none;">
-                            <td colspan="7" class="empty-state">
-                                No students match your search.
-                            </td>
+        <section class="dashboard-section">
+            <div class="section-heading">
+                <div>
+                    <p class="section-kicker">PEOPLE</p>
+                    <h2>Student Directory</h2>
+                </div>
+                <span class="count-pill">@students.Count students</span>
+            </div>
+
+            <div class="directory-search">
+                <span class="directory-search-icon" aria-hidden="true">⌕</span>
+                <input type="text" id="adminStudentSearch" class="admin-input directory-search-input" placeholder="Search students by ID, name, email, or phone..."
+                       aria-label="Search student directory" autocomplete="off" oninput="searchAdminStudents()" />
+            </div>
+
+            <div class="admin-table-wrap">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Student ID</th>
+                            <th>First Name</th>
+                            <th>Last Name</th>
+                            <th>Date of Birth</th>
+                            <th>Email</th>
+                            <th>Phone Number</th>
+                            <th>Actions</th>
                         </tr>
-                    }
-                    else
-                    {
-                        <tr><td colspan="7" class="empty-state">No students found.</td></tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </section>
+                    </thead>
 
-    <section class="dashboard-section">
-        <div class="section-heading">
-            <div><p class="section-kicker">SCHEDULING</p><h2>All Appointments</h2></div>
-            <div class="status-summary">
-                <span><i class="status-dot dot-scheduled"></i>@scheduledCount Scheduled</span>
-                <span><i class="status-dot dot-completed"></i>@completedCount Completed</span>
-                <span><i class="status-dot dot-cancelled"></i>@cancelledCount Cancelled</span>
-            </div>
-        </div>
-        <div class="admin-table-wrap">
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>Appointment ID</th>
-                        <th>Date</th>
-                        <th>Time</th>
-                        <th>Tutor</th>
-                        <th>Student</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (appointments.Count > 0)
-                    {
-                        @foreach (var appt in appointments.OrderBy(a => a.AppointmentDate))
+                    <tbody>
+                        @if (students.Count > 0)
                         {
-                            var status = appt.Status?.Trim() ?? "Scheduled";
-                            var statusClass = status switch { "Cancelled" => "status-cancelled", "Completed" => "status-completed", "Scheduled" => "status-scheduled", _ => "status-other" };
-                            <tr>
-                                <td class="table-id">@appt.AppointmentId</td>
-                                <td>@appt.AppointmentDate.ToString("MM/dd/yyyy")</td>
-                                <td>@appt.AppointmentDate.ToString("hh:mm tt")</td>
-                                <td>@(appt.Tutor != null ? $"{appt.Tutor.FName} {appt.Tutor.LName}" : "Tutor unavailable")</td>
-                                <td>@(appt.Student != null ? $"{appt.Student.FName} {appt.Student.LName}" : "Student unavailable")</td>
-                                <td><span class="status-pill @statusClass">@status</span></td>
-                                <td>
-                                    @if (status == "Scheduled")
-                                    {
-                                        <form asp-controller="Admin" asp-action="CancelAppointment" method="post" onsubmit="return confirm('Cancel this appointment?');"><input type="hidden" name="appointmentId" value="@appt.AppointmentId" /><button type="submit" class="small-action action-delete">Cancel</button></form>
-                                    }
-                                    else
-                                    {
-                                        <span class="muted-dash">—</span>
-                                    }
-                                </td>
+                            @foreach (var student in students)
+                            {
+                                <tr class="admin-student-row" data-search="@($"{student.StudentId} {student.FName} {student.LName} {student.DOB.ToString("MM/dd/yyyy")} {student.Email} {student.PhoneNumber}")">
+                                    <td class="table-id">@student.StudentId</td>
+                                    <td>@student.FName</td>
+                                    <td>@student.LName</td>
+                                    <td>@student.DOB.ToString("MM/dd/yyyy")</td>
+                                    <td>@student.Email</td>
+                                    <td>@student.PhoneNumber</td>
+                                    <td><form asp-controller="Admin" asp-action="DeleteStudent" method="post" onsubmit="return confirm('Are you sure you want to delete this student? Their login account will also be deleted, and their scheduled appointments will be cancelled.');"><input type="hidden" name="id" value="@student.StudentId" /><button type="submit" class="small-action action-delete">Delete</button></form></td>
+                                </tr>
+                            }
+                            <tr id="adminStudentNoMatch" style="display: none;">
+                                <td colspan="7" class="empty-state"> No students match your search. </td>
                             </tr>
                         }
-                    }
-                    else
-                    {
-                        <tr><td colspan="7" class="empty-state">No appointments found.</td></tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </section>
+                        else
+                        {
+                            <tr><td colspan="7" class="empty-state">No students found.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
 
-    <section class="analytics-panel">
-        <div class="analytics-copy">
-            <p class="section-kicker">REPORTING</p>
-            <h2>System Analytics</h2>
-            <p>Download a report containing system usage analytics.</p>
-        </div>
-        <form asp-controller="Admin" asp-action="DownloadSystemUsageReport" method="get">
-            <button type="submit" class="admin-primary-button">↓ Download Usage Report</button>
-        </form>
-    </section>
+        <section class="dashboard-section">
+            <div class="section-heading">
+                <div><p class="section-kicker">SCHEDULING</p><h2>All Appointments</h2></div>
+                <div class="status-summary">
+                    <span><i class="status-dot dot-scheduled"></i>@scheduledCount Scheduled</span>
+                    <span><i class="status-dot dot-completed"></i>@completedCount Completed</span>
+                    <span><i class="status-dot dot-cancelled"></i>@cancelledCount Cancelled</span>
+                </div>
+            </div>
 
-    <footer class="dashboard-footer">TAMS · Tutoring Appointment Management System</footer>
-</div>
+            <div class="admin-table-wrap">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Appointment ID</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Tutor</th>
+                            <th>Student</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @if (appointments.Count > 0)
+                        {
+                            @foreach (var appt in appointments.OrderBy(a => a.AppointmentDate))
+                            {
+                                var status = appt.Status?.Trim() ?? "Scheduled";
+                                var statusClass = status switch
+                                    { "Cancelled" => "status-cancelled", 
+                                    "Completed" => "status-completed", 
+                                    "Scheduled" => "status-scheduled", 
+                                    _ => "status-other" };
+
+                                <tr>
+                                    <td class="table-id">@appt.AppointmentId</td>
+                                    <td>@appt.AppointmentDate.ToString("MM/dd/yyyy")</td>
+                                    <td>@appt.AppointmentDate.AddHours(-5).ToString("hh:mm tt")</td>
+                                    <td>@(appt.Tutor != null ? $"{appt.Tutor.FName} {appt.Tutor.LName}" : "Tutor unavailable")</td>
+                                    <td>@(appt.Student != null ? $"{appt.Student.FName} {appt.Student.LName}" : "Student unavailable")</td>
+                                    <td><span class="status-pill @statusClass">@status</span></td>
+                                    <td>
+                                        @if (status == "Scheduled")
+                                        {
+                                            <form asp-controller="Admin" asp-action="CancelAppointment" method="post" onsubmit="return confirm('Cancel this appointment?');">
+                                                <input type="hidden" name="appointmentId" value="@appt.AppointmentId" />
+                                                <button type="submit" class="small-action action-delete">Cancel</button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <span class="muted-dash">—</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr><td colspan="7" class="empty-state">No appointments found.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="analytics-panel">
+            <div class="analytics-copy">
+                <p class="section-kicker">REPORTING</p>
+                <h2>System Analytics</h2>
+                <p>Download a report containing system usage analytics.</p>
+            </div>
+            <form asp-controller="Admin" asp-action="DownloadSystemUsageReport" method="get">
+                <button type="submit" class="admin-primary-button">↓ Download Usage Report</button>
+            </form>
+        </section>
+
+        <footer class="dashboard-footer">TAMS · Tutoring Appointment Management System</footer>
+    </div>
+</body>

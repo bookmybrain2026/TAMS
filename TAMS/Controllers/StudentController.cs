@@ -36,49 +36,35 @@ namespace TAMS.Controllers
             if (student == null) { return NotFound(); }
 
             // Get all tutors
-            var tutors = dBContext.Tutor
-                .Find(_ => true).ToList();
+            var tutors = dBContext.Tutor.Find(_ => true).ToList();
 
             // Search tutors by name or subject
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
                 searchTerm = searchTerm.Trim();
-
                 tutors = tutors
                     .Where(t =>
-                        ($"{t.FName} {t.LName}")
-                            .Contains(
-                                searchTerm,
-                                StringComparison.OrdinalIgnoreCase)
+                        ($"{t.FName} {t.LName}").Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
                         ||
-                        (!string.IsNullOrWhiteSpace(t.Subject) &&
-                         t.Subject.Contains(
-                             searchTerm,
-                             StringComparison.OrdinalIgnoreCase)))
+                        (!string.IsNullOrWhiteSpace(t.Subject) && t.Subject.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)))
                     .ToList();
             }
 
             // Get all reviews
-            var reviews = dBContext.Reviews
-                .Find(_ => true).ToList();
+            var reviews = dBContext.Reviews.Find(_ => true).ToList();
 
 
             // Calculate each tutor's average rating and review count
             foreach (var tutor in tutors)
             {
-                var tutorReviews = reviews
-                    .Where(r => r.TutorId == tutor.TutorId)
-                    .ToList();
+                var tutorReviews = reviews.Where(r => r.TutorId == tutor.TutorId).ToList();
 
                 // Store the tutor's reviews
                 tutor.Reviews = tutorReviews;
 
                 // Calculate the average rating and total reviews
                 tutor.ReviewCount = tutorReviews.Count;
-
-                tutor.AverageRating = tutorReviews.Any()
-                    ? Math.Round(tutorReviews.Average(r => r.Rating), 1)
-                    : 0;
+                tutor.AverageRating = tutorReviews.Any() ? Math.Round(tutorReviews.Average(r => r.Rating), 1) : 0;
             }
 
             // Get all appointments belonging to this student
@@ -94,29 +80,26 @@ namespace TAMS.Controllers
                     .Find(t => t.TutorId == appointment.TutorId)
                     .FirstOrDefault();
             }
-            var reviewedAppointmentIds =
-                dBContext.Reviews
-                .Find(r => r.StudentId == student.StudentId).ToList()
-                .Select(r => r.AppointmentId).ToHashSet();
+
+            // Get appointment IDs that this student has already reviewed
+            var reviewedAppointmentIds = dBContext.Reviews
+                .Find(r => r.StudentId == student.StudentId).ToList().Select(r => r.AppointmentId).ToHashSet();
 
             // Build the list of completed appointments awaiting a review
             student.AwaitingReviews = student.Appointments
-                .Where(a =>
-                    a.Status == "Completed" &&
-                    !reviewedAppointmentIds.Contains(a.AppointmentId))
+                .Where(a => a.Status == "Completed" && !reviewedAppointmentIds.Contains(a.AppointmentId))
+                .OrderByDescending(a => a.AppointmentDate)
                 .Select(a => new Review
                 {
                     AppointmentId = a.AppointmentId,
+                    AppointmentDate = a.AppointmentDate,
                     StudentId = a.StudentId,
                     TutorId = a.TutorId,
-
                     StudentName = $"{student.FName} {student.LName}",
-
-                    TutorName = a.Tutor != null
-                        ? $"{a.Tutor.FName} {a.Tutor.LName}"
-                        : "Unknown Tutor"
+                    TutorName = a.Tutor != null ? $"{a.Tutor.FName} {a.Tutor.LName}" : "Unknown Tutor"
                 })
                 .ToList();
+
             ViewBag.Tutors = tutors;
             ViewBag.SearchTerm = searchTerm;
 
@@ -300,7 +283,7 @@ namespace TAMS.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CancelAppointment(int appointmentId) //ancels an existing appointment.
+        public async Task<IActionResult> CancelAppointment(int appointmentId) 
         {
             var appointment = 
                 dBContext.Appointments                                          
@@ -552,6 +535,7 @@ namespace TAMS.Controllers
             var review = new Review
             {
                 AppointmentId = appointment.AppointmentId,
+                AppointmentDate = appointment.AppointmentDate,
                 StudentId = student.StudentId,
                 TutorId = tutor.TutorId,
                 StudentName = $"{student.FName} {student.LName}",
@@ -565,5 +549,7 @@ namespace TAMS.Controllers
             TempData["Success"] = "Your review has been submitted successfully.";
             return RedirectToAction("Dashboard", new { id = student.StudentId });
         }
+    
+        
     }
 }

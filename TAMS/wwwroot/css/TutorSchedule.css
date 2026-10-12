@@ -1,20 +1,4 @@
-﻿:root {
-    --bmb-cream: #fff0cf;
-    --bmb-yellow: #ffbd35;
-    --bmb-orange: #f4a51c;
-    --bmb-brown: #80451e;
-    --bmb-dark: #302014;
-    --bmb-white: #ffffff;
-    --bmb-muted: #8a7967;
-    --bmb-border: #e7d8bf;
-    --bmb-light: #fffdf8;
-    --bmb-shadow: 0 15px 45px rgba(93, 57, 20, 0.12);
-}
-
-body {
-    min-height: 100%;
-    margin: 0;
-    background: var(--bmb-cream);
+﻿body {
     font-family: "Segoe UI", Arial, sans-serif;
     color: var(--bmb-dark);
 }
@@ -98,13 +82,10 @@ body {
     color: var(--bmb-dark);
 }
 
-.schedule-button:focus-visible,
-.schedule-add-button:focus-visible {
+.schedule-button:focus-visible, .schedule-add-button:focus-visible {
     outline: 3px solid var(--bmb-brown);
     outline-offset: 3px;
 }
-
-/* Alerts */
 
 .schedule-alert {
     margin-bottom: 20px;
@@ -143,13 +124,9 @@ body {
     border-bottom: 1px solid #f0e5d4;
 }
 
-.schedule-toolbar > :last-child {
-    justify-self: end;
-}
+.schedule-toolbar > :last-child { justify-self: end; }
 
-.schedule-current-month {
-    text-align: center;
-}
+.schedule-current-month { text-align: center; }
 
 .schedule-month-label {
     color: var(--bmb-muted);
@@ -174,8 +151,7 @@ body {
     font-size: 12px;
 }
 
-.schedule-legend-dot,
-.schedule-slot-dot {
+.schedule-legend-dot, .schedule-slot-dot {
     flex-shrink: 0;
     width: 9px;
     height: 9px;
@@ -338,9 +314,7 @@ body {
     transition: background-color 0.2s ease;
 }
 
-.schedule-add-button:hover {
-    background: var(--bmb-orange);
-}
+.schedule-add-button:hover { background: var(--bmb-orange); }
 
 .schedule-footer {
     padding: 16px 24px;
@@ -350,9 +324,7 @@ body {
     font-size: 12px;
 }
 
-.schedule-footer strong {
-    color: var(--bmb-brown);
-}
+.schedule-footer strong { color: var(--bmb-brown); }
 
 
 @media (max-width: 700px) {
@@ -378,9 +350,7 @@ body {
         grid-row: 1;
     }
 
-    .schedule-toolbar > :last-child {
-        justify-self: end;
-    }
+    .schedule-toolbar > :last-child { justify-self: end; }
 
     .schedule-button {
         min-height: 40px;
@@ -388,27 +358,17 @@ body {
         font-size: 12px;
     }
 
-    .schedule-button-secondary {
-        width: 145px;
-    }
+    .schedule-button-secondary { width: 145px; }
 
-    .schedule-table-wrapper {
-        padding: 0 10px 14px;
-    }
+    .schedule-table-wrapper { padding: 0 10px 14px; }
 
-    .schedule-legend {
-        padding: 14px;
-    }
+    .schedule-legend { padding: 14px; }
 }
 
 @media (max-width: 400px) {
-    .schedule-current-month h2 {
-        font-size: 20px;
-    }
+    .schedule-current-month h2 { font-size: 20px; }
 
-    .schedule-toolbar {
-        gap: 12px 6px;
-    }
+    .schedule-toolbar { gap: 12px 6px; }
 
     .schedule-button-secondary {
         width: 125px;

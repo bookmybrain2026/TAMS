@@ -4,26 +4,23 @@
     ViewData["Title"] = "Manage Subjects";
     var subjects = Model?.ToList() ?? new List<TAMS.Models.Subject>();
 }
-
-<link rel="stylesheet" href="~/css/SubjectIndex.css" asp-append-version="true" />
+@section Styles {
+    <link rel="stylesheet" href="~/css/SubjectIndex.css" asp-append-version="true" />
+    <link href="~/css/site.css" rel="stylesheet" asp-append-version="true" />
+}
 
 <div class="subject-dashboard">
-
     <header class="dashboard-header">
         <div>
             <p class="dashboard-eyebrow">TAMS · ADMINISTRATION</p>
             <h1>Subject Management</h1>
-            <p class="dashboard-subtitle">
-                Create, update, and organize the subjects available for tutoring.
-            </p>
+            <p class="dashboard-subtitle"> Create, update, and organize the subjects available for tutoring. </p>
         </div>
 
         <div class="header-actions">
-            <a asp-controller="Admin" asp-action="Dashboard" class="subject-secondary-button">
-                ← Back to Dashboard
-            </a>
+            <a asp-controller="Admin" asp-action="Dashboard" class="subject-secondary-button"> &larr; Back to Dashboard </a>
             <button type="button" class="subject-primary-button" onclick="showSubjectAddForm()">
-                <span aria-hidden="true">＋</span> Add New Subject
+                <span aria-hidden="true">&#43;</span> Add New Subject
             </button>
         </div>
     </header>
@@ -35,9 +32,7 @@
                 <span class="summary-icon" aria-hidden="true">▤</span>
             </div>
 
-            <div class="summary-number" id="subjectCount">
-                @subjects.Count
-            </div>
+            <div class="summary-number" id="subjectCount"> @subjects.Count </div>
             <p class="summary-note">Subjects currently in the system</p>
             <div class="summary-bottom-line">
                 <span style="width:100%"></span>
@@ -51,21 +46,15 @@
                 <p class="section-kicker">SUBJECT DIRECTORY</p>
                 <h2>All Subjects</h2>
             </div>
-            <span class="count-pill">
-                @subjects.Count subjects
-            </span>
+            <span class="count-pill"> @subjects.Count subjects </span>
         </div>
         @if (TempData["SuccessMessage"] != null)
         {
-            <div class="subject-alert alert-success" role="status">
-                @TempData["SuccessMessage"]
-            </div>
+            <div class="subject-alert alert-success" role="status"> @TempData["SuccessMessage"] </div>
         }
         @if (TempData["ErrorMessage"] != null)
         {
-            <div class="subject-alert alert-error" role="alert">
-                @TempData["ErrorMessage"]
-            </div>
+            <div class="subject-alert alert-error" role="alert"> @TempData["ErrorMessage"] </div>
         }
 
         <div class="directory-search">
@@ -93,13 +82,9 @@
                                 data-search="@($"{subject.Code} {subject.Name}")">
 
                                 <td>
-                                    <span class="subject-pill">
-                                        @subject.Code
-                                    </span>
+                                    <span class="subject-pill"> @subject.Code </span>
                                 </td>
-
                                 <td>@subject.Name</td>
-
                                 <td>
                                     <div class="table-actions">
                                         <button type="button" class="small-action action-edit" onclick="showSubjectEditForm('@subject.SubjectId', '@subject.Code', '@subject.Name')">
@@ -119,17 +104,13 @@
                         }
 
                         <tr id="subjectNoMatch" style="display:none;">
-                            <td colspan="3" class="empty-state">
-                                No subjects match your search.
-                            </td>
+                            <td colspan="3" class="empty-state"> No subjects match your search. </td>
                         </tr>
                     }
                     else
                     {
                         <tr>
-                            <td colspan="3" class="empty-state">
-                                No subjects found. Add a subject to get started.
-                            </td>
+                            <td colspan="3" class="empty-state"> No subjects found. Add a subject to get started. </td>
                         </tr>
                     }
                 </tbody>
@@ -145,14 +126,10 @@
 
             <p class="section-kicker">SUBJECT DIRECTORY</p>
             <h2 id="addSubjectTitle">Add New Subject</h2>
-
-            <p class="modal-subtitle">
-                Enter the details for the new tutoring subject.
-            </p>
+            <p class="modal-subtitle"> Enter the details for the new tutoring subject. </p>
 
             <form asp-controller="Subject" asp-action="Create" method="post">
                 @Html.AntiForgeryToken()
-
                 <div class="subject-form-group">
                     <label for="CreateCode">Subject Code</label>
                     <input type="text" id="CreateCode" name="Code" class="subject-input" placeholder="Example: MATH" required />
@@ -164,13 +141,8 @@
                 </div>
 
                 <div class="form-actions">
-                    <button type="submit" class="subject-primary-button">
-                        Create Subject
-                    </button>
-
-                    <button type="button" class="subject-secondary-button" onclick="hideSubjectForms()">
-                        Cancel
-                    </button>
+                    <button type="submit" class="subject-primary-button"> Create Subject </button>
+                    <button type="button" class="subject-secondary-button" onclick="hideSubjectForms()"> Cancel </button>
                 </div>
             </form>
         </div>
@@ -181,6 +153,7 @@
             <button type="button" class="subject-modal-close" onclick="hideSubjectForms()" aria-label="Close">
                 &times;
             </button>
+
             <p class="section-kicker">SUBJECT DIRECTORY</p>
             <h2 id="editSubjectTitle">Edit Subject</h2>
             <p class="modal-subtitle">Update the selected subject information.</p>
@@ -201,14 +174,9 @@
                 </div>
 
                 <div class="form-actions">
-                    <button type="submit" class="subject-primary-button">
-                        Save Changes
-                    </button>
-                    <button type="button" class="subject-secondary-button" onclick="hideSubjectForms()">
-                        Cancel
-                    </button>
+                    <button type="submit" class="subject-primary-button"> Save Changes </button>
+                    <button type="button" class="subject-secondary-button" onclick="hideSubjectForms()"> Cancel </button>
                 </div>
-
             </form>
         </div>
     </div>

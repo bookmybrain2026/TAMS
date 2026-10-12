@@ -61,7 +61,7 @@ namespace TAMS.Controllers
             ViewBag.Schedules = schedules;
             ViewBag.Month = targetMonth;
             ViewBag.Year = targetYear;
-            ViewBag.StudentId = studentId;
+            ViewBag.StudentId = loggedinstudentId.Value;
             return View();
         }
 

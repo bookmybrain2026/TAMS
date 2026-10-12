@@ -5,24 +5,19 @@
 
 @{
     ViewData["Title"] = "Tutor Dashboard";
-
     var appointments = ViewBag.Appointments as List<Appointment> ?? new List<Appointment>();
     var schedules = ViewBag.Schedules as List<Schedule> ?? new List<Schedule>();
-    var upcomingAppointments = appointments
-        .Where(a => a.AppointmentDate >= DateTime.Now && a.Status == "Scheduled")
-        .OrderBy(a => a.AppointmentDate)
-        .ToList();
-    var sortedSchedules = schedules
-        .OrderBy(s => s.Date)
-        .ThenBy(s => s.StartTime)
-        .ToList();
-    var completedAppointments = appointments
-        .Count(a => a.Status == "Completed");
-    var cancelledAppointments = appointments
-        .Count(a => a.Status == "Cancelled");
+    var upcomingAppointments = appointments.Where(a => a.AppointmentDate >= DateTime.Now && a.Status == "Scheduled").OrderBy(a => a.AppointmentDate).ToList();
+    var sortedSchedules = schedules.OrderBy(s => s.Date).ThenBy(s => s.StartTime).ToList();
+    var completedAppointments = appointments.Count(a => a.Status == "Completed");
+    var cancelledAppointments = appointments.Count(a => a.Status == "Cancelled");
 }
 
-<link rel="stylesheet" href="~/css/TutorDashboard.css" asp-append-version="true" />
+@section Styles {
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/TutorDashboard.css" asp-append-version="true" />
+}
+
 
 <div class="tutor-dashboard">
     @if (TempData["Error"] != null)
@@ -44,7 +39,6 @@
     <header class="tutor-dashboard-header">
         <div class="tutor-header-top">
             <span class="tutor-dashboard-tag">TUTOR PORTAL</span>
-
             <span class="tutor-header-date"> @DateTime.Now.ToString("MMMM d, yyyy")</span>
         </div>
 
@@ -53,8 +47,7 @@
                 <p class="tutor-eyebrow">YOUR TEACHING SPACE</p>
                 <h1>Tutor Dashboard</h1>
                 <p class="tutor-header-subtitle">
-                    Welcome back, @Model.FName!
-                    Here's what's happening with your students.
+                    Welcome back, @Model.FName! Here's what's happening with your students.
                 </p>
             </div>
             <div class="tutor-header-mark" aria-hidden="true">
@@ -119,12 +112,9 @@
             </div>
 
             <div class="tutor-stat-grid">
-
                 <div class="tutor-stat-box">
                     <span class="tutor-stat-label">UPCOMING</span>
-                    <strong class="tutor-stat-number">
-                        @upcomingAppointments.Count
-                    </strong>
+                    <strong class="tutor-stat-number"> @upcomingAppointments.Count </strong>
                     <span class="tutor-stat-caption"> Scheduled sessions </span>
                     <div class="tutor-stat-track">
                         <span style="width: 100%"></span>
@@ -163,9 +153,7 @@
             <div class="tutor-completion-summary">
                 <div>
                     <span>Appointment completion</span>
-                    <strong>
-                        @(appointments.Count == 0 ? "0" : Math.Round(completedAppointments * 100.0 / appointments.Count).ToString("0"))%
-                    </strong>
+                    <strong> @(appointments.Count == 0 ? "0" : Math.Round(completedAppointments * 100.0 / appointments.Count).ToString("0"))% </strong>
                 </div>
 
                 <div class="tutor-completion-track">
@@ -211,7 +199,6 @@
                 <strong>@cancelledAppointments</strong>
             </div>
         </article>
-
     </section>
 
     <section class="tutor-main-grid">
@@ -221,10 +208,7 @@
                     <p class="tutor-eyebrow">YOUR NEXT SESSIONS</p>
                     <h2>Upcoming Appointments</h2>
                 </div>
-
-                <span class="tutor-count-pill">
-                    @upcomingAppointments.Count upcoming
-                </span>
+                <span class="tutor-count-pill"> @upcomingAppointments.Count upcoming </span>
             </div>
 
             @if (upcomingAppointments.Count == 0)
@@ -232,9 +216,7 @@
                 <div class="tutor-empty-state">
                     <span class="tutor-empty-icon" aria-hidden="true">☼</span>
                     <h3>Your schedule is clear</h3>
-                    <p>
-                        You currently have no upcoming scheduled appointments.
-                    </p>
+                    <p> You currently have no upcoming scheduled appointments. </p>
                     <a asp-controller="Tutor" asp-action="Schedule" asp-route-id="@Model.TutorId" class="tutor-button tutor-button-primary">
                         Manage Availability
                     </a>
@@ -264,22 +246,19 @@
                                     </td>
 
                                     <td>
-                                        @appointment.AppointmentDate.ToString("hh:mm tt")
+                                        @appointment.AppointmentDate.AddHours(-5).ToString("hh:mm tt")
                                     </td>
 
                                     <td>
                                         @if (appointment.Student != null)
                                         {
                                             <strong class="tutor-student-name">
-                                                @appointment.Student.FName
-                                                @appointment.Student.LName
+                                                @appointment.Student.FName @appointment.Student.LName 
                                             </strong>
                                         }
                                         else
                                         {
-                                            <span class="text-muted">
-                                                Student not found
-                                            </span>
+                                            <span class="text-muted"> Student not found </span>
                                         }
                                     </td>
 
@@ -298,9 +277,7 @@
                                     </td>
 
                                     <td>
-                                        <span class="tutor-status tutor-status-scheduled">
-                                            @appointment.Status
-                                        </span>
+                                        <span class="tutor-status tutor-status-scheduled"> @appointment.Status </span>
                                     </td>
 
                                     <td>
@@ -344,7 +321,6 @@
 
             <div class="tutor-focus-section">
                 <h3>UP NEXT</h3>
-
                 @if (upcomingAppointments.Any())
                 {
                     @foreach (var appointment in upcomingAppointments.Take(4))
@@ -352,8 +328,8 @@
                         <div class="tutor-agenda-item">
                             <span class="tutor-agenda-dot"></span>
                             <div>
-                                <strong>
-                                    @appointment.AppointmentDate.ToString("hh:mm tt")
+                                <strong> 
+                                    @appointment.AppointmentDate.AddHours(-5).ToString("hh:mm tt")
                                 </strong>
                                 <p>
                                     @if (appointment.Student != null)
@@ -365,18 +341,14 @@
                                         @:Student unavailable
                                     }
                                 </p>
-                                <small>
-                                    @appointment.AppointmentDate.ToString("MMM d")
-                                </small>
+                                <small> @appointment.AppointmentDate.ToString("MMM d") </small>
                             </div>
                         </div>
                     }
                 }
                 else
                 {
-                    <p class="tutor-muted-copy">
-                        No upcoming sessions. Enjoy the extra time or add availability.
-                    </p>
+                    <p class="tutor-muted-copy"> No upcoming sessions. Enjoy the extra time or add availability. </p>
                 }
             </div>
 
@@ -387,7 +359,7 @@
                 </div>
 
                 <a asp-controller="Tutor" asp-action="Schedule" asp-route-id="@Model.TutorId" class="tutor-text-link">
-                    Manage schedule →
+                    Manage schedule &rarr;
                 </a>
             </div>
         </aside>
@@ -400,9 +372,7 @@
                 <h2>Appointment History</h2>
             </div>
 
-            <span class="tutor-count-pill">
-                @appointments.Count total
-            </span>
+            <span class="tutor-count-pill">@appointments.Count total</span>
         </div>
 
         @if (appointments.Count == 0)
@@ -426,8 +396,7 @@
                     </thead>
 
                     <tbody>
-                        @foreach (var appointment in appointments
-                                            .OrderByDescending(a => a.AppointmentDate))
+                        @foreach (var appointment in appointments.OrderByDescending(a => a.AppointmentDate))
                         {
                             <tr>
                                 <td>
@@ -445,36 +414,26 @@
                                     }
                                     else
                                     {
-                                        <span class="text-muted">
-                                            Student not found
-                                        </span>
+                                        <span class="text-muted"> Student not found </span>
                                     }
                                 </td>
 
                                 <td>
                                     @if (appointment.Status == "Scheduled")
                                     {
-                                        <span class="tutor-status tutor-status-scheduled">
-                                            Scheduled
-                                        </span>
+                                        <span class="tutor-status tutor-status-scheduled"> Scheduled </span>
                                     }
                                     else if (appointment.Status == "Completed")
                                     {
-                                        <span class="tutor-status tutor-status-completed">
-                                            Completed
-                                        </span>
+                                        <span class="tutor-status tutor-status-completed"> Completed </span>
                                     }
                                     else if (appointment.Status == "Cancelled")
                                     {
-                                        <span class="tutor-status tutor-status-cancelled">
-                                            Cancelled
-                                        </span>
+                                        <span class="tutor-status tutor-status-cancelled"> Cancelled </span>
                                     }
                                     else
                                     {
-                                        <span class="tutor-status tutor-status-other">
-                                            @appointment.Status
-                                        </span>
+                                        <span class="tutor-status tutor-status-other"> @appointment.Status </span>
                                     }
                                 </td>
                             </tr>
@@ -492,15 +451,11 @@
                     <p class="tutor-eyebrow">PLAN YOUR AVAILABILITY</p>
                     <h2>Your Schedule</h2>
                 </div>
-
-                <span class="tutor-count-pill">
-                    @schedules.Count slots
-                </span>
+                <span class="tutor-count-pill"> @schedules.Count slots </span>
             </div>
 
             <div class="tutor-schedule-toolbar">
                 <p>Manage the dates and times students can book.</p>
-
                 <a asp-controller="Tutor" asp-action="Schedule" asp-route-id="@Model.TutorId" class="tutor-button tutor-button-primary">
                     Manage Schedule
                 </a>
@@ -535,11 +490,11 @@
                                     </td>
 
                                     <td>
-                                        @schedule.StartTime.ToString(@"hh\:mm")
+                                        @DateTime.Today.Add(schedule.StartTime).ToString("h:mm tt")
                                     </td>
 
                                     <td>
-                                        @schedule.EndTime.ToString(@"hh\:mm")
+                                        @DateTime.Today.Add(schedule.EndTime).ToString("h:mm tt")
                                     </td>
 
                                     <td>
@@ -575,9 +530,7 @@
                 </div>
 
                 <div>
-                    <strong>
-                        @(Model.ReviewCount == 1 ? "1 student review" : $"{Model.ReviewCount} student reviews")
-                    </strong>
+                    <strong> @(Model.ReviewCount == 1 ? "1 student review" : $"{Model.ReviewCount} student reviews") </strong>
                     <p>Overall student rating</p>
                 </div>
             </div>
@@ -596,12 +549,8 @@
                     {
                         <div class="tutor-review-item">
                             <div class="tutor-review-item-top">
-                                <span class="tutor-review-item-label">
-                                    Student feedback
-                                </span>
-
-                                <span class="tutor-review-stars"
-                                      aria-label="@review.Rating out of 5 stars">
+                                <span class="tutor-review-item-label"> Student feedback </span>
+                                <span class="tutor-review-stars" aria-label="@review.Rating out of 5 stars">
                                     @for (int i = 1; i <= 5; i++)
                                     {
                                         if (i <= review.Rating)
@@ -615,10 +564,7 @@
                                     }
                                 </span>
                             </div>
-
-                            <p class="tutor-review-comment">
-                                @review.Comment
-                            </p>
+                            <p class="tutor-review-comment"> @review.Comment </p>
                         </div>
                     }
                 }

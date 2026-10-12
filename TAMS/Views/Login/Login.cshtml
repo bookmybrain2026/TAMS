@@ -3,32 +3,21 @@
 @{
     ViewData["Title"] = "Login";
 }
-<head>
+@section Styles {
     <link href="~/css/Login.css" rel="stylesheet" />
-</head>
+    <link href="~/css/site.css" rel="stylesheet" />
+}
+
 <body>
     <div class="login-wrapper">
         <div class="login-container">
-
             <div class="login-panel">
-
-                <div class="brand-name">
-                    BookMy<span>Brain</span>
-                </div>
-
-                <h1 class="login-heading">
-                    Welcome back!
-                </h1>
-
-                <p class="login-subtitle">
-                    Please sign in before continuing.
-                </p>
+                <div class="brand-name"> BookMy<span>Brain</span> </div>
+                <h1 class="login-heading"> Welcome back! </h1>
+                <p class="login-subtitle"> Please sign in before continuing. </p>
 
                 <form asp-controller="Login" asp-action="Login" method="post">
-                    <div asp-validation-summary="ModelOnly"
-                         class="text-danger mb-3">
-                    </div>
-
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"> </div>
                     <div class="mb-3">
                         <label asp-for="Username" class="form-label"> Username </label>
                         <input asp-for="Username" class="form-control" placeholder="Enter your username" autocomplete="username" />
@@ -54,36 +43,15 @@
                     </div>
 
                     <a asp-controller="Login" asp-action="ForgotPassword" class="forgot-link">Forgot Password?</a>
-
                     <div class="login-divider"> Create an account </div>
                     <a asp-controller="Student" asp-action="StudentRegistration" class="register-button">Create Student Account</a>
-
-                    <p class="signup-text">Don't have an account?
-                        <a asp-controller="Student" asp-action="StudentRegistration" class="signup-link">Sign Up Now</a>
-                    </p>
-
+                    <p class="signup-text">Don't have an account? <a asp-controller="Student" asp-action="StudentRegistration" class="signup-link">Sign Up Now</a> </p>
                 </form>
             </div>
 
             <div class="illustration-panel">
-
                 <div class="illustration-content">
-
-                    @* <h2 class="illustration-title">
-                        Learn. Read. Grow.
-                    </h2>
-
-                    <p class="illustration-description">
-                        Discover new ideas, expand your knowledge,
-                        and make every reading experience count.
-                    </p> *@
-
                     <img src="~/images/BMB Owl.png" alt="BookMyBrain Owl" class="book-illustration" />
-
-                    @* <p class="illustration-footer">
-                        Your next great idea starts here.
-                    </p> *@
-
                 </div>
             </div>
         </div>
