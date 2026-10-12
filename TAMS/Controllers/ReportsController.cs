@@ -113,7 +113,7 @@ namespace TAMS.Controllers
         }
 
 
-        // Generates and downloads a tutor's schedule and appointments report
+        // Generates and downloads a tutor's schedule and appointments report.
         [HttpPost]
         public IActionResult GenerateTutorScheduleReport(int tutorId)
         {
@@ -123,31 +123,65 @@ namespace TAMS.Controllers
             var schedules = dBContext.Schedule.Find(s => s.TutorId == tutorId).SortBy(s => s.Date).ThenBy(s => s.StartTime).ToList();
             var appointments = dBContext.Appointments.Find(a => a.TutorId == tutorId).SortBy(a => a.AppointmentDate).ToList();
 
-            // Attach student information to each appointment.
             foreach (var appointment in appointments)
             {
                 appointment.Student = dBContext.Student.Find(s => s.StudentId == appointment.StudentId).FirstOrDefault();
             }
 
-            // Create the report header.
+            DateTime now = DateTime.Now;
+
             var lines = new List<string>
                 {
                     $"Tutor Schedule Report for {tutor.FName} {tutor.LName}",
-                    $"Generated: {DateTime.Now:MM/dd/yyyy hh:mm tt}",
+                    $"Generated: {now:MM/dd/yyyy hh:mm tt}",
                     "-----------------------------------------------------",
                     "",
-                    "=== SCHEDULE SLOTS ==="
+                    "=== SCHEDULE SLOTS ===",
+                    "Date          Start Time - End Time       Status       Student",
+                    "-----------------------------------------------------"
                 };
 
-            if (schedules.Count == 0) { lines.Add("No schedule slots were found."); }
+            if (schedules.Count == 0)
+            {
+                lines.Add("No schedule slots were found.");
+            }
 
-            // Add schedule slot information using 12-hour time.
             foreach (var schedule in schedules)
             {
+                var slotAppointments = appointments.Where(a => a.ScheduleId == schedule.ScheduleId).ToList();
+
+                var bookedAppointment = slotAppointments.FirstOrDefault(a => a.Status?.Trim().Equals("Scheduled", StringComparison.OrdinalIgnoreCase) == true);
+
+                // Find a completed appointment for this slot.
+                var completedAppointment = slotAppointments.FirstOrDefault(a => a.Status?.Trim().Equals("Completed", StringComparison.OrdinalIgnoreCase) == true);
+
+                string status;
+                string studentName = "N/A";
+
+                if (bookedAppointment != null)
+                {
+                    status = "Booked";
+                    studentName = bookedAppointment.Student == null ? "Student information unavailable" : $"{bookedAppointment.Student.FName} {bookedAppointment.Student.LName}";
+                }
+                else if (completedAppointment != null)
+                {
+                    status = "Completed";
+                    studentName = completedAppointment.Student == null ? "Student information unavailable" : $"{completedAppointment.Student.FName} {completedAppointment.Student.LName}";
+                }
+                else
+                {
+                    DateTime slotDateTime = schedule.Date.Date.Add(schedule.StartTime);
+                    status = slotDateTime < now ? "Expired" : "Available";
+                }
+
+                string startTime = DateTime.Today.Add(schedule.StartTime).ToString("hh:mm tt");
+                string endTime = DateTime.Today.Add(schedule.EndTime).ToString("hh:mm tt");
+
                 lines.Add(
                     $"{schedule.Date:MM/dd/yyyy}  " +
-                    $"{DateTime.Today.Add(schedule.StartTime).ToString("hh:mm tt")} - " +
-                    $"{DateTime.Today.Add(schedule.EndTime).ToString("hh:mm tt")}"
+                    $"{startTime} - {endTime}  |  " +
+                    $"{status}  |  " +
+                    $"{studentName}"
                 );
             }
 
@@ -160,12 +194,11 @@ namespace TAMS.Controllers
                 lines.Add("No appointments were found.");
             }
 
-            // Add appointment information using local time (UTC - 5 hours).
             foreach (var appointment in appointments)
             {
                 var studentName = appointment.Student == null ? "Student information unavailable" : $"{appointment.Student.FName} {appointment.Student.LName}";
-
                 DateTime localAppointmentDate = appointment.AppointmentDate.AddHours(-5);
+
                 lines.Add(
                     $"{localAppointmentDate:MM/dd/yyyy hh:mm tt}  |  " +
                     $"{appointment.Status}  |  " +
@@ -176,30 +209,29 @@ namespace TAMS.Controllers
             string reportContent = string.Join(Environment.NewLine, lines);
             byte[] fileBytes = Encoding.UTF8.GetBytes(reportContent);
 
-            string fileName = $"TutorSchedule_{tutor.FName}_{tutor.LName} _ {tutorId}_{DateTime.Now:yyyyMMddHHmmss}.txt";
+            string fileName = $"TutorSchedule_{tutor.FName}_{tutor.LName}_{tutorId}_{now:yyyyMMddHHmmss}.txt";
 
-            // Generate a new report ID.
             var lastReport = dBContext.Reports.Find(_ => true).SortByDescending(r => r.ReportId).FirstOrDefault();
 
             int newReportId = lastReport == null ? 1 : lastReport.ReportId + 1;
 
-            // Save a record of the generated report in MongoDB.
             var reportRecord = new Report
             {
                 ReportId = newReportId,
                 TutorId = tutorId,
                 ReportType = "TutorSchedule",
-                DateGenerated = DateTime.Now,
+                DateGenerated = now,
                 GeneratedByRole = "Tutor",
                 Summary =
                     $"Generated schedule and appointments report " +
                     $"({schedules.Count} schedule slots, " +
                     $"{appointments.Count} appointments)."
             };
+
             dBContext.Reports.InsertOne(reportRecord);
+
             return File(fileBytes, "text/plain", fileName);
         }
-    
 
     }
 }
