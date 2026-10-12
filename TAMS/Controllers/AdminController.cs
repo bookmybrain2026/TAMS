@@ -362,11 +362,29 @@ namespace TAMS.Controllers
             return View("AdminScheduler");
         }
 
+
         [HttpPost]
-        public IActionResult AddSlot(int tutorId, DateTime date, TimeSpan startTime,TimeSpan endTime)
+        [ValidateAntiForgeryToken]
+        public IActionResult AddSlot(int tutorId, DateTime date, TimeSpan startTime, TimeSpan endTime)
         {
             var adminId = HttpContext.Session.GetInt32("AdminId");
+
             if (adminId == null) { return RedirectToAction("Login", "Login"); }
+
+            var now = DateTime.Now;
+            var today = now.Date;
+
+            if (date.Date < today)
+            {
+                TempData["Error"] = "You cannot add a schedule slot for a date that has already passed.";
+                return RedirectToAction("Scheduler", new { month = date.Month, year = date.Year });
+            }
+
+            if (date.Date == today && startTime <= now.TimeOfDay)
+            {
+                TempData["Error"] = "You cannot add a schedule slot with a start time that has already passed. Please choose a future time.";
+                return RedirectToAction("Scheduler", new { month = date.Month, year = date.Year });
+            }
 
             if (endTime <= startTime)
             {
@@ -374,37 +392,26 @@ namespace TAMS.Controllers
                 return RedirectToAction("Scheduler", new { month = date.Month, year = date.Year });
             }
 
-            var tutor = dBContext.Tutor
-                .Find(t => t.TutorId == tutorId)
-                .FirstOrDefault();
+            var tutor = dBContext.Tutor.Find(t => t.TutorId == tutorId).FirstOrDefault();
 
             if (tutor == null)
             {
                 TempData["Error"] = "The selected tutor was not found.";
-
                 return RedirectToAction("Scheduler", new { month = date.Month, year = date.Year });
             }
 
-            var existingSlots = dBContext.Schedule
-                .Find(s => s.TutorId == tutorId).ToList();
+            var existingSlots = dBContext.Schedule.Find(s => s.TutorId == tutorId).ToList();
 
-            bool overlaps = existingSlots.Any(s =>
-                s.Date.Date == date.Date &&
-                startTime < s.EndTime &&
-                endTime > s.StartTime);
+            // Prevent overlapping schedules for the same tutor and date.
+            bool overlaps = existingSlots.Any(s => s.Date.Date == date.Date && startTime < s.EndTime && endTime > s.StartTime);
 
             if (overlaps)
             {
-                TempData["Error"] = "This time overlaps an existing tutor schedule.";
+                TempData["Error"] = "An existing schedule already overlaps with this time for the selected tutor. " + "If you want to add this time, please delete the preexisting schedule first.";
                 return RedirectToAction("Scheduler", new { month = date.Month, year = date.Year });
             }
 
-            // Generate the next schedule ID.
-            var lastSchedule = dBContext.Schedule
-                .Find(_ => true)
-                .SortByDescending(s => s.ScheduleId)
-                .FirstOrDefault();
-
+            var lastSchedule = dBContext.Schedule.Find(_ => true).SortByDescending(s => s.ScheduleId).FirstOrDefault();
             int newScheduleId = lastSchedule == null ? 1 : lastSchedule.ScheduleId + 1;
 
             var schedule = new Schedule
@@ -415,8 +422,9 @@ namespace TAMS.Controllers
                 StartTime = startTime,
                 EndTime = endTime
             };
-
             dBContext.Schedule.InsertOne(schedule);
+            TempData["Success"] = "Schedule added successfully.";
+
             return RedirectToAction("Scheduler", new { month = date.Month, year = date.Year });
         }
 
@@ -462,14 +470,14 @@ namespace TAMS.Controllers
                 // Notify the student.
                 if (!string.IsNullOrWhiteSpace(student.Email))
                 {
-                    await _emailService.SendAdminCancelledAppointmentAsync(student.Email, studentName, tutorName, appointment.AppointmentDate, "Student"
+                    await _emailService.SendAdminCancelledAppointmentAsync(student.Email, studentName, tutorName, appointment.AppointmentDate.AddHours(5), "Student"
                     );
                 }
 
                 // Notify the tutor.
                 if (!string.IsNullOrWhiteSpace(tutor.Email))
                 {
-                    await _emailService.SendAdminCancelledAppointmentAsync(tutor.Email, tutorName, studentName, appointment.AppointmentDate, "Tutor"
+                    await _emailService.SendAdminCancelledAppointmentAsync(tutor.Email, tutorName, studentName, appointment.AppointmentDate.AddHours(5), "Tutor"
                     );
                 }
             }

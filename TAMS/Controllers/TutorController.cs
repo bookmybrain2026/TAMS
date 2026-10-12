@@ -267,32 +267,46 @@ namespace TAMS.Controllers
             return View(schedules);
         }
 
+
         // Adds an available time period to the tutor's schedule
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult AddSchedule(int tutorId, DateTime date,TimeSpan startTime,TimeSpan endTime)
+        public IActionResult AddSchedule(int tutorId, DateTime date, TimeSpan startTime, TimeSpan endTime)
         {
             var loggedInTutorId = HttpContext.Session.GetInt32("TutorId");
             if (loggedInTutorId == null) { return RedirectToAction("Login", "Login"); }
+            if (loggedInTutorId.Value != tutorId) { return Unauthorized(); }
 
-            if (loggedInTutorId.Value != tutorId)
+            var now = DateTime.Now;
+            var today = now.Date;
+
+            // Reject dates that have already passed.
+            if (date.Date < today)
             {
-                return Unauthorized();
+                TempData["Error"] = "You cannot add a schedule for a date that has already passed.";
+                return RedirectToAction("Schedule", new { id = tutorId, month = date.Month, year = date.Year });
             }
 
+            // Reject start times that have already passed today.
+            if (date.Date == today && startTime <= now.TimeOfDay)
+            {
+                TempData["Error"] = "You cannot add a schedule with a start time that has already passed. Please choose a future time.";
+                return RedirectToAction("Schedule", new { id = tutorId, month = date.Month, year = date.Year });
+            }
+
+            // The end time must be later than the start time.
             if (endTime <= startTime)
             {
                 TempData["Error"] = "End time must be after start time.";
                 return RedirectToAction("Schedule", new { id = tutorId, month = date.Month, year = date.Year });
             }
 
-            var existingSchedules = 
-                dBContext.Schedule
-                .Find(s => s.TutorId == tutorId &&
-                    s.Date.Date == date.Date).ToList();
+            var existingSchedules = dBContext.Schedule.Find(s => s.TutorId == tutorId && s.Date.Date == date.Date).ToList();
 
-            // Check for overlapping schedules
-            bool overlap = existingSchedules.Any(s => startTime < s.EndTime && endTime > s.StartTime);
+            // Prevent overlapping schedules for the same tutor and date.
+            bool overlap = existingSchedules.Any(s =>
+                startTime < s.EndTime &&
+                endTime > s.StartTime);
 
             if (overlap)
             {
@@ -300,26 +314,22 @@ namespace TAMS.Controllers
                 return RedirectToAction("Schedule", new { id = tutorId, month = date.Month, year = date.Year });
             }
 
-            var lastSchedule = 
-                dBContext.Schedule.Find(_ => true)
-                .SortByDescending(s => s.ScheduleId).FirstOrDefault();
-
+            var lastSchedule = dBContext.Schedule.Find(_ => true).SortByDescending(s => s.ScheduleId).FirstOrDefault();
             int newScheduleId = lastSchedule == null ? 1 : lastSchedule.ScheduleId + 1;
 
-            var schedule = 
-                new Schedule {
+            var schedule = new Schedule
+            {
                 ScheduleId = newScheduleId,
                 TutorId = tutorId,
                 Date = date.Date,
                 StartTime = startTime,
-                EndTime = endTime};
+                EndTime = endTime
+            };
             dBContext.Schedule.InsertOne(schedule);
-
             TempData["Success"] = "Schedule added successfully.";
 
-            return RedirectToAction("Schedule", new {id = tutorId, month = date.Month, year = date.Year});
+            return RedirectToAction("Schedule", new { id = tutorId, month = date.Month, year = date.Year });
         }
-
 
         // Deletes a tutor's available schedule
         [HttpPost]
@@ -466,8 +476,7 @@ namespace TAMS.Controllers
         {
             var appointment =
                 dBContext.Appointments
-                .Find(a => a.AppointmentId == appointmentId)
-                .FirstOrDefault();
+                .Find(a => a.AppointmentId == appointmentId).FirstOrDefault();
 
             if (appointment == null) { return NotFound(); }
 

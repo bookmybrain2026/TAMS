@@ -359,44 +359,27 @@ function searchAdminAppointments() {
 
 async function openTutorModal(url, modalId) {
     try {
-        const response = await fetch(url, {
-            method: "GET",
-            credentials: "same-origin",
-            headers: {
-                "X-Requested-With": "XMLHttpRequest"
-            }
-        });
+        const response = await fetch(url, { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } });
 
-        if (!response.ok) { throw new Error("Could not retrieve the tutor information."); }
+        if (!response.ok) { throw new Error("Could not retrieve tutor information."); }
+
         const html = await response.text();
-        const parsedDocument = new DOMParser().parseFromString(html,
-            "text/html"
-        );
+        const doc = new DOMParser().parseFromString(html, "text/html");
+        const modal = doc.getElementById(modalId);
 
-        const modal = parsedDocument.getElementById(modalId);
+        if (!modal) { throw new Error("Tutor popup not found."); }
 
-        if (!modal) {
-            throw new Error("The requested popup was not found. Check the tutor ID and login session.");
-        }
-        const existingModal = document.getElementById(modalId);
-        if (existingModal) { existingModal.remove(); }
+        document.getElementById(modalId)?.remove();
 
-        const currentModal = document.importNode(modal, true);
+        const newModal = document.importNode(modal, true);
+        newModal.style.display = "flex";
+        newModal.setAttribute("aria-hidden", "false");
 
-        currentModal.style.display = "flex";
-        currentModal.setAttribute("aria-hidden", "false");
-
-        document.body.appendChild(currentModal);
+        document.body.appendChild(newModal);
         document.body.style.overflow = "hidden";
 
-        // Put keyboard focus inside the popup.
-        const firstInput = currentModal.querySelector(
-            "input:not([type='hidden']), button, select, textarea"
-        );
+        newModal.querySelector( "input:not([type='hidden']), button, select, textarea" )?.focus();
 
-        if (firstInput) {
-            firstInput.focus();
-        }
     } catch (error) {
         console.error("Tutor popup error:", error);
         alert("Could not open the tutor popup. Please refresh the page and try again.");
@@ -404,46 +387,38 @@ async function openTutorModal(url, modalId) {
 }
 
 function closeTutorModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {  modal.remove(); }
-    const tutorModalOpen = document.querySelector(".tutor-modal") !== null;
+    document.getElementById(modalId)?.remove();
+
+    const tutorModalOpen = !!document.querySelector(".tutor-modal");
     const otherModalIds = ["addSubjectModal", "editSubjectModal", "addCourseModal", "editCourseModal"];
-    const otherModalOpen = otherModalIds.some(function (id) {
-        const element = document.getElementById(id);
-        return element && window.getComputedStyle(element).display !== "none";
+
+    const otherModalOpen = otherModalIds.some(id => {
+        const modal = document.getElementById(id);
+        return modal && getComputedStyle(modal).display !== "none";
     });
-    if (!tutorModalOpen && !otherModalOpen) {
-        document.body.style.overflow = "";
-    }
+
+    if (!tutorModalOpen && !otherModalOpen) { document.body.style.overflow = ""; }
 }
 
-document.addEventListener("click", function (event) {
+document.addEventListener("click", event => {
     const modal = event.target.closest(".tutor-modal");
-    if (modal && event.target === modal) {
-        closeTutorModal(modal.id);
-    }
+    if (modal && event.target === modal) { closeTutorModal(modal.id); }
 });
 
-document.addEventListener("keydown", function (event) {
+document.addEventListener("keydown", event => {
     if (event.key === "Escape") {
-        document.querySelectorAll(".tutor-modal").forEach(function (modal) {
-            closeTutorModal(modal.id);
-        });
+        document.querySelectorAll(".tutor-modal").forEach(modal => { closeTutorModal(modal.id); });
     }
 });
 
-document.addEventListener("DOMContentLoaded", function () {
-    const editModal = document.getElementById("editTutorModal");
-    const scheduleModal = document.getElementById("tutorScheduleModal");
+document.addEventListener("DOMContentLoaded", () => {
+    const modal = document.getElementById("editTutorModal") || document.getElementById("tutorScheduleModal");
 
-    if (editModal) {
-        editModal.style.display = "flex";
-        editModal.setAttribute("aria-hidden", "false");
-        document.body.style.overflow = "hidden";
-    } else if (scheduleModal) {
-        scheduleModal.style.display = "flex";
-        scheduleModal.setAttribute("aria-hidden", "false");
+    if (modal) {
+        modal.style.display = "flex";
+        modal.setAttribute("aria-hidden", "false");
         document.body.style.overflow = "hidden";
     }
 });
+
 

@@ -8,7 +8,20 @@
     var appointments = ViewBag.Appointments as List<Appointment> ?? new List<Appointment>();
     var schedules = ViewBag.Schedules as List<Schedule> ?? new List<Schedule>();
     var upcomingAppointments = appointments.Where(a => a.AppointmentDate >= DateTime.Now && a.Status == "Scheduled").OrderBy(a => a.AppointmentDate).ToList();
-    var sortedSchedules = schedules.OrderBy(s => s.Date).ThenBy(s => s.StartTime).ToList();
+    // var sortedSchedules = schedules.OrderBy(s => s.Date).ThenBy(s => s.StartTime).ToList();
+
+    var now = DateTime.Now;
+
+    var sortedSchedules = schedules
+        .Where(schedule =>
+        {
+            var scheduleEnd = schedule.Date.Date.Add(schedule.EndTime);
+            return scheduleEnd > now;
+        })
+        .OrderBy(schedule => schedule.Date)
+        .ThenBy(schedule => schedule.StartTime)
+        .ToList();
+
     var completedAppointments = appointments.Count(a => a.Status == "Completed");
     var cancelledAppointments = appointments.Count(a => a.Status == "Cancelled");
 }
@@ -184,7 +197,7 @@
                 </span>
                 <span class="tutor-quick-arrow" aria-hidden="true">›</span>
             </a>
-
+  
             <a asp-controller="Tutor" asp-action="Profile" class="tutor-quick-link">
                 <span class="tutor-quick-icon" aria-hidden="true">✎</span>
                 <span>
@@ -193,6 +206,19 @@
                 </span>
                 <span class="tutor-quick-arrow" aria-hidden="true">›</span>
             </a>
+
+            <form asp-controller="Reports" asp-action="GenerateTutorScheduleReport" method="post" class="tutor-download-form">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="tutorId" value="@Model.TutorId" />
+                <button type="submit" class="tutor-quick-link tutor-download-link">
+                    <span class="tutor-quick-icon" aria-hidden="true">⇩</span>
+                    <span class="tutor-quick-text">
+                        <strong>Download Tutor Schedule</strong>
+                        <small>Download your schedule and appointments</small>
+                    </span>
+                    <span class="tutor-quick-arrow" aria-hidden="true">›</span>
+                </button>
+            </form>
 
             <div class="tutor-mini-summary">
                 <span>Cancelled appointments</span>
@@ -246,7 +272,7 @@
                                     </td>
 
                                     <td>
-                                        @appointment.AppointmentDate.AddHours(-5).ToString("hh:mm tt")
+                                        @appointment.AppointmentDate.ToString("hh:mm tt")
                                     </td>
 
                                     <td>
@@ -329,7 +355,7 @@
                             <span class="tutor-agenda-dot"></span>
                             <div>
                                 <strong> 
-                                    @appointment.AppointmentDate.AddHours(-5).ToString("hh:mm tt")
+                                    @appointment.AppointmentDate.ToString("hh:mm tt")
                                 </strong>
                                 <p>
                                     @if (appointment.Student != null)
@@ -404,7 +430,7 @@
                                 </td>
 
                                 <td>
-                                    @appointment.AppointmentDate.AddHours(-5).ToString("hh:mm tt")
+                                    @appointment.AppointmentDate.ToString("hh:mm tt")
                                 </td>
 
                                 <td>
@@ -451,7 +477,7 @@
                     <p class="tutor-eyebrow">PLAN YOUR AVAILABILITY</p>
                     <h2>Your Schedule</h2>
                 </div>
-                <span class="tutor-count-pill"> @schedules.Count slots </span>
+                <span class="tutor-count-pill">@sortedSchedules.Count slots</span>
             </div>
 
             <div class="tutor-schedule-toolbar">
@@ -464,8 +490,8 @@
             @if (sortedSchedules.Count == 0)
             {
                 <div class="tutor-empty-state tutor-empty-compact">
-                    <h3>No schedule slots added</h3>
-                    <p>Add available times so students can book appointments.</p>
+                    <h3>No upcoming schedule slots</h3>
+                    <p>Add new available times so students can book appointments.</p>
                 </div>
             }
             else

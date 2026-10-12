@@ -65,90 +65,131 @@ namespace TAMS.Controllers
             return View();
         }
 
+
         [HttpPost]
-        public async Task<IActionResult> BookAppointment(int tutorId, DateTime date, TimeSpan startTime, int studentId)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> BookAppointment(int scheduleId, int tutorId, DateTime date, TimeSpan startTime, int studentId)
         {
-            // Find the tutor.
-            var tutor =
-                dBContext.Tutor
-                .Find(t =>t.TutorId == tutorId).FirstOrDefault();
+            var loggedInStudentId = HttpContext.Session.GetInt32("StudentId");
+            if (loggedInStudentId == null) { return RedirectToAction("Login", "Login"); }
 
-            if (tutor == null) { return NotFound(); }
+            studentId = loggedInStudentId.Value;
 
-            var student =
-                dBContext.Student
-                .Find(s => s.StudentId == studentId) .FirstOrDefault();
+            var tutor = dBContext.Tutor.Find(t => t.TutorId == tutorId).FirstOrDefault();
+            var student = dBContext.Student.Find(s => s.StudentId == studentId).FirstOrDefault();
+            var schedule = dBContext.Schedule.Find(s => s.ScheduleId == scheduleId).FirstOrDefault();
 
-            if (student == null) { return NotFound(); }
+            if (tutor == null || student == null || schedule == null){ return NotFound(); }
 
-            DateTime appointmentDate = date.Date + startTime;
-
-            var appointmentExists =
-                dBContext.Appointments
-                .Find(a => a.TutorId == tutorId &&
-                    a.AppointmentDate == appointmentDate &&
-                    a.Status == "Scheduled").FirstOrDefault();
-
-            if (appointmentExists != null)
+            if (schedule.TutorId != tutorId || schedule.Date.Date != date.Date || schedule.StartTime != startTime)
             {
-                TempData["Error"] = "This time slot is already booked.";
+                TempData["Error"] = "Invalid appointment selection.";
                 return RedirectToAction("Scheduler", new { tutorId, studentId, month = date.Month, year = date.Year });
             }
 
-            var tutorSchedules =
-                dBContext.Schedule
-                .Find(s => s.TutorId == tutorId).ToList();
+            // Store the exact interval belonging to this schedule.
+            DateTime newStart = schedule.Date.Date.Add(schedule.StartTime);
+            DateTime newEnd = schedule.Date.Date.Add(schedule.EndTime);
 
-            var matchingSchedule =
-                tutorSchedules.FirstOrDefault(s => s.Date.Date == appointmentDate.Date &&
-                appointmentDate.TimeOfDay >= s.StartTime &&
-                appointmentDate.TimeOfDay < s.EndTime);
-
-            if (matchingSchedule == null)
+            if (newEnd <= newStart)
             {
-                TempData["Error"] = "The selected time is not available.";
+                TempData["Error"] = "The selected schedule has an invalid time.";
                 return RedirectToAction("Scheduler", new { tutorId, studentId, month = date.Month, year = date.Year });
             }
 
-            var lastAppointment =
-                dBContext.Appointments.Find(_ => true)
-                .SortByDescending(a => a.AppointmentId).FirstOrDefault();
+            // Retrieve only appointments that could conflict.  No existing appointment is modified here.
+            var possibleConflicts = dBContext.Appointments.Find(a => a.Status == "Scheduled" && (a.StudentId == studentId || a.TutorId == tutorId)).ToList();
 
-            int newAppointmentId =lastAppointment == null ? 1 : lastAppointment.AppointmentId + 1;
+            foreach (var existing in possibleConflicts)
+            {
+                DateTime existingStart = existing.AppointmentDate;
+                DateTime existingEnd = existing.EndDate;
 
-            var newAppointment =
-                new Appointment
+                if (existingEnd <= existingStart)
                 {
-                    AppointmentId = newAppointmentId,
-                    TutorId = tutorId,
-                    StudentId = studentId,
-                    AppointmentDate = appointmentDate,
-                    Status = "Scheduled"
-                };
+                    var oldSchedule = dBContext.Schedule.Find(s => s.ScheduleId == existing.ScheduleId).FirstOrDefault();
+
+                    if (oldSchedule != null)
+                    {
+                        existingStart = oldSchedule.Date.Date.Add(oldSchedule.StartTime);
+                        existingEnd = oldSchedule.Date.Date.Add(oldSchedule.EndTime);
+                    }
+                    else
+                    {
+                        TempData["Error"] = "An existing appointment has an invalid time. " + "Please contact the administrator.";
+                        return RedirectToAction("Scheduler", new { tutorId, studentId, month = date.Month, year = date.Year });
+                    }
+                }
+
+                bool overlaps = newStart < existingEnd &&
+                    newEnd > existingStart;
+
+                if (overlaps)
+                {
+                    if (existing.StudentId == studentId)
+                    {
+                        TempData["Error"] = "You already have an appointment during this time.";
+                        return RedirectToAction("Scheduler", new { tutorId, studentId, month = date.Month, year = date.Year });
+                    }
+
+                    if (existing.TutorId == tutorId)
+                    {
+                        TempData["Error"] = "This tutor already has an appointment during this time.";
+                        return RedirectToAction("Scheduler", new { tutorId, studentId, month = date.Month, year = date.Year });
+                    }
+                }
+            }
+
+            // Prevent booking this exact schedule twice
+            var existingScheduleBooking = dBContext.Appointments.Find(a => a.ScheduleId == scheduleId && a.Status == "Scheduled").FirstOrDefault();
+            if (existingScheduleBooking != null)
+            {
+                TempData["Error"] = "This schedule has already been booked.";
+                return RedirectToAction("Scheduler", new {tutorId, studentId, month = date.Month, year = date.Year });
+            }
+
+            // Generate an appointment ID.
+            var lastAppointment = dBContext.Appointments.Find(_ => true).SortByDescending(a => a.AppointmentId).FirstOrDefault();
+
+            int newAppointmentId = lastAppointment == null ? 1 : lastAppointment.AppointmentId + 1;
+
+            // INSERT exactly one new appointment no update to any other appointment or schedule
+            var newAppointment = new Appointment
+            {
+                AppointmentId = newAppointmentId,
+                ScheduleId = schedule.ScheduleId,
+                TutorId = tutorId,
+                StudentId = studentId,
+                AppointmentDate = newStart,
+                EndDate = newEnd,
+                Status = "Scheduled"
+            };
             dBContext.Appointments.InsertOne(newAppointment);
 
-            var studentName = $"{student.FName} {student.LName}";
-            var tutorName = $"{tutor.FName} {tutor.LName}";
+            string studentName = $"{student.FName} {student.LName}";
+            string tutorName = $"{tutor.FName} {tutor.LName}";
+
             try
             {
                 if (!string.IsNullOrWhiteSpace(student.Email))
                 {
-                    await _emailService.SendStudentAppointmentConfirmationAsync(student.Email, studentName, tutorName, appointmentDate);
+                    await _emailService.SendStudentAppointmentConfirmationAsync(student.Email, studentName, tutorName, newStart.AddHours(5));
                 }
+
                 if (!string.IsNullOrWhiteSpace(tutor.Email))
                 {
-                    await _emailService.SendTutorAppointmentNotificationAsync(tutor.Email,tutorName, studentName, appointmentDate);
+                    await _emailService.SendTutorAppointmentNotificationAsync(tutor.Email, tutorName, studentName, newStart.AddHours(5));
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine(
-                    $"Email failed: {ex.Message}");
+                Console.WriteLine($"Email failed: {ex.Message}");
             }
 
-            TempData["Success"] ="Appointment booked successfully!";
+            TempData["Success"] = "Appointment booked successfully!";
 
             return RedirectToAction("Dashboard", "Student", new { id = studentId });
         }
+
     }
 }

@@ -143,14 +143,10 @@
                                 {
                                     var selectedDay = currentDay;
                                     var selectedDate = firstDay.AddDays(selectedDay - 1);
-                                    var daySchedules = schedules
-                                        .Where(s => s.Date.Date == selectedDate.Date)
-                                        .OrderBy(s => s.StartTime).ToList();
-
+                                    var daySchedules = schedules.Where(s => s.Date.Date == selectedDate.Date).OrderBy(s => s.StartTime).ToList();
                                     var dayAppointments = appointments
                                         .Where(a => a.AppointmentDate.AddHours(-5).Date == selectedDate.Date && (a.Status == "Scheduled" || a.Status == "Completed"))
                                         .OrderBy(a => a.AppointmentDate.AddHours(-5).TimeOfDay).ToList();
-
                                     var isToday = selectedDate.Date == now.Date;
 
                                     <td class="scheduler-day-cell">
@@ -173,31 +169,18 @@
                                                 else
                                                 {
                                                     @foreach (var s in daySchedules)
-                                                    {
+                                                    {                                                                      
                                                         var slotDateTime = s.Date.Date.Add(s.StartTime);
-                                                        var slotCompleted = dayAppointments.Any(a =>
-                                                        {
-                                                            var localAppointmentTime = a.AppointmentDate.AddHours(-5);
-                                                            return a.Status == "Completed" &&
-                                                                   localAppointmentTime.Date == slotDateTime.Date &&
-                                                                   localAppointmentTime.TimeOfDay >= s.StartTime &&
-                                                                   localAppointmentTime.TimeOfDay < s.EndTime;
-                                                        });
+                                                        var slotAppointments = appointments.Where(a => a.ScheduleId == s.ScheduleId).ToList();
+                                                        var slotCompleted = slotAppointments.Any(a => string.Equals(a.Status?.Trim(), "Completed", StringComparison.OrdinalIgnoreCase));
+                                                        var slotBooked = slotAppointments.Any(a => string.Equals(a.Status?.Trim(), "Scheduled", StringComparison.OrdinalIgnoreCase));
+                                                        var localSlotDateTime = slotDateTime;//.AddHours(-5);
+                                                        var slotExpired = !slotCompleted && !slotBooked && localSlotDateTime < now;
 
-                                                        var slotBooked = dayAppointments.Any(a =>
-                                                        {
-                                                            var localAppointmentTime = a.AppointmentDate.AddHours(-5);
-
-                                                            return a.Status == "Scheduled" &&
-                                                                   localAppointmentTime.Date == slotDateTime.Date &&
-                                                                   localAppointmentTime.TimeOfDay >= s.StartTime &&
-                                                                   localAppointmentTime.TimeOfDay < s.EndTime;
-                                                        });
-
-                                                        var slotExpired = !slotCompleted && !slotBooked && slotDateTime < now;
                                                         var startTime = DateTime.Today.Add(s.StartTime).ToString("h:mm tt");
                                                         var endTime = DateTime.Today.Add(s.EndTime).ToString("h:mm tt");
-                                                        var slotLabel = $"{startTime} - {endTime}";
+
+                                                        var slotLabel = $"{startTime} - {endTime}";                                                                  
 
                                                         if (slotCompleted)
                                                         {
@@ -225,6 +208,7 @@
                                                             <form class="scheduler-booking-form" asp-controller="Appointment" asp-action="BookAppointment"
                                                                   method="post" onsubmit="return confirm('Do you want to confirm this appointment?');">
                                                                 @Html.AntiForgeryToken()
+                                                                <input type="hidden" name="scheduleId" value="@s.ScheduleId" />
                                                                 <input type="hidden" name="tutorId" value="@tutor.TutorId" />
                                                                 <input type="hidden" name="studentId" value="@studentId" />
                                                                 <input type="hidden" name="date" value="@s.Date.ToString("yyyy-MM-dd")" />

@@ -16,6 +16,11 @@ namespace TAMS.Models
         public DateTime AppointmentDate { get; set; }
 
         [Required]
+        public DateTime EndDate { get; set; }         // End time
+
+        public int ScheduleId { get; set; } // Exact schedule being booked
+
+        [Required]
         [ForeignKey("Student")]
         public int StudentId { get; set; }
         public virtual Student Student { get; set; }

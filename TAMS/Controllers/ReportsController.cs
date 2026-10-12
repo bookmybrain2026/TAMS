@@ -112,63 +112,42 @@ namespace TAMS.Controllers
             return File(fileBytes, "text/plain", fileName);
         }
 
-        // Generates and downloads a tutor's schedule and appointments report.
+
+        // Generates and downloads a tutor's schedule and appointments report
         [HttpPost]
         public IActionResult GenerateTutorScheduleReport(int tutorId)
         {
-            // Find the tutor using the supplied ID.
-            var tutor = dBContext.Tutor
-                .Find(t => t.TutorId == tutorId)
-                .FirstOrDefault();
+            var tutor = dBContext.Tutor.Find(t => t.TutorId == tutorId).FirstOrDefault();
+            if (tutor == null) { return NotFound(); }
 
-            if (tutor == null)
-            {
-                return NotFound();
-            }
-
-            // Retrieve the tutor's schedule slots in chronological order.
-            var schedules = dBContext.Schedule
-                .Find(s => s.TutorId == tutorId)
-                .SortBy(s => s.Date)
-                .ThenBy(s => s.StartTime)
-                .ToList();
-
-            // Retrieve the tutor's appointments in chronological order.
-            var appointments = dBContext.Appointments
-                .Find(a => a.TutorId == tutorId)
-                .SortBy(a => a.AppointmentDate)
-                .ToList();
+            var schedules = dBContext.Schedule.Find(s => s.TutorId == tutorId).SortBy(s => s.Date).ThenBy(s => s.StartTime).ToList();
+            var appointments = dBContext.Appointments.Find(a => a.TutorId == tutorId).SortBy(a => a.AppointmentDate).ToList();
 
             // Attach student information to each appointment.
             foreach (var appointment in appointments)
             {
-                appointment.Student = dBContext.Student
-                    .Find(s => s.StudentId == appointment.StudentId)
-                    .FirstOrDefault();
+                appointment.Student = dBContext.Student.Find(s => s.StudentId == appointment.StudentId).FirstOrDefault();
             }
 
             // Create the report header.
             var lines = new List<string>
-            {
-                $"Tutor Schedule Report for {tutor.FName} {tutor.LName}",
-                $"Generated: {DateTime.Now:MM/dd/yyyy hh:mm tt}",
-                "-----------------------------------------------------",
-                "",
-                "=== SCHEDULE SLOTS ==="
-            };
+                {
+                    $"Tutor Schedule Report for {tutor.FName} {tutor.LName}",
+                    $"Generated: {DateTime.Now:MM/dd/yyyy hh:mm tt}",
+                    "-----------------------------------------------------",
+                    "",
+                    "=== SCHEDULE SLOTS ==="
+                };
 
-            if (schedules.Count == 0)
-            {
-                lines.Add("No schedule slots were found.");
-            }
+            if (schedules.Count == 0) { lines.Add("No schedule slots were found."); }
 
-            // Add schedule slot information.
+            // Add schedule slot information using 12-hour time.
             foreach (var schedule in schedules)
             {
                 lines.Add(
                     $"{schedule.Date:MM/dd/yyyy}  " +
-                    $"{schedule.StartTime:hh\\:mm} - " +
-                    $"{schedule.EndTime:hh\\:mm}"
+                    $"{DateTime.Today.Add(schedule.StartTime).ToString("hh:mm tt")} - " +
+                    $"{DateTime.Today.Add(schedule.EndTime).ToString("hh:mm tt")}"
                 );
             }
 
@@ -181,37 +160,28 @@ namespace TAMS.Controllers
                 lines.Add("No appointments were found.");
             }
 
-            // Add appointment information.
+            // Add appointment information using local time (UTC - 5 hours).
             foreach (var appointment in appointments)
             {
-                var studentName = appointment.Student == null
-                    ? "Student information unavailable"
-                    : $"{appointment.Student.FName} {appointment.Student.LName}";
+                var studentName = appointment.Student == null ? "Student information unavailable" : $"{appointment.Student.FName} {appointment.Student.LName}";
 
+                DateTime localAppointmentDate = appointment.AppointmentDate.AddHours(-5);
                 lines.Add(
-                    $"{appointment.AppointmentDate:MM/dd/yyyy hh:mm tt}  |  " +
+                    $"{localAppointmentDate:MM/dd/yyyy hh:mm tt}  |  " +
                     $"{appointment.Status}  |  " +
                     $"Student: {studentName}"
                 );
             }
 
-            // Convert the report content into bytes.
             string reportContent = string.Join(Environment.NewLine, lines);
             byte[] fileBytes = Encoding.UTF8.GetBytes(reportContent);
 
-            // Generate a unique filename.
-            string fileName =
-                $"TutorSchedule_{tutorId}_{DateTime.Now:yyyyMMddHHmmss}.txt";
+            string fileName = $"TutorSchedule_{tutor.FName}_{tutor.LName} _ {tutorId}_{DateTime.Now:yyyyMMddHHmmss}.txt";
 
             // Generate a new report ID.
-            var lastReport = dBContext.Reports
-                .Find(_ => true)
-                .SortByDescending(r => r.ReportId)
-                .FirstOrDefault();
+            var lastReport = dBContext.Reports.Find(_ => true).SortByDescending(r => r.ReportId).FirstOrDefault();
 
-            int newReportId = lastReport == null
-                ? 1
-                : lastReport.ReportId + 1;
+            int newReportId = lastReport == null ? 1 : lastReport.ReportId + 1;
 
             // Save a record of the generated report in MongoDB.
             var reportRecord = new Report
@@ -226,11 +196,10 @@ namespace TAMS.Controllers
                     $"({schedules.Count} schedule slots, " +
                     $"{appointments.Count} appointments)."
             };
-
             dBContext.Reports.InsertOne(reportRecord);
-
-            // Return the report as a downloadable text file.
             return File(fileBytes, "text/plain", fileName);
         }
+    
+
     }
 }

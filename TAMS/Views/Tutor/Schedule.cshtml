@@ -130,16 +130,27 @@
                                                 }
                                             </div>
 
-                                            <form asp-controller="Tutor" asp-action="AddSchedule" method="post" class="schedule-add-form">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="tutorId" value="@tutorId" />
-                                                <input type="hidden" name="date" value="@currentDate.ToString("yyyy-MM-dd")" />
-                                                <label class="schedule-input-label"> Start time </label>
-                                                <input type="time" name="startTime" class="schedule-time-input" required />
-                                                <label class="schedule-input-label"> End time </label>
-                                                <input type="time" name="endTime" class="schedule-time-input" required />
-                                                <button type="submit" class="schedule-add-button"> &#43; Add Schedule </button>
-                                            </form>
+
+                                            @if (currentDate.Date < DateTime.Today)
+                                            {
+                                                <p class="schedule-no-slots">
+                                                    Past date — schedules cannot be added.
+                                                </p>
+                                            }
+                                            else
+                                            {
+                                                <form asp-controller="Tutor" asp-action="AddSchedule" method="post" class="schedule-add-form">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="tutorId" value="@tutorId" />
+                                                    <input type="hidden" name="date" value="@currentDate.ToString("yyyy-MM-dd")" />
+                                                    <label class="schedule-input-label">Start time</label>
+                                                    <input type="time" name="startTime" class="schedule-time-input" min="@(currentDate.Date == DateTime.Today ? DateTime.Now.ToString("HH:mm") : null)" required />
+                                                    <label class="schedule-input-label">End time</label>
+                                                    <input type="time" name="endTime" class="schedule-time-input" required />
+                                                    <button type="submit" class="schedule-add-button"> &#43; Add Schedule </button>
+                                                </form>
+                                            }
+
                                         </td>
 
                                         day++;

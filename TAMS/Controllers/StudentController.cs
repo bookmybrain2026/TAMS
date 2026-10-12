@@ -341,149 +341,149 @@ namespace TAMS.Controllers
             return RedirectToAction( "Dashboard", new { id = appointment.StudentId });
         }     
 
-        [HttpGet]
-        public IActionResult Scheduler(int tutorId, int studentId, int? month, int? year)
-        {
-            var tutor = 
-                dBContext.Tutor    
-                .Find(t => t.TutorId == tutorId).FirstOrDefault();
+        //[HttpGet]
+        //public IActionResult Scheduler(int tutorId, int studentId, int? month, int? year)
+        //{
+        //    var tutor = 
+        //        dBContext.Tutor    
+        //        .Find(t => t.TutorId == tutorId).FirstOrDefault();
 
-            if (tutor == null) { return NotFound(); }
+        //    if (tutor == null) { return NotFound(); }
 
-            int targetMonth = month ?? DateTime.Today.Month;
-            int targetYear = year ?? DateTime.Today.Year;
+        //    int targetMonth = month ?? DateTime.Today.Month;
+        //    int targetYear = year ?? DateTime.Today.Year;
 
-            if (targetMonth < 1)
-            {
-                targetMonth = 12;
-                targetYear--;
-            }
-            else if (targetMonth > 12)
-            {
-                targetMonth = 1;
-                targetYear++;
-            }
+        //    if (targetMonth < 1)
+        //    {
+        //        targetMonth = 12;
+        //        targetYear--;
+        //    }
+        //    else if (targetMonth > 12)
+        //    {
+        //        targetMonth = 1;
+        //        targetYear++;
+        //    }
 
-            var firstDay = new DateTime(targetYear, targetMonth, 1);
-            var nextMonth = firstDay.AddMonths(1);
+        //    var firstDay = new DateTime(targetYear, targetMonth, 1);
+        //    var nextMonth = firstDay.AddMonths(1);
 
-            var appointments = 
-                dBContext.Appointments                         
-                .Find(a => a.TutorId == tutorId &&            
-                    a.AppointmentDate >= firstDay &&            
-                    a.AppointmentDate < nextMonth).ToList();    
+        //    var appointments = 
+        //        dBContext.Appointments                         
+        //        .Find(a => a.TutorId == tutorId &&            
+        //            a.AppointmentDate >= firstDay &&            
+        //            a.AppointmentDate < nextMonth).ToList();    
 
-            foreach (var appointment in appointments)
-            {                                 
-                appointment.Student =                                                   
-                    dBContext.Student                                                   
-                    .Find(s => s.StudentId == appointment.StudentId).FirstOrDefault();  
-            }
+        //    foreach (var appointment in appointments)
+        //    {                                 
+        //        appointment.Student =                                                   
+        //            dBContext.Student                                                   
+        //            .Find(s => s.StudentId == appointment.StudentId).FirstOrDefault();  
+        //    }
 
-            var schedules = 
-                dBContext.Schedule                              
-                .Find(s => s.TutorId == tutorId).ToList()     
-                .Where(s => s.Date.Month == targetMonth &&      
-                    s.Date.Year == targetYear).ToList();        
+        //    var schedules = 
+        //        dBContext.Schedule                              
+        //        .Find(s => s.TutorId == tutorId).ToList()     
+        //        .Where(s => s.Date.Month == targetMonth &&      
+        //            s.Date.Year == targetYear).ToList();        
 
-            ViewBag.Tutor = tutor;
-            ViewBag.Appointments = appointments;
-            ViewBag.Schedules = schedules;
-            ViewBag.Month = targetMonth;
-            ViewBag.Year = targetYear;
-            ViewBag.StudentId = studentId;
+        //    ViewBag.Tutor = tutor;
+        //    ViewBag.Appointments = appointments;
+        //    ViewBag.Schedules = schedules;
+        //    ViewBag.Month = targetMonth;
+        //    ViewBag.Year = targetYear;
+        //    ViewBag.StudentId = studentId;
 
-            return View("StudentScheduler");
-        }
+        //    return View("StudentScheduler");
+        //}
 
-        [HttpPost]
-        public async Task<IActionResult> BookAppointment(int studentId, int tutorId, DateTime appointmentDate)
-        {
-            var student =  
-                dBContext.Student                                        
-                .Find(s => s.StudentId == studentId).FirstOrDefault();   
-            if (student == null) { return NotFound(); }  
+        //[HttpPost]
+        //public async Task<IActionResult> BookAppointment(int studentId, int tutorId, DateTime appointmentDate)
+        //{
+        //    var student =  
+        //        dBContext.Student                                        
+        //        .Find(s => s.StudentId == studentId).FirstOrDefault();   
+        //    if (student == null) { return NotFound(); }  
 
-            var tutor =  
-                dBContext.Tutor                                         
-                .Find(d => d.TutorId == tutorId).FirstOrDefault();     
+        //    var tutor =  
+        //        dBContext.Tutor                                         
+        //        .Find(d => d.TutorId == tutorId).FirstOrDefault();     
 
-            if (tutor == null) { return NotFound(); }  
+        //    if (tutor == null) { return NotFound(); }  
 
-            if (appointmentDate <= DateTime.Now)  
-            {
-                TempData["Error"] = "Please select a future appointment time.";
-                return RedirectToAction("Scheduler", new { tutorId, studentId });
-            }
+        //    if (appointmentDate <= DateTime.Now)  
+        //    {
+        //        TempData["Error"] = "Please select a future appointment time.";
+        //        return RedirectToAction("Scheduler", new { tutorId, studentId });
+        //    }
 
-            var existingAppointment =                          
-                dBContext.Appointments.Find(a =>                 
-                    a.TutorId == tutorId &&                    
-                    a.AppointmentDate == appointmentDate &&      
-                    a.Status != "Cancelled").FirstOrDefault();   
+        //    var existingAppointment =                          
+        //        dBContext.Appointments.Find(a =>                 
+        //            a.TutorId == tutorId &&                    
+        //            a.AppointmentDate == appointmentDate &&      
+        //            a.Status != "Cancelled").FirstOrDefault();   
 
-            if (existingAppointment != null) 
-            {
-                TempData["Error"] = "That appointment time is already booked.";
-                return RedirectToAction("Scheduler", new { tutorId, studentId });
-            }
+        //    if (existingAppointment != null) 
+        //    {
+        //        TempData["Error"] = "That appointment time is already booked.";
+        //        return RedirectToAction("Scheduler", new { tutorId, studentId });
+        //    }
 
-            var tutorSchedules =  
-                dBContext.Schedule                              
-                .Find(s => s.TutorId == tutorId).ToList();     
+        //    var tutorSchedules =  
+        //        dBContext.Schedule                              
+        //        .Find(s => s.TutorId == tutorId).ToList();     
 
-            var matchingSchedule = tutorSchedules  
-                .FirstOrDefault(s =>                                 
-                    s.Date.Date == appointmentDate.Date &&           
-                    appointmentDate.TimeOfDay >= s.StartTime &&      
-                    appointmentDate.TimeOfDay < s.EndTime);          
+        //    var matchingSchedule = tutorSchedules  
+        //        .FirstOrDefault(s =>                                 
+        //            s.Date.Date == appointmentDate.Date &&           
+        //            appointmentDate.TimeOfDay >= s.StartTime &&      
+        //            appointmentDate.TimeOfDay < s.EndTime);          
 
-            if (matchingSchedule == null)  
-            {
-                TempData["Error"] = "The selected time is not available.";
+        //    if (matchingSchedule == null)  
+        //    {
+        //        TempData["Error"] = "The selected time is not available.";
 
-                return RedirectToAction("Scheduler", new { tutorId, studentId });
-            }
+        //        return RedirectToAction("Scheduler", new { tutorId, studentId });
+        //    }
 
-            var lastAppointment =  
-                dBContext.Appointments.Find(_ => true)                       
-                .SortByDescending(a => a.AppointmentId).FirstOrDefault();    
+        //    var lastAppointment =  
+        //        dBContext.Appointments.Find(_ => true)                       
+        //        .SortByDescending(a => a.AppointmentId).FirstOrDefault();    
 
-            int newAppointmentId = lastAppointment == null ? 1 : lastAppointment.AppointmentId + 1;  
+        //    int newAppointmentId = lastAppointment == null ? 1 : lastAppointment.AppointmentId + 1;  
 
-            var appointment = new Appointment  
-            {
-                AppointmentId = newAppointmentId,
-                StudentId = studentId,
-                TutorId = tutorId,
-                AppointmentDate = appointmentDate, //DUE TO TEMP FIX OF TIME
-                //AppointmentDate = TimeZoneHelper.ToUtc(appointmentDate),StudentId = studentId,TutorId = tutorId,Status = "Scheduled" //temp fix as well
-                Status = "Scheduled"
-            };
-            dBContext.Appointments.InsertOne(appointment);
+        //    var appointment = new Appointment  
+        //    {
+        //        AppointmentId = newAppointmentId,
+        //        StudentId = studentId,
+        //        TutorId = tutorId,
+        //        AppointmentDate = appointmentDate, //DUE TO TEMP FIX OF TIME
+        //        //AppointmentDate = TimeZoneHelper.ToUtc(appointmentDate),StudentId = studentId,TutorId = tutorId,Status = "Scheduled" //temp fix as well
+        //        Status = "Scheduled"
+        //    };
+        //    dBContext.Appointments.InsertOne(appointment);
 
-            var studentName = $"{student.FName} {student.LName}";
-            var tutorName = $"{tutor.FName} {tutor.LName}";
-            try  
-            {
-                if (!string.IsNullOrWhiteSpace(student.Email)) 
-                { 
-                    await _emailService.SendStudentAppointmentConfirmationAsync(student.Email, studentName, tutorName, appointmentDate);
-                }
+        //    var studentName = $"{student.FName} {student.LName}";
+        //    var tutorName = $"{tutor.FName} {tutor.LName}";
+        //    try  
+        //    {
+        //        if (!string.IsNullOrWhiteSpace(student.Email)) 
+        //        { 
+        //            await _emailService.SendStudentAppointmentConfirmationAsync(student.Email, studentName, tutorName, appointmentDate);
+        //        }
 
-                if (!string.IsNullOrWhiteSpace(tutor.Email)) 
-                {
-                    await _emailService.SendTutorAppointmentNotificationAsync(tutor.Email, tutorName, studentName, appointmentDate);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Email failed: {ex.Message}");
-            }
+        //        if (!string.IsNullOrWhiteSpace(tutor.Email)) 
+        //        {
+        //            await _emailService.SendTutorAppointmentNotificationAsync(tutor.Email, tutorName, studentName, appointmentDate);
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine($"Email failed: {ex.Message}");
+        //    }
 
-            // Return the student to their dashboard
-            return RedirectToAction("Dashboard", new { id = studentId });
-        }
+        //    // Return the student to their dashboard
+        //    return RedirectToAction("Dashboard", new { id = studentId });
+        //}
 
         [HttpPost]
         public IActionResult SubmitReview(int appointmentId, int rating, string comment)

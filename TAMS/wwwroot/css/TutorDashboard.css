@@ -438,6 +438,31 @@
     font-size: 24px;
 }
 
+
+.tutor-download-form {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+}
+
+.tutor-download-link {
+    width: 100%;
+    font-family: inherit;
+    font-size: inherit;
+    text-align: left;
+    color: inherit;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.tutor-download-link:hover { background-color: rgba(0, 0, 0, 0.03); }
+
+.tutor-download-link .tutor-download-text {
+    display: flex;
+    flex-direction: column;
+}
+
 .tutor-mini-summary {
     display: flex;
     align-items: center;
