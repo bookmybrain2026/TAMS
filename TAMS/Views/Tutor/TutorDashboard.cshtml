@@ -423,7 +423,7 @@
                     </thead>
 
                     <tbody>
-                        @foreach (var appointment in appointments.OrderByDescending(a => a.AppointmentDate))
+                        @foreach (var appointment in appointments.OrderBy(a => a.AppointmentDate))
                         {
                             <tr>
                                 <td class="tutor-date-cell">
