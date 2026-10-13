@@ -230,12 +230,38 @@
     font-weight: 600;
 }
 
-.schedule-slots {
+/*.schedule-slots {
     display: flex;
     flex-direction: column;
     gap: 6px;
     margin-bottom: 12px;
+}*/
+
+
+.schedule-slots {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    max-height: 45px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;
+    padding-right: 5px;
+    margin-bottom: 12px;
+    box-sizing: border-box;
 }
+
+.schedule-slots .schedule-slot { flex-shrink: 0; }
+
+.schedule-slots::-webkit-scrollbar { width: 5px; }
+
+.schedule-slots::-webkit-scrollbar-thumb {
+    background: #d5c3a8;
+    border-radius: 5px;
+}
+
+.schedule-slots::-webkit-scrollbar-track { background: transparent; }
+
 
 .schedule-slot {
     display: flex;
@@ -246,7 +272,7 @@
     border-radius: 5px;
     background: var(--bmb-cream);
     color: var(--bmb-brown);
-    font-size: 11px;
+    font-size: 9.5px;
     font-weight: 700;
     overflow-wrap: anywhere;
 }

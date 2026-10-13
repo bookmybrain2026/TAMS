@@ -120,7 +120,7 @@
                                                         if (appt.Status == "Cancelled")
                                                         {
                                                             <li class="appointment-item appointment-cancelled">
-                                                                <span class="appointment-time"> @appt.AppointmentDate.AddHours(-5).ToString("hh:mm tt") </span>
+                                                                <span class="appointment-time"> @appt.AppointmentDate.ToString("hh:mm tt") </span>
                                                                 <span class="appointment-student"> @appt.Student.FName @appt.Student.LName </span>
                                                                 <span class="appointment-status"> Cancelled </span>
                                                             </li>
@@ -128,7 +128,7 @@
                                                         else
                                                         {
                                                             <li class="appointment-item appointment-active">
-                                                                <span class="appointment-time"> @appt.AppointmentDate.AddHours(-5).ToString("hh:mm tt") </span>
+                                                                <span class="appointment-time"> @appt.AppointmentDate.ToString("hh:mm tt") </span>
                                                                 <span class="appointment-student"> @appt.Student.FName @appt.Student.LName </span>
                                                             </li>
                                                         }

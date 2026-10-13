@@ -111,7 +111,7 @@
                                             <div class="schedule-slots">
                                                 @if (daySchedules.Any())
                                                 {
-                                                    @foreach (var s in daySchedules)
+                                                    @foreach (var s in daySchedules.OrderBy(s => s.StartTime))
                                                     {
                                                         <div class="schedule-slot">
                                                             <span class="schedule-slot-dot"></span>

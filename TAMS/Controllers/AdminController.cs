@@ -516,7 +516,7 @@ namespace TAMS.Controllers
             {
                 if (a.Status != "Scheduled")
                     return false;
-                var localAppointmentDate = a.AppointmentDate.AddHours(-5);
+                var localAppointmentDate = a.AppointmentDate;
                 return localAppointmentDate.Date == slot.Date.Date && localAppointmentDate.TimeOfDay >= slot.StartTime && localAppointmentDate.TimeOfDay < slot.EndTime;
             });
 
@@ -668,7 +668,7 @@ namespace TAMS.Controllers
                     "} | {2," + lastLoginWidth + "}|",
                     user.Username,
                     user.Role,
-                    user.LastLogin.ToString("MM/dd/yyyy hh:mm tt")));
+                    user.LastLogin.AddHours(-5).ToString("MM/dd/yyyy hh:mm tt")));
             }
 
             string reportContent = string.Join(

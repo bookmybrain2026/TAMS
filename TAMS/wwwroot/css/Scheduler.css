@@ -326,6 +326,37 @@
     margin: 0;
 }
 
+
+.scheduler-day-slots {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    max-height: 80px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;
+    padding-right: 5px;
+    margin-bottom: 12px;
+    box-sizing: border-box;
+}
+
+.scheduler-day-slots .scheduler-slot { flex-shrink: 0; }
+
+.scheduler-day-slots .scheduler-booking-form {
+    flex-shrink: 0;
+    margin: 0;
+}
+
+.scheduler-day-slots::-webkit-scrollbar { width: 5px; }
+
+.scheduler-day-slots::-webkit-scrollbar-thumb {
+    background: #d5c3a8;
+    border-radius: 5px;
+}
+
+.scheduler-day-slots::-webkit-scrollbar-track { background: transparent; }
+
+
 .tutor-booking-page .scheduler-slot {
     display: flex;
     flex-direction: column;

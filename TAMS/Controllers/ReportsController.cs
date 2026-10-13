@@ -180,7 +180,7 @@ namespace TAMS.Controllers
             foreach (var appointment in appointments)
             {
                 var studentName = appointment.Student == null ? "Student information unavailable" : $"{appointment.Student.FName} {appointment.Student.LName}";
-                DateTime localAppointmentDate = appointment.AppointmentDate.AddHours(-5);
+                DateTime localAppointmentDate = appointment.AppointmentDate;
 
                 lines.Add(
                     $"{localAppointmentDate:MM/dd/yyyy hh:mm tt}  |  " +

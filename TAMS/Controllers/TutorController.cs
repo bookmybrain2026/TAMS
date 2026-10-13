@@ -352,10 +352,8 @@ namespace TAMS.Controllers
 
             var hasAppointments = tutorAppointments.Any(a =>
             {
-                if (a.Status != "Scheduled")
-                    return false;
-                var localAppointmentDate = a.AppointmentDate.AddHours(-5);
-
+                if (a.Status != "Scheduled") { return false; }                 
+                var localAppointmentDate = a.AppointmentDate;
                 return localAppointmentDate.Date == schedule.Date.Date && localAppointmentDate.TimeOfDay >= schedule.StartTime && localAppointmentDate.TimeOfDay < schedule.EndTime;
             });
 
@@ -487,7 +485,7 @@ namespace TAMS.Controllers
                 dBContext.Appointments.UpdateOne(a => a.AppointmentId == appointmentId, update);
 
                 // Find and delete the associated schedule slot.
-                var localAppointmentDate = appointment.AppointmentDate.AddHours(-5);
+                var localAppointmentDate = appointment.AppointmentDate;
                 var appointmentDate = localAppointmentDate.Date; 
                 var appointmentTime = localAppointmentDate.TimeOfDay;
                 

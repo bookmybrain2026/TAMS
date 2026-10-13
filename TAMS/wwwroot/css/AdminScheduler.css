@@ -249,12 +249,35 @@
     font-weight: 600;
 }
 
-.admin-scheduler-slots {
+/*.admin-scheduler-slots {
     display: flex;
     flex-direction: column;
     gap: 7px;
     margin-bottom: 12px;
+}*/
+
+
+.admin-scheduler-slots {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    max-height: 80px; /*180px;*/ 
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin-bottom: 12px;
+    padding-right: 5px;
+    min-height: 0;
+    box-sizing: border-box;
 }
+
+.admin-scheduler-slots::-webkit-scrollbar { width: 5px; }
+
+.admin-scheduler-slots::-webkit-scrollbar-thumb {
+    background: #d5c3a8;
+    border-radius: 5px;
+}
+
+.admin-scheduler-slots::-webkit-scrollbar-track { background: transparent; }
 
 .admin-slot {
     display: flex;
@@ -264,6 +287,7 @@
     border-left: 3px solid;
     border-radius: 5px;
     overflow-wrap: anywhere;
+    flex-shrink: 0;
 }
 
 .admin-slot-time {
