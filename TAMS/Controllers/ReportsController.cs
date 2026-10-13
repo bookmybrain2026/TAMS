@@ -26,28 +26,14 @@ namespace TAMS.Controllers
         [HttpPost]
         public IActionResult GenerateAppointmentHistory(int studentId)
         {
-            // Find the student using the supplied ID.
-            var student = dBContext.Student
-                .Find(s => s.StudentId == studentId)
-                .FirstOrDefault();
+            var student = dBContext.Student.Find(s => s.StudentId == studentId).FirstOrDefault();
+            if (student == null) { return NotFound(); }
 
-            if (student == null)
-            {
-                return NotFound();
-            }
+            var appointments = dBContext.Appointments.Find(a => a.StudentId == studentId).SortBy(a => a.AppointmentDate).ToList();
 
-            // Retrieve the student's appointments in chronological order.
-            var appointments = dBContext.Appointments
-                .Find(a => a.StudentId == studentId)
-                .SortBy(a => a.AppointmentDate)
-                .ToList();
-
-            // Attach tutor information to each appointment.
             foreach (var appointment in appointments)
             {
-                appointment.Tutor = dBContext.Tutor
-                    .Find(t => t.TutorId == appointment.TutorId)
-                    .FirstOrDefault();
+                appointment.Tutor = dBContext.Tutor.Find(t => t.TutorId == appointment.TutorId).FirstOrDefault();
             }
 
             // Create the report content.
@@ -66,9 +52,7 @@ namespace TAMS.Controllers
             // Add each appointment to the report.
             foreach (var appointment in appointments)
             {
-                var tutorName = appointment.Tutor == null
-                    ? "Tutor information unavailable"
-                    : $"{appointment.Tutor.FName} {appointment.Tutor.LName}";
+                var tutorName = appointment.Tutor == null ? "Tutor information unavailable" : $"{appointment.Tutor.FName} {appointment.Tutor.LName}";
 
                 lines.Add($"Date: {appointment.AppointmentDate:MM/dd/yyyy hh:mm tt}");
                 lines.Add($"Tutor: {tutorName}");
@@ -81,8 +65,7 @@ namespace TAMS.Controllers
             byte[] fileBytes = Encoding.UTF8.GetBytes(reportContent);
 
             // Generate a unique filename.
-            string fileName =
-                $"AppointmentHistory_{studentId}_{DateTime.Now:yyyyMMddHHmmss}.txt";
+            string fileName = $"AppointmentHistory_{studentId}_{DateTime.Now:yyyyMMddHHmmss}.txt";
 
             // Generate a new report ID.
             var lastReport = dBContext.Reports
