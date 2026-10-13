@@ -475,14 +475,6 @@
                                                     Complete
                                                 </button>
                                             </form>
-                                            <form asp-controller="Tutor" asp-action="CancelAppointment" method="post" onsubmit="return confirm('Delete this appointment by cancelling it?');">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="appointmentId" value="@appointment.AppointmentId" />
-                                                <button type="submit"
-                                                        class="tutor-button tutor-button-small tutor-button-danger">
-                                                    Delete
-                                                </button>
-                                            </form>
                                         </div>
                                     }
                                     else
