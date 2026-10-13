@@ -21,6 +21,7 @@
         .OrderBy(schedule => schedule.Date)
         .ThenBy(schedule => schedule.StartTime)
         .ToList();
+    var pastAndCurrentAppointments = appointments.Where(a => a.AppointmentDate < DateTime.Now).OrderBy(a => a.AppointmentDate).ToList();
 
     var completedAppointments = appointments.Count(a => a.Status == "Completed");
     var cancelledAppointments = appointments.Count(a => a.Status == "Cancelled");
@@ -398,10 +399,12 @@
                 <h2>Appointment History</h2>
             </div>
 
-            <span class="tutor-count-pill">@appointments.Count total</span>
+            <span class="tutor-count-pill">
+                @pastAndCurrentAppointments.Count total
+            </span>
         </div>
 
-        @if (appointments.Count == 0)
+        @if (pastAndCurrentAppointments.Count == 0)
         {
             <div class="tutor-empty-state tutor-empty-compact">
                 <h3>No appointments yet</h3>
@@ -423,7 +426,7 @@
                     </thead>
 
                     <tbody>
-                        @foreach (var appointment in appointments.OrderBy(a => a.AppointmentDate))
+                        @foreach (var appointment in pastAndCurrentAppointments)
                         {
                             <tr>
                                 <td class="tutor-date-cell">
