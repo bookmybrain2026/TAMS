@@ -61,19 +61,18 @@ namespace TAMS.Services
             await smtp.DisconnectAsync(true); //close the connection between application and email provider
         }
         public async Task SendTutorAppointmentNotificationAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate)
-        //sends an email notification to the tutor after a student schedules an appointment.
         {
-            var message = new MimeMessage(); //email message object
+            var message = new MimeMessage();
 
-            message.From.Add(new MailboxAddress( //Sender's display name & email
+            message.From.Add(new MailboxAddress(
                 _configuration["EmailSettings:SenderName"],
                 _configuration["EmailSettings:SenderEmail"]));
 
-            message.To.Add(new MailboxAddress(tutorName, tutorEmail)); //sets the recipient
+            message.To.Add(new MailboxAddress(tutorName, tutorEmail));
 
-            message.Subject = "New Appointment Scheduled"; //subject line
+            message.Subject = "New Appointment Scheduled";
 
-            message.Body = new TextPart("plain") //email body
+            message.Body = new TextPart("plain")
             {
                 Text = $"""
                 Hello {tutorName},
@@ -89,22 +88,20 @@ namespace TAMS.Services
                 """
             };
 
-            using var smtp = new SmtpClient(); //creates an SMTP client used to connect to the email provide
-                                               //Using keyword ensure that the SMTP client is properly disposed of when the method finishes 
-                                               //even if an error occurs
+            using var smtp = new SmtpClient();
 
-            await smtp.ConnectAsync( //asynchronous connection to the email provider’s SMTP server
-                _configuration["EmailSettings:SmtpServer"], //read SMTP server name and port
+            await smtp.ConnectAsync(
+                _configuration["EmailSettings:SmtpServer"],
                 int.Parse(_configuration["EmailSettings:SmtpPort"]!),
-                SecureSocketOptions.StartTls); //tells MailKit to use STARTTLS security when connecting to the SMTP server
+                SecureSocketOptions.StartTls);
 
-            await smtp.AuthenticateAsync( //begins the login process with the email provider
+            await smtp.AuthenticateAsync(
                 _configuration["EmailSettings:Username"],
                 _configuration["EmailSettings:Password"]);
 
-            await smtp.SendAsync(message); //sends the email
+            await smtp.SendAsync(message);
 
-            await smtp.DisconnectAsync(true); //close the connection between application and email provider
+            await smtp.DisconnectAsync(true);
         }
 
 
@@ -453,6 +450,160 @@ namespace TAMS.Services
         }
 
 
+
+        public async Task SendTutorAppointmentCompletionReminderAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate, DateTime endDate, int hoursAfterEnd)
+        {
+            var message = new MimeMessage();
+
+            message.From.Add(new MailboxAddress(
+                _configuration["EmailSettings:SenderName"],
+                _configuration["EmailSettings:SenderEmail"]));
+
+            message.To.Add(new MailboxAddress(tutorName, tutorEmail));
+
+            message.Subject = "Reminder: Confirm Your Tutoring Appointment";
+
+            var reminderMessage = hoursAfterEnd <= 1 ? "Your tutoring appointment ended at least one hour ago." : "Your tutoring appointment ended at least 24 hours ago.";
+
+            message.Body = new TextPart("plain")
+            {
+                Text = $"""
+                Hello {tutorName},
+
+                {reminderMessage}
+
+                Student: {studentName}
+                Appointment Date: {appointmentDate.ToString("MMMM dd, yyyy")}
+                Start Time: {appointmentDate.ToString("h:mm tt")}
+                End Time: {endDate.ToString("h:mm tt")}
+
+                If the tutoring session took place, please log in to TAMS
+                and mark the appointment as complete.
+
+                If it did not take place, please contact 
+                an administrator to cancel this appointment for you.
+
+                Thank you for using TAMS.
+                """
+            };
+
+            using var client = new SmtpClient();
+
+            await client.ConnectAsync(
+                _configuration["EmailSettings:SmtpServer"],
+                int.Parse(_configuration["EmailSettings:SmtpPort"]!),
+                SecureSocketOptions.StartTls);
+
+            await client.AuthenticateAsync(
+                _configuration["EmailSettings:Username"],
+                _configuration["EmailSettings:Password"]);
+
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
+        }
+
+        public async Task SendTutorAppointmentAdminFollowUpAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate, DateTime endDate)
+        {
+            var message = new MimeMessage();
+
+            message.From.Add(new MailboxAddress(
+                _configuration["EmailSettings:SenderName"],
+                _configuration["EmailSettings:SenderEmail"]));
+
+            message.To.Add(new MailboxAddress(tutorName, tutorEmail));
+
+            message.Subject = "Action Required: Unconfirmed Appointment";
+
+            message.Body = new TextPart("plain")
+            {
+                Text = $"""
+                    Hello {tutorName},
+
+                    Your tutoring appointment has remained unconfirmed for
+                    more than 48 hours after its scheduled end time.
+
+                    Student: {studentName}
+                    Appointment Date: {appointmentDate.ToString("MMMM dd, yyyy")}
+                    Start Time: {appointmentDate.ToString("h:mm tt")}
+                    End Time: {endDate.ToString("h:mm tt")}
+
+                    Please review the appointment in your TAMS dashboard.
+
+                    If the session took place, please mark the appointment 
+                    as complete. 
+                    
+                    If it did not take place, please contact 
+                    an administrator to cancel this appointment for you.
+                                                    
+                    Thank you for using TAMS.
+                    """
+            };
+
+            using var client = new SmtpClient();
+
+            await client.ConnectAsync(
+                _configuration["EmailSettings:SmtpServer"],
+                int.Parse(_configuration["EmailSettings:SmtpPort"]!),
+                SecureSocketOptions.StartTls);
+
+            await client.AuthenticateAsync(
+                _configuration["EmailSettings:Username"],
+                _configuration["EmailSettings:Password"]);
+
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
+        }
+
+        public async Task SendAdminAppointmentFollowUpAsync(string adminEmail, string tutorName, string studentName, DateTime appointmentDate, DateTime endDate, int appointmentId)
+        {
+            var subject = $"Action Required: Appointment #{appointmentId} Needs Review";
+
+            var body = $@"
+                <h2>Appointment Requires Admin Review</h2>
+                <p>The following appointment is still marked as scheduled
+                72 hours after its end time.</p>
+
+                <p><strong>Appointment ID:</strong> {appointmentId}</p>
+                <p><strong>Tutor:</strong> {System.Net.WebUtility.HtmlEncode(tutorName)}</p>
+                <p><strong>Student:</strong> {System.Net.WebUtility.HtmlEncode(studentName)}</p>
+                <p><strong>Appointment Date:</strong> {appointmentDate:MMMM d, yyyy}</p>
+                <p><strong>Start Time:</strong> {appointmentDate:h:mm tt}</p>
+                <p><strong>End Time:</strong> {endDate:h:mm tt}</p>
+
+                <p>Please investigate and update the appointment status
+                after confirming whether the session took place.</p>
+            ";
+
+            var message = new MimeKit.MimeMessage();
+
+            message.From.Add(new MailboxAddress(
+                _configuration["EmailSettings:SenderName"],
+                _configuration["EmailSettings:SenderEmail"]));
+
+            message.To.Add(MimeKit.MailboxAddress.Parse(adminEmail));
+            message.Subject = subject;
+
+            var builder = new MimeKit.BodyBuilder
+            {
+                HtmlBody = body
+            };
+
+            message.Body = builder.ToMessageBody();
+
+            using var client = new SmtpClient();
+
+            await client.ConnectAsync(
+                _configuration["EmailSettings:SmtpServer"],
+                int.Parse(_configuration["EmailSettings:SmtpPort"]!),
+                SecureSocketOptions.StartTls);
+
+            await client.AuthenticateAsync(
+                _configuration["EmailSettings:Username"],
+                _configuration["EmailSettings:Password"]);
+
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
+        }
 
     }
 }

@@ -749,3 +749,142 @@
 
     .tutor-schedule-table-wrap .admin-table { min-width: 560px; }
 }
+
+.admin-appointment-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+    .admin-appointment-actions form {
+        margin: 0;
+    }
+
+.action-complete {
+    background: var(--bmb-brown);
+    border-color: var(--bmb-brown);
+    color: var(--bmb-white);
+}
+
+    .action-complete:hover {
+        background: var(--bmb-dark);
+        border-color: var(--bmb-dark);
+        color: var(--bmb-white);
+    }
+
+.dashboard-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.admin-notification-button {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    flex-shrink: 0;
+    border: 1px solid #e2ded6;
+    border-radius: 12px;
+    background: #fff;
+    color: #343434;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+    .admin-notification-button:hover {
+        background: #f7f3eb;
+        transform: translateY(-1px);
+    }
+
+    .admin-notification-button:focus-visible {
+        outline: 3px solid #c58b35;
+        outline-offset: 3px;
+    }
+
+.notification-bell {
+    font-size: 24px;
+    line-height: 1;
+}
+
+.notification-alert {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: #dc3545;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.admin-follow-up-content {
+    width: min(720px, calc(100vw - 32px));
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+.admin-follow-up-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 20px;
+}
+
+.admin-follow-up-item {
+    padding: 16px;
+    border: 1px solid #ead8d5;
+    border-left: 4px solid #dc3545;
+    border-radius: 10px;
+    background: #fffaf9;
+}
+
+    .admin-follow-up-item h3 {
+        margin: 0;
+        font-size: 1rem;
+    }
+
+    .admin-follow-up-item p {
+        margin: 8px 0 0;
+    }
+
+.admin-follow-up-item-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.admin-follow-up-status {
+    padding: 4px 9px;
+    border-radius: 20px;
+    background: #f8d7da;
+    color: #842029;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.admin-follow-up-warning {
+    color: #842029;
+    font-size: 0.92rem;
+}
+
+@media (max-width: 600px) {
+    .dashboard-header-actions {
+        flex-wrap: wrap;
+    }
+
+    .admin-follow-up-content {
+        max-height: 90vh;
+    }
+}

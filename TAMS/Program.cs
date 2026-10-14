@@ -15,8 +15,10 @@ builder.Services.AddSession(options =>
 //MongoDB 
 builder.Services.AddSingleton<MongoDBContext>();
 
-//Email service
+//Email services
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddHostedService<RecoveryCodeCleanupService>();
+builder.Services.AddHostedService<AppointmentReminderService>();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();

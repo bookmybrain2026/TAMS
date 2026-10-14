@@ -34,5 +34,26 @@ namespace TAMS.Models
         [StringLength(20)]
         public string Status { get; set; } = "Scheduled"; // Scheduled, Completed, Cancelled
 
+        [BsonElement("Reminder1Sent")]
+        public bool Reminder1Sent { get; set; } = false;
+
+        [BsonElement("Reminder2Sent")]
+        public bool Reminder2Sent { get; set; } = false;
+
+        [BsonElement("NeedsAdminFollowUp")]
+        public bool NeedsAdminFollowUp { get; set; } = false;
+
+        [BsonElement("AdminNotificationSent")]
+        public bool AdminNotificationSent { get; set; } = false;
+
+
+        [BsonElement("TutorReminder1Acknowledged")]
+        public bool TutorReminder1Acknowledged { get; set; } = false;
+
+        [BsonElement("TutorReminder2Acknowledged")]
+        public bool TutorReminder2Acknowledged { get; set; } = false;
+
+        [BsonElement("TutorReminder3Acknowledged")]
+        public bool TutorReminder3Acknowledged { get; set; } = false;
     }
 }

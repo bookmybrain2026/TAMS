@@ -20,7 +20,7 @@ namespace TAMS.Controllers
 
 
         [HttpGet]
-        public IActionResult Dashboard(int? id, int? editTutorId, int? viewTutorId)
+        public IActionResult Dashboard(int? id, int? editTutorId, int? viewTutorId, bool showAdminFollowUps = false)
         {
             var adminId = HttpContext.Session.GetInt32("AdminId");
             if (adminId == null) { return RedirectToAction("Login", "Login"); }
@@ -28,6 +28,7 @@ namespace TAMS.Controllers
             ViewBag.AdminId = adminId;
             ViewBag.Tutors = dBContext.Tutor.Find(_ => true).ToList();
             ViewBag.Students = dBContext.Student.Find(_ => true).ToList();
+            ViewBag.ShowAdminFollowUps = showAdminFollowUps;
 
             var appointments = dBContext.Appointments
                 .Find(_ => true)
@@ -684,6 +685,70 @@ namespace TAMS.Controllers
                 fileBytes,
                 "text/plain",
                 fileName);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CompleteAppointment(int appointmentId)
+        {
+            var appointment = await dBContext.Appointments.Find(a => a.AppointmentId == appointmentId).FirstOrDefaultAsync();
+            if (appointment == null) { return NotFound(); }
+
+            if (appointment.Status != "Scheduled" || !appointment.AdminNotificationSent)
+            {
+                TempData["ErrorMessage"] = "This appointment cannot be completed until the Admin notification has been sent.";
+                return RedirectToAction("AdminDashboard");
+            }
+
+            var filter =
+                Builders<Appointment>.Filter.Eq(a => a.AppointmentId, appointmentId)
+                &
+                Builders<Appointment>.Filter.Eq(a => a.Status, "Scheduled")
+                &
+                Builders<Appointment>.Filter.Eq(a => a.AdminNotificationSent, true);
+
+            var update = Builders<Appointment>.Update.Set(a => a.Status, "Completed");
+            var result = await dBContext.Appointments.UpdateOneAsync(filter, update);
+
+            if (result.ModifiedCount == 0)
+            {
+                TempData["ErrorMessage"] = "The appointment could not be completed. It may have already been updated.";
+                return RedirectToAction("AdminDashboard");
+            }
+
+            // Find and delete the associated schedule slot.
+            var appointmentDate = appointment.AppointmentDate.Date;
+            var appointmentTime = appointment.AppointmentDate.TimeOfDay;
+
+            var schedules = await dBContext.Schedule.Find(s => s.TutorId == appointment.TutorId).ToListAsync();
+            var schedule = schedules.FirstOrDefault(s => s.Date.Date == appointmentDate && appointmentTime >= s.StartTime && appointmentTime < s.EndTime);
+
+            if (schedule != null)
+            {
+                await dBContext.Schedule.DeleteOneAsync(s => s.ScheduleId == schedule.ScheduleId && s.TutorId == appointment.TutorId);
+            }
+
+            // Send the student a review reminder.
+            try
+            {
+                var student = await dBContext.Student.Find(s => s.StudentId == appointment.StudentId).FirstOrDefaultAsync();
+                var tutor = await dBContext.Tutor.Find(t => t.TutorId == appointment.TutorId).FirstOrDefaultAsync();
+
+                if (student != null && tutor != null && !string.IsNullOrWhiteSpace(student.Email))
+                {
+                    var studentName = $"{student.FName} {student.LName}";
+                    var tutorName = $"{tutor.FName} {tutor.LName}";
+                    await _emailService.SendReviewReminderAsync(student.Email, studentName, tutorName);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Review reminder email failed: {ex.Message}");
+            }
+
+            TempData["SuccessMessage"] = $"Appointment #{appointmentId} has been marked as completed.";
+
+            return RedirectToAction("Dashboard");
         }
     }
 }

@@ -10,6 +10,9 @@
     var scheduledCount = appointments.Count(a => string.Equals(a.Status?.Trim() ?? "Scheduled", "Scheduled", StringComparison.OrdinalIgnoreCase));
     var completedCount = appointments.Count(a => string.Equals(a.Status?.Trim(), "Completed", StringComparison.OrdinalIgnoreCase));
     var cancelledCount = appointments.Count(a => string.Equals(a.Status?.Trim(), "Cancelled", StringComparison.OrdinalIgnoreCase));
+
+    var adminFollowUpAppointments = appointments
+    .Where(a => string.Equals(a.Status?.Trim(), "Scheduled", StringComparison.OrdinalIgnoreCase) && a.AdminNotificationSent).OrderBy(a => a.AppointmentDate).ToList();
 }
 
 @section Styles {
@@ -38,9 +41,22 @@
                 <h1>Dashboard</h1>
                 <p class="dashboard-subtitle">Welcome to your tutoring appointment management workspace.</p>
             </div>
-            <a asp-controller="Admin" asp-action="CreateTutor" class="admin-primary-button">
-                <span aria-hidden="true">&#43;</span> Create Tutor Account
-            </a>
+
+            <div class="dashboard-header-actions">
+                <button type="button" class="admin-notification-button" aria-label="Appointment completion reminders" aria-haspopup="dialog"
+                        aria-controls="adminFollowUpModal" onclick="openTutorModal('@Url.Action("Dashboard", "Admin", new { showAdminFollowUps = true })', 'adminFollowUpModal')">
+                    <span class="notification-bell" aria-hidden="true">&#128276;</span>
+
+                    @if (adminFollowUpAppointments.Count > 0)
+                    {
+                        <span class="notification-alert" aria-label="Reminders require attention">!</span>
+                    }
+                </button>
+
+                <a asp-controller="Admin" asp-action="CreateTutor" class="admin-primary-button">
+                    <span aria-hidden="true">&#43;</span> Create Tutor Account
+                </a>
+            </div>
         </header>
 
         <section class="dashboard-summary" aria-label="System overview">
@@ -316,6 +332,77 @@
             </div>
         }
 
+        @* Admin 72-hour appointment follow-up popup *@
+        @if (ViewBag.ShowAdminFollowUps == true)
+        {
+            <div id="adminFollowUpModal" class="tutor-modal" style="display:none;" aria-hidden="true">
+                <div class="tutor-modal-content admin-follow-up-content" role="dialog" aria-modal="true" aria-labelledby="adminFollowUpTitle">
+                    <button type="button" class="tutor-modal-close" aria-label="Close appointment reminders" onclick="closeTutorModal('adminFollowUpModal')">
+                        &times;
+                    </button>
+
+                    <p class="section-kicker">REQUIRES ATTENTION</p>
+                    <h2 id="adminFollowUpTitle">Appointment Completion Reminders</h2>
+
+                    <p class="modal-subtitle">
+                        These appointments remain scheduled even though the 72-hour completion reminder has been sent. Please investigate and update each appointment's status when appropriate.
+                    </p>
+
+                    <div class="admin-follow-up-list">
+                        @if (adminFollowUpAppointments.Count > 0)
+                        {
+                            @foreach (var appt in adminFollowUpAppointments)
+                            {
+                                <article class="admin-follow-up-item">
+                                    <div class="admin-follow-up-item-header">
+                                        <h3>Appointment #@appt.AppointmentId</h3>
+                                        <span class="admin-follow-up-status">
+                                            Still Scheduled
+                                        </span>
+                                    </div>
+
+                                    <p>
+                                        <strong>Tutor:</strong>
+                                        @(appt.Tutor != null ? $"{appt.Tutor.FName} {appt.Tutor.LName}" : "Tutor unavailable")
+                                    </p>
+
+                                    <p>
+                                        <strong>Student:</strong>
+                                        @(appt.Student != null ? $"{appt.Student.FName} {appt.Student.LName}" : "Student unavailable")
+                                    </p>
+
+                                    <p>
+                                        <strong>Session date:</strong>
+                                        @appt.AppointmentDate.ToString("MMM d, yyyy")
+                                    </p>
+
+                                    <p>
+                                        <strong>Session time:</strong>
+                                        @appt.AppointmentDate.ToString("h:mm tt") – @appt.EndDate.ToString("h:mm tt")
+                                    </p>
+
+                                    <p class="admin-follow-up-warning">
+                                        The appointment has not been marked as completed. Please review the appointment and follow up as needed.
+                                    </p>
+                                </article>
+                            }
+                        }
+                        else
+                        {
+                            <p class="empty-state">
+                                There are no outstanding appointment completion reminders.
+                            </p>
+                        }
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="admin-secondary-button" onclick="closeTutorModal('adminFollowUpModal')">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
 
         <section class="dashboard-section">
             <div class="section-heading">
@@ -427,10 +514,27 @@
                                     <td>
                                         @if (status == "Scheduled")
                                         {
-                                            <form asp-controller="Admin" asp-action="CancelAppointment" method="post" onsubmit="return confirm('Cancel this appointment?');">
-                                                <input type="hidden" name="appointmentId" value="@appt.AppointmentId" />
-                                                <button type="submit" class="small-action action-delete">Cancel</button>
-                                            </form>
+                                            <div class="admin-appointment-actions">
+                                                <form asp-controller="Admin" asp-action="CancelAppointment" method="post" onsubmit="return confirm('Cancel this appointment?');">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="appointmentId" value="@appt.AppointmentId" />
+                                                    <button type="submit"
+                                                            class="small-action action-delete">
+                                                        Cancel
+                                                    </button>
+                                                </form>
+
+                                                @if (appt.AdminNotificationSent)
+                                                {
+                                                    <form asp-controller="Admin" asp-action="CompleteAppointment" method="post" onsubmit="return confirm('Mark this appointment as completed?');">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="appointmentId" value="@appt.AppointmentId" />
+                                                        <button type="submit" class="small-action action-complete">
+                                                            Complete
+                                                        </button>
+                                                    </form>
+                                                }
+                                            </div>
                                         }
                                         else
                                         {

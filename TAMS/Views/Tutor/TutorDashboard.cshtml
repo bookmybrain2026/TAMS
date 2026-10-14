@@ -25,6 +25,8 @@
 
     var completedAppointments = appointments.Count(a => a.Status == "Completed");
     var cancelledAppointments = appointments.Count(a => a.Status == "Cancelled");
+
+    var tutorReminderAppointments = ViewBag.TutorReminderAppointments as List<TAMS.Models.Appointment> ?? new List<TAMS.Models.Appointment>();
 }
 
 @section Styles {
@@ -56,18 +58,42 @@
             <span class="tutor-header-date"> @DateTime.Now.ToString("MMMM d, yyyy")</span>
         </div>
 
+
         <div class="tutor-header-content">
-            <div>
+            <div class="tutor-header-welcome">
                 <p class="tutor-eyebrow">YOUR TEACHING SPACE</p>
                 <h1>Tutor Dashboard</h1>
                 <p class="tutor-header-subtitle">
-                    Welcome back, @Model.FName! Here's what's happening with your students.
+                    Welcome back, @Model.FName!
+                    Here's what's happening with your students.
                 </p>
             </div>
-            <div class="tutor-header-mark" aria-hidden="true">
-                <span>✦</span>
+
+            <div class="tutor-header-actions">
+                <button type="button"
+                        class="tutor-notification-button"
+                        aria-label="Appointment completion reminders"
+                        aria-haspopup="dialog"
+                        aria-controls="tutorReminderModal"
+                        onclick="openTutorModal('@Url.Action("Dashboard", "Tutor", new { showTutorReminders = true })', 'tutorReminderModal')">
+
+                    <span class="notification-bell"
+                          aria-hidden="true">&#128276;</span>
+
+                    @if (tutorReminderAppointments.Count > 0)
+                    {
+                        <span class="notification-alert"
+                              aria-label="Reminders require attention">!</span>
+                    }
+                </button>
+
+                <div class="tutor-header-mark" aria-hidden="true">
+                    <span>✦</span>
+                </div>
             </div>
         </div>
+
+
     </header>
 
     <section class="tutor-overview-grid">
