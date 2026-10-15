@@ -14,8 +14,6 @@ namespace TAMS.Controllers
             dBContext = context;
         }
 
-
-        // Displays all courses
         public IActionResult Index()
         {
             var adminId = HttpContext.Session.GetInt32("AdminId");
@@ -25,17 +23,11 @@ namespace TAMS.Controllers
             return View(courses);
         }
 
-
-        // Loads subjects from MongoDB for the Subject dropdown
         private void LoadSubjects()
         {
-            ViewBag.Subjects = 
-                dBContext.Subject.Find(_ => true)
-                .SortBy(s => s.Code).ToList();
+            ViewBag.Subjects = dBContext.Subject.Find(_ => true).SortBy(s => s.Code).ToList();
         }
 
-
-        // Creates a new course
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Create(Course model)
@@ -51,32 +43,25 @@ namespace TAMS.Controllers
                 return View("Index", courses);
             }
 
-            // Check whether the course code already exists
             var existingCourse =  dBContext.Course.Find(c => c.CourseCode == model.CourseCode).FirstOrDefault();
-
             if (existingCourse != null)
             {
                 TempData["ErrorMessage"] = "A course with this course code already exists.";
                 return RedirectToAction(nameof(Index));
             }
 
-            // Check whether the selected subject exists
             var subjectExists = dBContext.Subject.Find(s => s.Code == model.SubjectCode).Any();
-
             if (!subjectExists)
             {
                 TempData["ErrorMessage"] = "The selected subject does not exist.";
                 return RedirectToAction(nameof(Index));
             }
-            // Add the course
             dBContext.Course.InsertOne(model);
 
             TempData["SuccessMessage"] = "Course was successfully created.";
             return RedirectToAction(nameof(Index));
         }
 
-
-        // Edits an existing course
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Edit(string id, Course model)
@@ -89,31 +74,23 @@ namespace TAMS.Controllers
                 TempData["ErrorMessage"] = "Please enter valid course information.";
                 return RedirectToAction(nameof(Index));
             }
-            // Find the existing course
             var existingCourse = dBContext.Course.Find(c => c.CourseId == id).FirstOrDefault();
-
             if (existingCourse == null) { return NotFound(); }
 
-
-            // Check whether another course already uses this course code
             var duplicateCourse = dBContext.Course.Find(c => c.CourseCode == model.CourseCode && c.CourseId != id).FirstOrDefault();
-
             if (duplicateCourse != null)
             {
                 TempData["ErrorMessage"] = "A course with this course code already exists.";
                 return RedirectToAction(nameof(Index));
             }
 
-            // Check whether the selected subject exists
             var subjectExists = dBContext.Subject.Find(s => s.Code == model.SubjectCode).Any();
-
             if (!subjectExists)
             {
                 TempData["ErrorMessage"] = "The selected subject does not exist.";
                 return RedirectToAction(nameof(Index));
             }
 
-            // Update the course
             var update = Builders<Course>.Update
                 .Set(c => c.SubjectCode, model.SubjectCode)
                 .Set(c => c.CourseCode, model.CourseCode)
@@ -125,8 +102,6 @@ namespace TAMS.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-
-        // Deletes an existing course
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Delete(string id)
@@ -137,7 +112,6 @@ namespace TAMS.Controllers
             var course = dBContext.Course.Find(c => c.CourseId == id).FirstOrDefault();
 
             if (course == null) { return NotFound(); }
-            // Delete the course
             dBContext.Course.DeleteOne( c => c.CourseId == id);
 
             TempData["SuccessMessage"] = "Course was successfully deleted.";

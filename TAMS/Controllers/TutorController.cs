@@ -18,27 +18,20 @@ namespace TAMS.Controllers
             _emailService = emailService;
         }
 
-        // Public Tutor Directory
         [HttpGet]
         public IActionResult OurTutors()
         {
-            var tutors = dBContext.Tutor
-                .Find(_ => true).SortBy(t => t.LName)
-                .ThenBy(t => t.FName).ToList();
+            var tutors = dBContext.Tutor.Find(_ => true).SortBy(t => t.LName).ThenBy(t => t.FName).ToList();
 
             foreach (var tutor in tutors)
             {
-                tutor.Reviews = dBContext.Reviews
-                    .Find(r => r.TutorId == tutor.TutorId)
-                    .ToList();
+                tutor.Reviews = dBContext.Reviews.Find(r => r.TutorId == tutor.TutorId).ToList();
                 tutor.AverageRating = tutor.Reviews.Any() ? tutor.Reviews.Average(r => r.Rating) : 0;
                 tutor.ReviewCount = tutor.Reviews.Count;
             }
             return View(tutors);
         }
 
-
-        // Public Tutor Profile
         [HttpGet]
         public IActionResult Details(int id)
         {
@@ -75,25 +68,16 @@ namespace TAMS.Controllers
             return View(tutor);
         }
 
-
-        // Tutor Dashboard
         [HttpGet]
         public IActionResult Dashboard(int? id, bool showTutorReminders = false)
         {
             var tutorId = HttpContext.Session.GetInt32("TutorId");
-            if (tutorId == null)
-            {
-                return RedirectToAction("Login", "Login");
-            }
+            if (tutorId == null) { return RedirectToAction("Login", "Login"); }
 
             if (id == null) { return RedirectToAction("Login", "Login"); }
-
             if (tutorId.Value != id.Value) { return Unauthorized(); }
 
-            var tutor = dBContext.Tutor
-                .Find(t => t.TutorId == id.Value)
-                .FirstOrDefault();
-
+            var tutor = dBContext.Tutor.Find(t => t.TutorId == id.Value).FirstOrDefault();
             if (tutor == null) { return NotFound(); }
 
             tutor.Appointments = dBContext.Appointments.Find(a => a.TutorId == tutor.TutorId).ToList();
@@ -137,7 +121,6 @@ namespace TAMS.Controllers
             var tutorId = HttpContext.Session.GetInt32("TutorId");
             if (tutorId == null) { return RedirectToAction("Login", "Login"); }
 
-            // Only allow the supported reminder intervals.
             if (reminderHours != 1 && reminderHours != 24 && reminderHours != 48)
             {
                 TempData["ErrorMessage"] = "Invalid reminder selected.";
@@ -168,10 +151,8 @@ namespace TAMS.Controllers
 
             var filter =
                 Builders<Appointment>.Filter.Eq(a => a.AppointmentId, appointmentId)
-                &
-                Builders<Appointment>.Filter.Eq(a => a.TutorId, tutorId.Value)
-                &
-                Builders<Appointment>.Filter.Eq(a => a.Status, "Scheduled");
+                & Builders<Appointment>.Filter.Eq(a => a.TutorId, tutorId.Value)
+                & Builders<Appointment>.Filter.Eq(a => a.Status, "Scheduled");
             UpdateDefinition<Appointment> update;
 
             switch (reminderHours)
@@ -203,47 +184,32 @@ namespace TAMS.Controllers
                 TempData["InfoMessage"] = "This reminder was already confirmed or the appointment has changed.";
             }
 
-            // Redirect to the FULL dashboard, not the reminder partial view.
             return RedirectToAction("Dashboard", new { id = tutorId.Value });
         }
 
-        // Display Tutor Profile
         [HttpGet]
         public IActionResult Profile()
         {
             var tutorId = HttpContext.Session.GetInt32("TutorId");
-
             if (tutorId == null) { return RedirectToAction("Login", "Login"); }
 
-            var tutor = dBContext.Tutor
-                .Find(t => t.TutorId == tutorId.Value)
-                .FirstOrDefault();
-
+            var tutor = dBContext.Tutor.Find(t => t.TutorId == tutorId.Value).FirstOrDefault();
             if (tutor == null) { return RedirectToAction("Login", "Login"); }
 
             LoadProfileData();
             return View(tutor);
         }
 
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Profile(Tutor model)
         {
             var tutorId = HttpContext.Session.GetInt32("TutorId");
+            if (tutorId == null) { return RedirectToAction("Login", "Login"); }
 
-            if (tutorId == null)
-            {
-                return RedirectToAction("Login", "Login");
-            }
-
-            var existingTutor = dBContext.Tutor
-                .Find(t => t.TutorId == tutorId.Value)
-                .FirstOrDefault();
-
+            var existingTutor = dBContext.Tutor.Find(t => t.TutorId == tutorId.Value).FirstOrDefault();
             if (existingTutor == null) { return NotFound("Tutor profile was not found."); } 
 
-            // If validation fails, show the actual error
             if (!ModelState.IsValid)
             {
                 var errors = ModelState
@@ -257,20 +223,14 @@ namespace TAMS.Controllers
                 return View(model);
             }
 
-            // Get selected courses
             var selectedCourseIds = model.TutoringCourseIds ?? new List<string>();
 
-            // Only save courses that belong to the selected subject
             var validCourseIds = dBContext.Course
-                .Find(c =>
-                    c.CourseId != null &&
-                    selectedCourseIds.Contains(c.CourseId) &&
-                    c.SubjectCode == model.Subject)
+                .Find(c => c.CourseId != null && selectedCourseIds.Contains(c.CourseId) && c.SubjectCode == model.Subject)
                 .ToList()
                 .Select(c => c.CourseId!)
                 .ToList();
 
-            // Update tutor
             var update = Builders<Tutor>.Update
                 .Set(t => t.FName, model.FName)
                 .Set(t => t.LName, model.LName)
@@ -279,9 +239,7 @@ namespace TAMS.Controllers
                 .Set(t => t.Subject, model.Subject)
                 .Set(t => t.TutoringCourseIds, validCourseIds);
 
-            var result = dBContext.Tutor.UpdateOne(
-                t => t.TutorId == tutorId.Value,
-                update);
+            var result = dBContext.Tutor.UpdateOne(t => t.TutorId == tutorId.Value, update);
 
             if (result.MatchedCount == 0)
             {
@@ -292,44 +250,26 @@ namespace TAMS.Controllers
             return RedirectToAction(nameof(Profile));
         }
 
-
-        // Load subjects and courses for the profile page
         private void LoadProfileData()
         {
-            ViewBag.Subjects = dBContext.Subject
-                .Find(_ => true)
-                .SortBy(s => s.Name)
-                .ToList();
-
-            ViewBag.Courses = dBContext.Course
-                .Find(_ => true)
-                .SortBy(c => c.CourseCode)
-                .ToList();
+            ViewBag.Subjects = dBContext.Subject.Find(_ => true).SortBy(s => s.Name).ToList();
+            ViewBag.Courses = dBContext.Course.Find(_ => true).SortBy(c => c.CourseCode).ToList();
         }
 
-        // Displays the tutor's schedule for a selected month
         [HttpGet]
         public IActionResult Schedule(int id, int? month, int? year)
         {
             var tutorId = HttpContext.Session.GetInt32("TutorId");
             if (tutorId == null) {return RedirectToAction("Login", "Login");}
-
             if (tutorId.Value != id) {return Unauthorized();}
-
-            var tutor = dBContext.Tutor
-                .Find(t => t.TutorId == id)
-                .FirstOrDefault();
+            var tutor = dBContext.Tutor.Find(t => t.TutorId == id).FirstOrDefault();
 
             if (tutor == null) {return NotFound();}
 
             int targetMonth = month ?? DateTime.Today.Month;
             int targetYear = year ?? DateTime.Today.Year;
 
-            var schedules = 
-                dBContext.Schedule
-                .Find(s => s.TutorId == id &&
-                    s.Date.Month == targetMonth &&
-                    s.Date.Year == targetYear).ToList();
+            var schedules =  dBContext.Schedule.Find(s => s.TutorId == id && s.Date.Month == targetMonth && s.Date.Year == targetYear).ToList();
 
             ViewBag.TutorId = id;
             ViewBag.Month = targetMonth;
@@ -339,8 +279,6 @@ namespace TAMS.Controllers
             return View(schedules);
         }
 
-
-        // Adds an available time period to the tutor's schedule
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult AddSchedule(int tutorId, DateTime date, TimeSpan startTime, TimeSpan endTime)
@@ -352,21 +290,18 @@ namespace TAMS.Controllers
             var now = DateTime.Now;
             var today = now.Date;
 
-            // Reject dates that have already passed.
             if (date.Date < today)
             {
                 TempData["Error"] = "You cannot add a schedule for a date that has already passed.";
                 return RedirectToAction("Schedule", new { id = tutorId, month = date.Month, year = date.Year });
             }
 
-            // Reject start times that have already passed today.
             if (date.Date == today && startTime <= now.TimeOfDay)
             {
                 TempData["Error"] = "You cannot add a schedule with a start time that has already passed. Please choose a future time.";
                 return RedirectToAction("Schedule", new { id = tutorId, month = date.Month, year = date.Year });
             }
 
-            // The end time must be later than the start time.
             if (endTime <= startTime)
             {
                 TempData["Error"] = "End time must be after start time.";
@@ -374,12 +309,7 @@ namespace TAMS.Controllers
             }
 
             var existingSchedules = dBContext.Schedule.Find(s => s.TutorId == tutorId && s.Date.Date == date.Date).ToList();
-
-            // Prevent overlapping schedules for the same tutor and date.
-            bool overlap = existingSchedules.Any(s =>
-                startTime < s.EndTime &&
-                endTime > s.StartTime);
-
+            bool overlap = existingSchedules.Any(s => startTime < s.EndTime && endTime > s.StartTime);
             if (overlap)
             {
                 TempData["Error"] = "This schedule overlaps with an existing schedule.";
@@ -403,7 +333,6 @@ namespace TAMS.Controllers
             return RedirectToAction("Schedule", new { id = tutorId, month = date.Month, year = date.Year });
         }
 
-        // Deletes a tutor's available schedule
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult DeleteSchedule(int scheduleId)
@@ -411,17 +340,12 @@ namespace TAMS.Controllers
             var tutorId = HttpContext.Session.GetInt32("TutorId");
             if (tutorId == null) { return RedirectToAction("Login", "Login"); }
 
-            var schedule = dBContext.Schedule
-                .Find(s => s.ScheduleId == scheduleId)
-                .FirstOrDefault();
+            var schedule = dBContext.Schedule.Find(s => s.ScheduleId == scheduleId).FirstOrDefault();
 
             if (schedule == null) { return NotFound(); }
             if (schedule.TutorId != tutorId.Value) { return Unauthorized(); }
 
-            var tutorAppointments = dBContext.Appointments
-                .Find(a => a.TutorId == tutorId.Value)
-                .ToList();
-
+            var tutorAppointments = dBContext.Appointments.Find(a => a.TutorId == tutorId.Value).ToList();
             var hasAppointments = tutorAppointments.Any(a =>
             {
                 if (a.Status != "Scheduled") { return false; }                 
@@ -450,9 +374,7 @@ namespace TAMS.Controllers
 
             if (tutorId.Value != id) {return Unauthorized(); }
 
-            var tutor = dBContext.Tutor
-                .Find(t => t.TutorId == id)
-                .FirstOrDefault();
+            var tutor = dBContext.Tutor.Find(t => t.TutorId == id).FirstOrDefault();
 
             if (tutor == null) { return NotFound(); }
 
@@ -460,19 +382,13 @@ namespace TAMS.Controllers
             int targetYear = year ?? DateTime.Today.Year;
 
             var startOfMonth = new DateTime(targetYear, targetMonth, 1);
-
             var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
 
-            var appointments =
-                dBContext.Appointments
-                .Find(a => a.TutorId == id &&
-                a.AppointmentDate >= startOfMonth &&
-                a.AppointmentDate <= endOfMonth).ToList();
+            var appointments = dBContext.Appointments.Find(a => a.TutorId == id && a.AppointmentDate >= startOfMonth && a.AppointmentDate <= endOfMonth).ToList();
 
             foreach (var appointment in appointments)
             {
-                appointment.Student =
-                    dBContext.Student.Find(s => s.StudentId == appointment.StudentId).FirstOrDefault();
+                appointment.Student = dBContext.Student.Find(s => s.StudentId == appointment.StudentId).FirstOrDefault();
             }
 
             ViewBag.TutorId = id;
@@ -483,14 +399,10 @@ namespace TAMS.Controllers
             return View("ScheduleCalendar");
         }
 
-
         [HttpPost]
         public async Task<IActionResult> CancelAppointment(int appointmentId)
         {
-            var appointment = dBContext.Appointments
-                .Find(a => a.AppointmentId == appointmentId)
-                .FirstOrDefault();
-
+            var appointment = dBContext.Appointments.Find(a => a.AppointmentId == appointmentId).FirstOrDefault();
             if (appointment == null) { return NotFound(); }
 
             if (appointment.Status == "Cancelled")
@@ -498,19 +410,14 @@ namespace TAMS.Controllers
                 return RedirectToAction( "Dashboard", "Tutor",  new { id = appointment.TutorId });
             }
 
-            var student = dBContext.Student
-                .Find(s => s.StudentId == appointment.StudentId).FirstOrDefault();
-
-            var tutor = dBContext.Tutor
-                .Find(t => t.TutorId == appointment.TutorId).FirstOrDefault();
+            var student = dBContext.Student.Find(s => s.StudentId == appointment.StudentId).FirstOrDefault();
+            var tutor = dBContext.Tutor.Find(t => t.TutorId == appointment.TutorId).FirstOrDefault();
 
             if (student == null || tutor == null) { return NotFound(); }
 
             var update = Builders<Appointment>.Update.Set(a => a.Status, "Cancelled");
-
             var result = dBContext.Appointments.UpdateOne(a => a.AppointmentId == appointmentId, update);
 
-            // Verify that the appointment was updated
             if (result.ModifiedCount == 0)
             {
                 return RedirectToAction("Dashboard", "Tutor", new { id = appointment.TutorId });
@@ -540,14 +447,10 @@ namespace TAMS.Controllers
             return RedirectToAction("Dashboard", "Tutor", new { id = appointment.TutorId });
         }
 
-
         [HttpPost]
         public async Task<IActionResult> CompleteAppointment(int appointmentId)
         {
-            var appointment =
-                dBContext.Appointments
-                .Find(a => a.AppointmentId == appointmentId).FirstOrDefault();
-
+            var appointment = dBContext.Appointments .Find(a => a.AppointmentId == appointmentId).FirstOrDefault();
             if (appointment == null) { return NotFound(); }
 
             if (appointment.Status != "Completed")
@@ -556,21 +459,17 @@ namespace TAMS.Controllers
 
                 dBContext.Appointments.UpdateOne(a => a.AppointmentId == appointmentId, update);
 
-                // Find and delete the associated schedule slot.
                 var localAppointmentDate = appointment.AppointmentDate;
                 var appointmentDate = localAppointmentDate.Date; 
                 var appointmentTime = localAppointmentDate.TimeOfDay;
                 
-                var schedule = dBContext.Schedule 
-                    .Find(s => s.TutorId == appointment.TutorId) 
-                    .ToList() .FirstOrDefault(s => s.Date.Date == appointmentDate 
+                var schedule = dBContext.Schedule.Find(s => s.TutorId == appointment.TutorId).ToList() .FirstOrDefault(s => s.Date.Date == appointmentDate 
                     && appointmentTime >= s.StartTime && appointmentTime < s.EndTime); 
 
                 if (schedule != null) 
                 { 
                     dBContext.Schedule.DeleteOne(s => s.ScheduleId == schedule.ScheduleId && s.TutorId == appointment.TutorId); 
                 }
-
 
                 try
                 {
@@ -591,7 +490,7 @@ namespace TAMS.Controllers
                 }
             }
             return RedirectToAction("Dashboard", "Tutor", new { id = appointment.TutorId });
-
         }
+
     }
 }

@@ -12,9 +12,7 @@ namespace TAMS.Controllers
         private readonly MongoDBContext dBContext;
         private readonly IEmailService _emailService;
 
-        public AppointmentController(
-            MongoDBContext dBContext,
-            IEmailService emailService)
+        public AppointmentController(MongoDBContext dBContext, IEmailService emailService)
         {
             this.dBContext = dBContext;
             _emailService = emailService;
@@ -65,7 +63,6 @@ namespace TAMS.Controllers
             return View();
         }
 
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> BookAppointment(int scheduleId, int tutorId, DateTime date, TimeSpan startTime, int studentId)
@@ -87,7 +84,6 @@ namespace TAMS.Controllers
                 return RedirectToAction("Scheduler", new { tutorId, studentId, month = date.Month, year = date.Year });
             }
 
-            // Store the exact interval belonging to this schedule.
             DateTime newStart = schedule.Date.Date.Add(schedule.StartTime);
             DateTime newEnd = schedule.Date.Date.Add(schedule.EndTime);
 
@@ -97,7 +93,6 @@ namespace TAMS.Controllers
                 return RedirectToAction("Scheduler", new { tutorId, studentId, month = date.Month, year = date.Year });
             }
 
-            // Retrieve only appointments that could conflict.  No existing appointment is modified here.
             var possibleConflicts = dBContext.Appointments.Find(a => a.Status == "Scheduled" && (a.StudentId == studentId || a.TutorId == tutorId)).ToList();
 
             foreach (var existing in possibleConflicts)
@@ -140,7 +135,6 @@ namespace TAMS.Controllers
                 }
             }
 
-            // Prevent booking this exact schedule twice
             var existingScheduleBooking = dBContext.Appointments.Find(a => a.ScheduleId == scheduleId && a.Status == "Scheduled").FirstOrDefault();
             if (existingScheduleBooking != null)
             {
@@ -148,12 +142,8 @@ namespace TAMS.Controllers
                 return RedirectToAction("Scheduler", new {tutorId, studentId, month = date.Month, year = date.Year });
             }
 
-            // Generate an appointment ID.
             var lastAppointment = dBContext.Appointments.Find(_ => true).SortByDescending(a => a.AppointmentId).FirstOrDefault();
-
             int newAppointmentId = lastAppointment == null ? 1 : lastAppointment.AppointmentId + 1;
-
-            // INSERT exactly one new appointment no update to any other appointment or schedule
             var newAppointment = new Appointment
             {
                 AppointmentId = newAppointmentId,

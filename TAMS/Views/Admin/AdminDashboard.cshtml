@@ -555,18 +555,82 @@
                 </table>
             </div>
         </section>
-
+    
         <section class="analytics-panel">
             <div class="analytics-copy">
                 <p class="section-kicker">REPORTING</p>
-                <h2>System Analytics</h2>
-                <p>Download a report containing system usage analytics.</p>
+                <h2>Reports and Exports</h2>
+                <p>Download administrative reports as text files.</p>
             </div>
-            <form asp-controller="Admin" asp-action="DownloadSystemUsageReport" method="get">
-                <button type="submit" class="admin-primary-button">↓ Download Usage Report</button>
-            </form>
-        </section>
 
+            <div class="report-download-actions">
+                <div class="report-daily-column">
+                    <form asp-controller="Admin" asp-action="DownloadDailyAppointmentsReport" method="get" class="report-card report-daily-card">
+                        <div class="report-card-heading">
+                            <h3>Daily Appointments</h3>
+                            <p>Choose a date to export appointments.</p>
+                        </div>
+
+                        <div class="report-date-field">
+                            <label for="reportDate">Appointment date</label>
+                            <input type="date" id="reportDate" name="date" value="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                        </div>
+
+                        <button type="submit" class="admin-primary-button">
+                            Download Daily Report
+                        </button>
+                    </form>
+
+                    <div class="report-card report-tutor-card">
+                        <div class="report-card-heading">
+                            <h3>Tutor Schedules</h3>
+                            <p>View or export tutor scheduling information.</p>
+                        </div>
+
+                        <a asp-controller="Admin" asp-action="DownloadTutorSchedulesReport" class="admin-primary-button">
+                            Download Tutor Schedules
+                        </a>
+                    </div>
+
+                </div>
+
+                <div class="report-other-column">
+                    <form asp-controller="Admin" asp-action="DownloadAllAppointmentsReport" method="get" class="report-card report-compact-card">
+                        <div class="report-card-heading">
+                            <h3>All Appointments</h3>
+                            <p>Export all appointment records.</p>
+                        </div>
+
+                        <button type="submit" class="admin-primary-button">
+                            Download All Appointments
+                        </button>
+                    </form>
+
+                    <form asp-controller="Admin" asp-action="DownloadUserAccountsReport" method="get" class="report-card report-compact-card">
+                        <div class="report-card-heading">
+                            <h3>User Accounts</h3>
+                            <p>Export registered user accounts.</p>
+                        </div>
+
+                        <button type="submit" class="admin-primary-button">
+                            Download User Accounts
+                        </button>
+                    </form>
+
+                    <form asp-controller="Admin" asp-action="DownloadSystemUsageReport" method="get" class="report-card report-compact-card">
+                        <div class="report-card-heading">
+                            <h3>Login Activity</h3>
+                            <p>Export system login activity.</p>
+                        </div>
+
+                        <button type="submit" class="admin-primary-button">
+                            Download Login Activity
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+        
         <footer class="dashboard-footer">TAMS · Tutoring Appointment Management System</footer>
     </div>
 </body>

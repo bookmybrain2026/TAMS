@@ -25,20 +25,14 @@ namespace TAMS.Controllers
             var loggedinstudentId = HttpContext.Session.GetInt32("StudentId");
             if (loggedinstudentId == null) { return RedirectToAction("Login", "Login"); }
 
-            // Redirect to login if no student ID was provided
             if (id == null){ return RedirectToAction("Login", "Login");}
 
-            // Get the student
-            var student = dBContext.Student
-                .Find(s => s.StudentId == id.Value)
-                .FirstOrDefault();
+            var student = dBContext.Student.Find(s => s.StudentId == id.Value).FirstOrDefault();
 
             if (student == null) { return NotFound(); }
 
-            // Get all tutors
             var tutors = dBContext.Tutor.Find(_ => true).ToList();
 
-            // Search tutors by name or subject
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
                 searchTerm = searchTerm.Trim();
@@ -50,53 +44,30 @@ namespace TAMS.Controllers
                     .ToList();
             }
 
-            // Get all reviews
             var reviews = dBContext.Reviews.Find(_ => true).ToList();
-
-
-            // Calculate each tutor's average rating and review count
             foreach (var tutor in tutors)
             {
                 var tutorReviews = reviews.Where(r => r.TutorId == tutor.TutorId).ToList();
-
-                // Store the tutor's reviews
                 tutor.Reviews = tutorReviews;
-
-                // Calculate the average rating and total reviews
                 tutor.ReviewCount = tutorReviews.Count;
                 tutor.AverageRating = tutorReviews.Any() ? Math.Round(tutorReviews.Average(r => r.Rating), 1) : 0;
             }
 
-            // Get all appointments belonging to this student
-            student.Appointments = dBContext.Appointments
-                .Find(a => a.StudentId == student.StudentId)
-                .ToList();
+            student.Appointments = dBContext.Appointments.Find(a => a.StudentId == student.StudentId).ToList();
 
-            // Attach tutor information to each appointment
             foreach (var appointment in student.Appointments)
             {
-                appointment.Tutor =
-                    dBContext.Tutor
-                    .Find(t => t.TutorId == appointment.TutorId)
-                    .FirstOrDefault();
+                appointment.Tutor = dBContext.Tutor.Find(t => t.TutorId == appointment.TutorId).FirstOrDefault();
             }
 
-            // Get appointment IDs that this student has already reviewed
-            var reviewedAppointmentIds = dBContext.Reviews
-                .Find(r => r.StudentId == student.StudentId).ToList().Select(r => r.AppointmentId).ToHashSet();
+            var reviewedAppointmentIds = dBContext.Reviews.Find(r => r.StudentId == student.StudentId).ToList().Select(r => r.AppointmentId).ToHashSet();
 
-            // Build the list of completed appointments awaiting a review
             student.AwaitingReviews = student.Appointments
-                .Where(a => a.Status == "Completed" && !reviewedAppointmentIds.Contains(a.AppointmentId))
-                .OrderByDescending(a => a.AppointmentDate)
+                .Where(a => a.Status == "Completed" && !reviewedAppointmentIds.Contains(a.AppointmentId)).OrderByDescending(a => a.AppointmentDate)
                 .Select(a => new Review
                 {
-                    AppointmentId = a.AppointmentId,
-                    AppointmentDate = a.AppointmentDate,
-                    StudentId = a.StudentId,
-                    TutorId = a.TutorId,
-                    StudentName = $"{student.FName} {student.LName}",
-                    TutorName = a.Tutor != null ? $"{a.Tutor.FName} {a.Tutor.LName}" : "Unknown Tutor"
+                    AppointmentId = a.AppointmentId, AppointmentDate = a.AppointmentDate, StudentId = a.StudentId, TutorId = a.TutorId,
+                    StudentName = $"{student.FName} {student.LName}", TutorName = a.Tutor != null ? $"{a.Tutor.FName} {a.Tutor.LName}" : "Unknown Tutor"
                 })
                 .ToList();
 
@@ -111,14 +82,11 @@ namespace TAMS.Controllers
         {
             var loggedinstudentId = HttpContext.Session.GetInt32("StudentId");
             if (loggedinstudentId == null) { return RedirectToAction("Login", "Login"); }
-            var tutor = dBContext.Tutor
-                .Find(t => t.TutorId == tutorId)
-                .FirstOrDefault();
 
+            var tutor = dBContext.Tutor.Find(t => t.TutorId == tutorId).FirstOrDefault();
             if (tutor == null) { return NotFound(); }
-            var reviews =
-                dBContext.Reviews
-                .Find(r => r.TutorId == tutorId).ToList();
+
+            var reviews = dBContext.Reviews.Find(r => r.TutorId == tutorId).ToList();
 
             tutor.Reviews = reviews;
             tutor.ReviewCount = reviews.Count;
@@ -126,10 +94,7 @@ namespace TAMS.Controllers
 
             var courseIds = tutor.TutoringCourseIds ?? new List<string>();
 
-            var courses = dBContext.Course
-                .Find(c => c.CourseId != null &&
-                 courseIds.Contains(c.CourseId))
-                .SortBy(c => c.CourseCode) .ToList();
+            var courses = dBContext.Course.Find(c => c.CourseId != null && courseIds.Contains(c.CourseId)).SortBy(c => c.CourseCode) .ToList();
 
             ViewBag.StudentId = studentId;
             ViewBag.Courses = courses;
@@ -156,7 +121,6 @@ namespace TAMS.Controllers
                 .Set(s => s.Email, updatedStudent.Email)
                 .Set(s => s.PhoneNumber, updatedStudent.PhoneNumber)
                 .Set(s => s.DOB, updatedStudent.DOB);
-
             dBContext.Student.UpdateOne(s => s.StudentId == updatedStudent.StudentId,update);
 
             return RedirectToAction("Dashboard", new { id = updatedStudent.StudentId });
@@ -187,14 +151,11 @@ namespace TAMS.Controllers
                 return View(studentModel);
             }
 
-            var lastLogin =
-                dBContext.Login.Find(_ => true)
-                .SortByDescending(l => l.UserId).FirstOrDefault();
+            var lastLogin = dBContext.Login.Find(_ => true).SortByDescending(l => l.UserId).FirstOrDefault();
 
             int newUserId = lastLogin == null ? 1 : lastLogin.UserId + 1;
 
-            var login =
-                new Login
+            var login = new Login
                 {
                     UserId = newUserId,
                     Username = username,
@@ -222,37 +183,20 @@ namespace TAMS.Controllers
         [HttpPost]
         public IActionResult StudentRegistration(StudentRegistration model)
         {
-            if (!ModelState.IsValid)
-            {
-                return View(model);
-            }
+            if (!ModelState.IsValid) { return View(model); }
 
-            // Check whether the username already exists
-            var existingUsername = dBContext.Login
-                .Find(u => u.Username == model.Username)
-                .FirstOrDefault();
+            var existingUsername = dBContext.Login.Find(u => u.Username == model.Username).FirstOrDefault();
+            var existingEmail = dBContext.Student.Find(s => s.Email == model.Email).FirstOrDefault();
 
-            // Check whether the email already exists
-            var existingEmail = dBContext.Student
-                .Find(s => s.Email == model.Email)
-                .FirstOrDefault();
-
-            // If either the username or email is already registered, do not create another account.
             if (existingUsername != null || existingEmail != null)
             {
                 ModelState.AddModelError("", "An account with this username or email already exists. Please use the password reset option to recover your account.");
                 return View(model);
             }
 
-            // Create a new UserId
-            var lastUser = dBContext.Login
-                .Find(_ => true)
-                .SortByDescending(u => u.UserId)
-                .FirstOrDefault();
-
+            var lastUser = dBContext.Login.Find(_ => true).SortByDescending(u => u.UserId).FirstOrDefault();
             int newUserId = lastUser == null ? 1 : lastUser.UserId + 1;
 
-            // Create Login account
             var login = new Login
             {
                 UserId = newUserId,
@@ -264,7 +208,6 @@ namespace TAMS.Controllers
                 isActive = true
             };
 
-            // Create Student profile
             var student = new Student
             {
                 StudentId = newUserId,
@@ -275,42 +218,31 @@ namespace TAMS.Controllers
                 Email = model.Email
             };
 
-            // Insert into MongoDB
             dBContext.Login.InsertOne(login);
             dBContext.Student.InsertOne(student);
 
             return RedirectToAction("Login", "Login");
         }
 
-
         [HttpPost]
         public async Task<IActionResult> CancelAppointment(int appointmentId)
         {
-            var appointment = 
-                dBContext.Appointments
-                .Find(a => a.AppointmentId == appointmentId).FirstOrDefault();
+            var appointment =  dBContext.Appointments.Find(a => a.AppointmentId == appointmentId).FirstOrDefault();
 
             if (appointment == null) { return NotFound(); }
 
-            // Prevent cancelling an appointment that is already cancelled
             if (appointment.Status == "Cancelled")
             {
                 return RedirectToAction("Dashboard", new { id = appointment.StudentId });
             }
 
-            var student = dBContext.Student
-                .Find(s => s.StudentId == appointment.StudentId).FirstOrDefault();
-
-            var tutor = dBContext.Tutor
-                .Find(t => t.TutorId == appointment.TutorId).FirstOrDefault();
+            var student = dBContext.Student.Find(s => s.StudentId == appointment.StudentId).FirstOrDefault();
+            var tutor = dBContext.Tutor.Find(t => t.TutorId == appointment.TutorId).FirstOrDefault();
 
             if (student == null || tutor == null) { return NotFound(); }
 
             var update = Builders<Appointment>.Update.Set(a => a.Status, "Cancelled");
-
             var result = dBContext.Appointments.UpdateOne(a => a.AppointmentId == appointmentId, update);
-
-            // Verify that the appointment was updated
             if (result.ModifiedCount == 0)
             {
                 return RedirectToAction("Dashboard", new { id = appointment.StudentId });
@@ -341,157 +273,10 @@ namespace TAMS.Controllers
             return RedirectToAction( "Dashboard", new { id = appointment.StudentId });
         }     
 
-        //[HttpGet]
-        //public IActionResult Scheduler(int tutorId, int studentId, int? month, int? year)
-        //{
-        //    var tutor = 
-        //        dBContext.Tutor    
-        //        .Find(t => t.TutorId == tutorId).FirstOrDefault();
-
-        //    if (tutor == null) { return NotFound(); }
-
-        //    int targetMonth = month ?? DateTime.Today.Month;
-        //    int targetYear = year ?? DateTime.Today.Year;
-
-        //    if (targetMonth < 1)
-        //    {
-        //        targetMonth = 12;
-        //        targetYear--;
-        //    }
-        //    else if (targetMonth > 12)
-        //    {
-        //        targetMonth = 1;
-        //        targetYear++;
-        //    }
-
-        //    var firstDay = new DateTime(targetYear, targetMonth, 1);
-        //    var nextMonth = firstDay.AddMonths(1);
-
-        //    var appointments = 
-        //        dBContext.Appointments                         
-        //        .Find(a => a.TutorId == tutorId &&            
-        //            a.AppointmentDate >= firstDay &&            
-        //            a.AppointmentDate < nextMonth).ToList();    
-
-        //    foreach (var appointment in appointments)
-        //    {                                 
-        //        appointment.Student =                                                   
-        //            dBContext.Student                                                   
-        //            .Find(s => s.StudentId == appointment.StudentId).FirstOrDefault();  
-        //    }
-
-        //    var schedules = 
-        //        dBContext.Schedule                              
-        //        .Find(s => s.TutorId == tutorId).ToList()     
-        //        .Where(s => s.Date.Month == targetMonth &&      
-        //            s.Date.Year == targetYear).ToList();        
-
-        //    ViewBag.Tutor = tutor;
-        //    ViewBag.Appointments = appointments;
-        //    ViewBag.Schedules = schedules;
-        //    ViewBag.Month = targetMonth;
-        //    ViewBag.Year = targetYear;
-        //    ViewBag.StudentId = studentId;
-
-        //    return View("StudentScheduler");
-        //}
-
-        //[HttpPost]
-        //public async Task<IActionResult> BookAppointment(int studentId, int tutorId, DateTime appointmentDate)
-        //{
-        //    var student =  
-        //        dBContext.Student                                        
-        //        .Find(s => s.StudentId == studentId).FirstOrDefault();   
-        //    if (student == null) { return NotFound(); }  
-
-        //    var tutor =  
-        //        dBContext.Tutor                                         
-        //        .Find(d => d.TutorId == tutorId).FirstOrDefault();     
-
-        //    if (tutor == null) { return NotFound(); }  
-
-        //    if (appointmentDate <= DateTime.Now)  
-        //    {
-        //        TempData["Error"] = "Please select a future appointment time.";
-        //        return RedirectToAction("Scheduler", new { tutorId, studentId });
-        //    }
-
-        //    var existingAppointment =                          
-        //        dBContext.Appointments.Find(a =>                 
-        //            a.TutorId == tutorId &&                    
-        //            a.AppointmentDate == appointmentDate &&      
-        //            a.Status != "Cancelled").FirstOrDefault();   
-
-        //    if (existingAppointment != null) 
-        //    {
-        //        TempData["Error"] = "That appointment time is already booked.";
-        //        return RedirectToAction("Scheduler", new { tutorId, studentId });
-        //    }
-
-        //    var tutorSchedules =  
-        //        dBContext.Schedule                              
-        //        .Find(s => s.TutorId == tutorId).ToList();     
-
-        //    var matchingSchedule = tutorSchedules  
-        //        .FirstOrDefault(s =>                                 
-        //            s.Date.Date == appointmentDate.Date &&           
-        //            appointmentDate.TimeOfDay >= s.StartTime &&      
-        //            appointmentDate.TimeOfDay < s.EndTime);          
-
-        //    if (matchingSchedule == null)  
-        //    {
-        //        TempData["Error"] = "The selected time is not available.";
-
-        //        return RedirectToAction("Scheduler", new { tutorId, studentId });
-        //    }
-
-        //    var lastAppointment =  
-        //        dBContext.Appointments.Find(_ => true)                       
-        //        .SortByDescending(a => a.AppointmentId).FirstOrDefault();    
-
-        //    int newAppointmentId = lastAppointment == null ? 1 : lastAppointment.AppointmentId + 1;  
-
-        //    var appointment = new Appointment  
-        //    {
-        //        AppointmentId = newAppointmentId,
-        //        StudentId = studentId,
-        //        TutorId = tutorId,
-        //        AppointmentDate = appointmentDate, //DUE TO TEMP FIX OF TIME
-        //        //AppointmentDate = TimeZoneHelper.ToUtc(appointmentDate),StudentId = studentId,TutorId = tutorId,Status = "Scheduled" //temp fix as well
-        //        Status = "Scheduled"
-        //    };
-        //    dBContext.Appointments.InsertOne(appointment);
-
-        //    var studentName = $"{student.FName} {student.LName}";
-        //    var tutorName = $"{tutor.FName} {tutor.LName}";
-        //    try  
-        //    {
-        //        if (!string.IsNullOrWhiteSpace(student.Email)) 
-        //        { 
-        //            await _emailService.SendStudentAppointmentConfirmationAsync(student.Email, studentName, tutorName, appointmentDate);
-        //        }
-
-        //        if (!string.IsNullOrWhiteSpace(tutor.Email)) 
-        //        {
-        //            await _emailService.SendTutorAppointmentNotificationAsync(tutor.Email, tutorName, studentName, appointmentDate);
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Console.WriteLine($"Email failed: {ex.Message}");
-        //    }
-
-        //    // Return the student to their dashboard
-        //    return RedirectToAction("Dashboard", new { id = studentId });
-        //}
-
         [HttpPost]
         public IActionResult SubmitReview(int appointmentId, int rating, string comment)
         {
-            var appointment = dBContext.Appointments
-                .Find(a => a.AppointmentId == appointmentId)
-                .FirstOrDefault();
-
+            var appointment = dBContext.Appointments.Find(a => a.AppointmentId == appointmentId).FirstOrDefault();
             if (appointment == null) { return NotFound(); }
 
             if (appointment.Status != "Completed")
@@ -500,9 +285,7 @@ namespace TAMS.Controllers
                 return RedirectToAction("Dashboard", new { id = appointment.StudentId });
             }
 
-            var existingReview = dBContext.Reviews
-                .Find(r => r.AppointmentId == appointmentId)
-                .FirstOrDefault();
+            var existingReview = dBContext.Reviews.Find(r => r.AppointmentId == appointmentId).FirstOrDefault();
 
             if (existingReview != null)
             {
@@ -516,17 +299,11 @@ namespace TAMS.Controllers
                 return RedirectToAction("Dashboard", new { id = appointment.StudentId });
             }
 
-            var student = dBContext.Student
-                .Find(s => s.StudentId == appointment.StudentId)
-                .FirstOrDefault();
-
-            var tutor = dBContext.Tutor
-                .Find(t => t.TutorId == appointment.TutorId)
-                .FirstOrDefault();
+            var student = dBContext.Student.Find(s => s.StudentId == appointment.StudentId).FirstOrDefault();
+            var tutor = dBContext.Tutor.Find(t => t.TutorId == appointment.TutorId).FirstOrDefault();
 
             if (student == null || tutor == null) { return NotFound(); }
 
-            // Create the review
             var review = new Review
             {
                 AppointmentId = appointment.AppointmentId,
@@ -539,12 +316,11 @@ namespace TAMS.Controllers
                 Comment = comment ?? string.Empty,
                 CreatedAt = DateTime.UtcNow
             };
-
             dBContext.Reviews.InsertOne(review);
             TempData["Success"] = "Your review has been submitted successfully.";
+
             return RedirectToAction("Dashboard", new { id = student.StudentId });
-        }
-    
+        } 
         
     }
 }

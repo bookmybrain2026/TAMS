@@ -15,14 +15,12 @@ namespace TAMS.Controllers
             this.dBContext = dBContext;
         }
 
-        // Displays the Reports page.
         [HttpGet]
         public IActionResult Index()
         {
             return View();
         }
 
-        // Generates and downloads a student's appointment history report.
         [HttpPost]
         public IActionResult GenerateAppointmentHistory(int studentId)
         {
@@ -30,13 +28,11 @@ namespace TAMS.Controllers
             if (student == null) { return NotFound(); }
 
             var appointments = dBContext.Appointments.Find(a => a.StudentId == studentId).SortBy(a => a.AppointmentDate).ToList();
-
             foreach (var appointment in appointments)
             {
                 appointment.Tutor = dBContext.Tutor.Find(t => t.TutorId == appointment.TutorId).FirstOrDefault();
             }
 
-            // Create the report content.
             var lines = new List<string>
             {
                 $"Appointment History Report for {student.FName} {student.LName}",
@@ -49,7 +45,6 @@ namespace TAMS.Controllers
                 lines.Add("No appointments were found for this student.");
             }
 
-            // Add each appointment to the report.
             foreach (var appointment in appointments)
             {
                 var tutorName = appointment.Tutor == null ? "Tutor information unavailable" : $"{appointment.Tutor.FName} {appointment.Tutor.LName}";
@@ -60,24 +55,13 @@ namespace TAMS.Controllers
                 lines.Add("---------------------------------------------------");
             }
 
-            // Convert the report content into bytes.
             string reportContent = string.Join(Environment.NewLine, lines);
             byte[] fileBytes = Encoding.UTF8.GetBytes(reportContent);
 
-            // Generate a unique filename.
             string fileName = $"AppointmentHistory_{studentId}_{DateTime.Now:yyyyMMddHHmmss}.txt";
 
-            // Generate a new report ID.
-            var lastReport = dBContext.Reports
-                .Find(_ => true)
-                .SortByDescending(r => r.ReportId)
-                .FirstOrDefault();
-
-            int newReportId = lastReport == null
-                ? 1
-                : lastReport.ReportId + 1;
-
-            // Save a record of the generated report in MongoDB.
+            var lastReport = dBContext.Reports.Find(_ => true).SortByDescending(r => r.ReportId).FirstOrDefault();
+            int newReportId = lastReport == null ? 1 : lastReport.ReportId + 1;
             var reportRecord = new Report
             {
                 ReportId = newReportId,
@@ -88,15 +72,11 @@ namespace TAMS.Controllers
                 Summary =
                     $"Generated appointment history containing {appointments.Count} appointment(s)."
             };
-
             dBContext.Reports.InsertOne(reportRecord);
 
-            // Return the report as a downloadable text file.
             return File(fileBytes, "text/plain", fileName);
         }
 
-
-        // Generates and downloads a tutor's schedule and appointments report.
         [HttpPost]
         public IActionResult GenerateTutorScheduleReport(int tutorId)
         {
@@ -132,10 +112,7 @@ namespace TAMS.Controllers
             foreach (var schedule in schedules)
             {
                 var slotAppointments = appointments.Where(a => a.ScheduleId == schedule.ScheduleId).ToList();
-
                 var bookedAppointment = slotAppointments.FirstOrDefault(a => a.Status?.Trim().Equals("Scheduled", StringComparison.OrdinalIgnoreCase) == true);
-
-                // Find a completed appointment for this slot.
                 var completedAppointment = slotAppointments.FirstOrDefault(a => a.Status?.Trim().Equals("Completed", StringComparison.OrdinalIgnoreCase) == true);
 
                 string status;
@@ -168,7 +145,6 @@ namespace TAMS.Controllers
                 );
             }
 
-            // Add the appointments section.
             lines.Add("");
             lines.Add("=== APPOINTMENTS ===");
 
@@ -195,7 +171,6 @@ namespace TAMS.Controllers
             string fileName = $"TutorSchedule_{tutor.FName}_{tutor.LName}_{tutorId}_{now:yyyyMMddHHmmss}.txt";
 
             var lastReport = dBContext.Reports.Find(_ => true).SortByDescending(r => r.ReportId).FirstOrDefault();
-
             int newReportId = lastReport == null ? 1 : lastReport.ReportId + 1;
 
             var reportRecord = new Report
@@ -210,7 +185,6 @@ namespace TAMS.Controllers
                     $"({schedules.Count} schedule slots, " +
                     $"{appointments.Count} appointments)."
             };
-
             dBContext.Reports.InsertOne(reportRecord);
 
             return File(fileBytes, "text/plain", fileName);
