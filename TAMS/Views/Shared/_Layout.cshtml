@@ -11,43 +11,52 @@
 </head>
 
 <body>
+
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light border-bottom box-shadow mb-3">
-            <div class="container-fluid">
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm tams-navbar">
+            <div class="container-fluid tams-navbar-container">
+                <a class="navbar-brand tams-brand" asp-area="" asp-controller="Home" asp-action="Welcome">
+                    <span class="brand-icon">B</span>
+                    <span class="brand-text">BookMy<span>Brain</span></span>
+                </a>
 
-                @* <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Welcome">TAMS</a> *@
-
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent" 
-                        aria-expanded="false" aria-label="Toggle navigation">
+                <button class="navbar-toggler tams-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+                        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
+                <div class="navbar-collapse collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav mx-auto tams-nav-links">
+
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Welcome">Home
-                                @* <img src="~/images/BMB Owl.png" alt="BookMyBrain" class="navbar-logo" /> *@
-                            </a>
+                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Welcome">Home</a>
+                            @* <img src="~/images/BMB Owl.png" alt="BookMyBrain" class="navbar-logo" /> *@
                         </li>
+
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Tutor" asp-action="OurTutors">Tutor Profiles</a>
+                            <a class="nav-link" asp-area="" asp-controller="Tutor" asp-action="OurTutors">Tutor Profiles</a>
                         </li>
+
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Login" asp-action="Login">Login</a>
-                        </li> 
+                            <a class="nav-link" asp-area="" asp-controller="Login" asp-action="Login">Login</a>
+                        </li>
+
                     </ul>
 
-                    @* Show Logout only when a user is logged in *@
                     @if (Context.Session.GetInt32("StudentId") != null || Context.Session.GetInt32("TutorId") != null || Context.Session.GetInt32("AdminId") != null)
                     {
-                        <form asp-controller="Login" asp-action="Logout" method="post" class="d-flex">
-                            <button type="submit" class="btn btn-outline-danger">Logout</button>
+                        <form asp-controller="Login" asp-action="Logout" method="post" class="tams-logout-form">
+                            <button type="submit" class="tams-logout-btn">
+                                <span>Logout</span>
+                                <span aria-hidden="true">&rarr;</span>
+                            </button>
                         </form>
                     }
                 </div>
             </div>
         </nav>
     </header>
+
 
     <div class="container">
         <main role="main" class="pb-3">@RenderBody()</main>

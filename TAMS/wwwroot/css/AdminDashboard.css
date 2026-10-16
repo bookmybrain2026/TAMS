@@ -51,7 +51,7 @@
     margin-bottom: 28px;
 }
 
-.dashboard-eyebrow { /*.section-kicker*/
+.dashboard-eyebrow, .section-kicker{
     color: var(--bmb-brown);
     font-size: 10px;
     font-weight: 800;

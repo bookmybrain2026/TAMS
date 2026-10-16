@@ -37,7 +37,7 @@
         }
         <header class="dashboard-header">
             <div>
-                <p class="dashboard-eyebrow">TAMS · ADMINISTRATION</p>
+                <p class="dashboard-eyebrow">BMB · ADMINISTRATION</p>
                 <h1>Dashboard</h1>
                 <p class="dashboard-subtitle">Welcome to your tutoring appointment management workspace.</p>
             </div>
@@ -100,10 +100,10 @@
         <section class="dashboard-section">
             <div class="section-heading">
                 <div>
-                    <p class="section-kicker">QUICK ACCESS</p>
+                    @* <p class="section-kicker">QUICK ACCESS</p>*@
                     <h2>System Management</h2>
                 </div>
-                <span class="section-description">Manage the core parts of TAMS</span>
+                @*<span class="section-description">Manage the core parts of TAMS</span>*@
             </div>
 
             <div class="management-grid">
@@ -133,7 +133,7 @@
         <section class="dashboard-section">
             <div class="section-heading">
                 <div>
-                    <p class="section-kicker">PEOPLE</p>
+                    @* <p class="section-kicker">PEOPLE</p>*@
                     <h2>Tutor Directory</h2>
                 </div>
                 <span class="count-pill">@tutors.Count tutors</span>
@@ -407,7 +407,7 @@
         <section class="dashboard-section">
             <div class="section-heading">
                 <div>
-                    <p class="section-kicker">PEOPLE</p>
+                    @*<p class="section-kicker">PEOPLE</p>*@
                     <h2>Student Directory</h2>
                 </div>
                 <span class="count-pill">@students.Count students</span>
@@ -463,7 +463,10 @@
 
         <section class="dashboard-section">
             <div class="section-heading">
-                <div><p class="section-kicker">SCHEDULING</p><h2>All Appointments</h2></div>
+                <div>
+                    @*<p class="section-kicker">SCHEDULING</p>*@
+                    <h2>All Appointments</h2>
+                </div>
               
                 <div class="status-summary">
                     <span><i class="status-dot dot-scheduled"></i>@scheduledCount Scheduled</span>
@@ -631,6 +634,6 @@
             </div>
         </section>
         
-        <footer class="dashboard-footer">TAMS · Tutoring Appointment Management System</footer>
+        <footer class="dashboard-footer">BMS · Book My Brain</footer>
     </div>
 </body>
