@@ -21,6 +21,14 @@
     int startDayOfWeek = (int)firstDay.DayOfWeek;
 
     var weekdays = new[] { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+
+    var allTutors = ViewBag.Tutors as List<Tutor>
+    ?? new List<Tutor>();
+
+    int? rescheduleAppointmentId =
+        ViewBag.RescheduleAppointmentId as int?;
+
+    bool isRescheduling = rescheduleAppointmentId.HasValue;
 }
 
 @section Styles {
@@ -50,6 +58,46 @@
             </a>
         </div>
     </header>
+    
+    @if (isRescheduling)
+    {
+        <section class="scheduler-reschedule-card">
+            <div class="scheduler-reschedule-heading">
+                <div class="scheduler-reschedule-icon" aria-hidden="true">
+                    &#8635;
+                </div>
+
+                <div>
+                    <p class="scheduler-section-kicker">APPOINTMENT OPTIONS</p>
+                    <h2>Reschedule Appointment</h2>
+                    <p class="scheduler-reschedule-description">Keep your current tutor or choose another tutor. Select a tutor below to view their available time slots.</p>
+                </div>
+            </div>
+
+            <form asp-controller="Appointment" asp-action="Scheduler" method="get" class="scheduler-reschedule-form">
+                <input type="hidden" name="studentId" value="@studentId" />
+                <input type="hidden" name="rescheduleAppointmentId" value="@rescheduleAppointmentId" />
+
+                <div class="scheduler-reschedule-field">
+                    <label for="tutorId">Choose your tutor</label>
+                    <select id="tutorId" name="tutorId" class="scheduler-tutor-select" required>
+                        @foreach (var item in allTutors)
+                        {
+                            <option value="@item.TutorId"
+                                    selected="@(item.TutorId == tutor.TutorId)">
+                                @item.FName @item.LName - @item.Subject
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <button type="submit" class="scheduler-reschedule-submit">
+                    View Calendar
+                    <span aria-hidden="true">&rarr;</span>
+                </button>
+            </form>
+        </section>
+    }
 
     @if (TempData["Error"] != null)
     {
@@ -80,7 +128,8 @@
         </div>
 
         <div class="scheduler-calendar-toolbar">
-            <a class="scheduler-month-button" href="@Url.Action("Scheduler", "Appointment", new {tutorId = tutor.TutorId, month = previousMonth.Month, year = previousMonth.Year})">
+            <a class="scheduler-month-button" href="@Url.Action("Scheduler", "Appointment", new {tutorId = tutor.TutorId, month = previousMonth.Month, year = previousMonth.Year, 
+                studentId = studentId, rescheduleAppointmentId = rescheduleAppointmentId})">
                 <span aria-hidden="true">←</span> Previous Month
             </a>
 
@@ -89,7 +138,8 @@
             </span>
 
             <a class="scheduler-month-button"
-               href="@Url.Action("Scheduler", "Appointment", new { tutorId = tutor.TutorId, month = nextMonth.Month, year = nextMonth.Year})">
+               href="@Url.Action("Scheduler", "Appointment", new { tutorId = tutor.TutorId, month = nextMonth.Month, year = nextMonth.Year, 
+                   studentId = studentId, rescheduleAppointmentId = rescheduleAppointmentId})">
                 Next Month <span aria-hidden="true">→</span> 
             </a>
         </div>
@@ -168,19 +218,16 @@
                                                 }
                                                 else
                                                 {
+                                                    
                                                     @foreach (var s in daySchedules)
-                                                    {                                                                      
+                                                    {
                                                         var slotDateTime = s.Date.Date.Add(s.StartTime);
+                                                        var slotLabel = $"{DateTime.Today.Add(s.StartTime).ToString("h:mm tt")} - {DateTime.Today.Add(s.EndTime).ToString("h:mm tt")}";
                                                         var slotAppointments = appointments.Where(a => a.ScheduleId == s.ScheduleId).ToList();
                                                         var slotCompleted = slotAppointments.Any(a => string.Equals(a.Status?.Trim(), "Completed", StringComparison.OrdinalIgnoreCase));
                                                         var slotBooked = slotAppointments.Any(a => string.Equals(a.Status?.Trim(), "Scheduled", StringComparison.OrdinalIgnoreCase));
-                                                        var localSlotDateTime = slotDateTime;//.AddHours(-5);
+                                                        var localSlotDateTime = slotDateTime;
                                                         var slotExpired = !slotCompleted && !slotBooked && localSlotDateTime < now;
-
-                                                        var startTime = DateTime.Today.Add(s.StartTime).ToString("h:mm tt");
-                                                        var endTime = DateTime.Today.Add(s.EndTime).ToString("h:mm tt");
-
-                                                        var slotLabel = $"{startTime} - {endTime}";                                                                  
 
                                                         if (slotCompleted)
                                                         {
@@ -205,21 +252,32 @@
                                                         }
                                                         else
                                                         {
-                                                            <form class="scheduler-booking-form" asp-controller="Appointment" asp-action="BookAppointment"
+                                                            <form class="scheduler-booking-form" asp-controller="Appointment" asp-action="@(isRescheduling ? "RescheduleAppointment" : "BookAppointment")"
                                                                   method="post" onsubmit="return confirm('Do you want to confirm this appointment?');">
+
                                                                 @Html.AntiForgeryToken()
+
                                                                 <input type="hidden" name="scheduleId" value="@s.ScheduleId" />
                                                                 <input type="hidden" name="tutorId" value="@tutor.TutorId" />
                                                                 <input type="hidden" name="studentId" value="@studentId" />
                                                                 <input type="hidden" name="date" value="@s.Date.ToString("yyyy-MM-dd")" />
                                                                 <input type="hidden" name="startTime" value="@s.StartTime.ToString(@"hh\:mm\:ss")" />
+
+                                                                @if (isRescheduling)
+                                                                {
+                                                                    <input type="hidden" name="appointmentId" value="@rescheduleAppointmentId" />
+                                                                }
+
                                                                 <button type="submit" class="scheduler-slot scheduler-slot-available">
                                                                     <span class="scheduler-slot-time">@slotLabel</span>
-                                                                    <span class="scheduler-slot-status">Book <span aria-hidden="true">→</span></span>
+                                                                    <span class="scheduler-slot-status">
+                                                                        Book <span aria-hidden="true">→</span>
+                                                                    </span>
                                                                 </button>
                                                             </form>
                                                         }
                                                     }
+
                                                 }
                                             </div>
                                         </div>

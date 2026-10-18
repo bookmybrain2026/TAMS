@@ -52,7 +52,6 @@
                 </button>
 
                 @* Update Info *@
-
                 <div id="editForm" class="collapse mt-3">
                     <form asp-controller="Student" asp-action="UpdateInfo" method="post">
                         @Html.AntiForgeryToken()
@@ -158,14 +157,23 @@
                                             }
                                         </td>
 
+                                        
                                         <td>
                                             @if (appt.Status == "Scheduled")
                                             {
-                                                <form asp-controller="Student" asp-action="CancelAppointment" method="post" onsubmit="return confirm('Are you sure you want to cancel this appointment?');">
-                                                    @Html.AntiForgeryToken()
-                                                    <input type="hidden" name="appointmentId" value="@appt.AppointmentId" />
-                                                    <button type="submit" class="btn btn-danger btn-sm">Cancel</button>
-                                                </form>
+                                                <div class="d-flex gap-2 flex-wrap">
+                                                    <a class="btn btn-primary btn-sm" href="@Url.Action("Scheduler", "Appointment", new { tutorId = appt.TutorId, studentId = Model.StudentId, rescheduleAppointmentId = appt.AppointmentId })">
+                                                        Reschedule
+                                                    </a>
+
+                                                    <form asp-controller="Student" asp-action="CancelAppointment" method="post" onsubmit="return confirm('Are you sure you want to cancel this appointment?');">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="appointmentId" value="@appt.AppointmentId" />
+                                                        <button type="submit" class="btn btn-danger btn-sm">
+                                                            Cancel
+                                                        </button>
+                                                    </form>
+                                                </div>
                                             }
                                             else
                                             {

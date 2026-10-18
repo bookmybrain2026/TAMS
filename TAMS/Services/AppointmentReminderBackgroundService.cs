@@ -27,7 +27,6 @@ namespace TAMS.Services
                 {
                     using var scope = _scopeFactory.CreateScope();
 
-                    // Resolve your existing reminder-processing service here.
                     var reminderService = scope.ServiceProvider.GetRequiredService<AppointmentReminderService>();
 
                     //await reminderService.ProcessDueRemindersAsync(
@@ -45,7 +44,7 @@ namespace TAMS.Services
 
                 try
                 {
-                    // Check again in one minute.
+                    // Check again in one minute
                     await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
                 }
                 catch (OperationCanceledException)

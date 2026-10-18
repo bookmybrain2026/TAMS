@@ -428,6 +428,157 @@
 
 .tutor-booking-page .scheduler-calendar-footer strong { color: var(--scheduler-brown); }
 
+.tutor-booking-page .scheduler-reschedule-card {
+    margin-bottom: 24px;
+    padding: 26px 28px;
+    border: 1px solid var(--scheduler-border);
+    border-radius: 22px;
+    background: linear-gradient(135deg, #fffdf8 0%, #ffffff 75%);
+    box-shadow: 0 8px 24px rgba(73, 55, 40, 0.06);
+}
+
+.tutor-booking-page .scheduler-reschedule-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 22px;
+}
+
+.tutor-booking-page .scheduler-reschedule-icon {
+    display: flex;
+    flex: 0 0 46px;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    border: 1px solid #ead9b3;
+    border-radius: 14px;
+    background: var(--scheduler-gold-light);
+    color: #8d6827;
+    font-size: 1.25rem;
+}
+
+.tutor-booking-page .scheduler-reschedule-heading h2 {
+    margin: 0;
+    color: var(--scheduler-brown);
+    font-size: 1.45rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+}
+
+.tutor-booking-page .scheduler-reschedule-description {
+    margin: 7px 0 0;
+    color: var(--scheduler-muted);
+    font-size: 0.92rem;
+    line-height: 1.6;
+}
+
+.tutor-booking-page .scheduler-reschedule-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 16px;
+    margin: 0;
+    padding-top: 20px;
+    border-top: 1px solid var(--scheduler-border);
+}
+
+.tutor-booking-page .scheduler-reschedule-field {
+    min-width: 0;
+    margin: 0;
+}
+
+.tutor-booking-page .scheduler-reschedule-field label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--scheduler-brown);
+    font-size: 0.85rem;
+    font-weight: 800;
+}
+
+.tutor-booking-page .scheduler-tutor-select {
+    display: block;
+    width: 100%;
+    min-height: 48px;
+    padding: 11px 42px 11px 14px;
+    border: 1px solid #dfd2bf;
+    border-radius: 12px;
+    background-color: #fff;
+    color: var(--scheduler-brown);
+    font: inherit;
+    font-size: 0.92rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tutor-booking-page .scheduler-tutor-select:hover { border-color: var(--scheduler-gold); }
+
+.tutor-booking-page .scheduler-tutor-select:focus {
+    border-color: var(--scheduler-gold);
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(214, 173, 85, 0.2);
+}
+
+.tutor-booking-page .scheduler-reschedule-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 48px;
+    padding: 12px 20px;
+    border: 1px solid #b58b3c;
+    border-radius: 12px;
+    background: var(--scheduler-gold);
+    color: #382918;
+    font-size: 0.9rem;
+    font-weight: 800;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tutor-booking-page .scheduler-reschedule-submit:hover {
+    border-color: #b58b3c;
+    background: #c79b43;
+    color: #2f2114;
+    box-shadow: 0 5px 12px rgba(73, 55, 40, 0.12);
+    transform: translateY(-1px);
+}
+
+.tutor-booking-page .scheduler-reschedule-submit:focus-visible {
+    outline: 3px solid rgba(214, 173, 85, 0.45);
+    outline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+    .tutor-booking-page .scheduler-reschedule-card {
+        padding: 20px 16px;
+        border-radius: 17px;
+    }
+
+    .tutor-booking-page .scheduler-reschedule-heading {
+        gap: 11px;
+        margin-bottom: 18px;
+    }
+
+    .tutor-booking-page .scheduler-reschedule-icon {
+        flex-basis: 40px;
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+    }
+
+    .tutor-booking-page .scheduler-reschedule-heading h2 { font-size: 1.25rem; }
+
+    .tutor-booking-page .scheduler-reschedule-form {
+        grid-template-columns: 1fr;
+        gap: 14px;
+        padding-top: 16px;
+    }
+
+    .tutor-booking-page .scheduler-reschedule-submit { width: 100%; }
+}
+
+
 @media (max-width: 900px) {
     .tutor-booking-page { padding: 18px; }
 

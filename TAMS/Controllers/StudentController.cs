@@ -253,16 +253,13 @@ namespace TAMS.Controllers
 
             try
             {
-                // Send cancellation confirmation to the student
                 if (!string.IsNullOrWhiteSpace(student.Email))
                 {
-                    await _emailService.SendStudentAppointmentCancellationAsync(student.Email, studentName, tutorName, appointment.AppointmentDate);
+                    await _emailService.SendStudentAppointmentCancellationAsync(student.Email, studentName, tutorName, appointment.AppointmentDate.AddHours(5));
                 }
-
-                // Notify the tutor that the student cancelled
                 if (!string.IsNullOrWhiteSpace(tutor.Email))
                 {
-                    await _emailService.SendTutorAppointmentCancellationAsync(tutor.Email, tutorName,  studentName, appointment.AppointmentDate);
+                    await _emailService.SendTutorAppointmentCancellationAsync(tutor.Email, tutorName,  studentName, appointment.AppointmentDate.AddHours(5));
                 }
             }
             catch (Exception ex)
