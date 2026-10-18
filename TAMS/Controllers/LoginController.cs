@@ -10,11 +10,13 @@ namespace TAMS.Controllers
     {
         private readonly MongoDBContext dBContext; //Provides access to MongoDB database
         private readonly IEmailService _emailService;
+        private readonly IConfiguration _configuration;
 
-        public LoginController( MongoDBContext dBContext, IEmailService emailService)
+        public LoginController( MongoDBContext dBContext, IEmailService emailService, IConfiguration configuration)
         {
             this.dBContext = dBContext;
             _emailService = emailService;
+            _configuration = configuration;
         }
 
         [HttpGet]
@@ -157,17 +159,59 @@ namespace TAMS.Controllers
             dBContext.PasswordRecoveries.DeleteMany(r => r.UserId == user.UserId && !r.IsUsed);        
             dBContext.PasswordRecoveries.InsertOne(recoveryRecord);
 
+            //bool emailSent = false;
+
+            //try
+            //{
+            //    await _emailService.SendPasswordRecoveryCodeAsync(model.Email, recipientName, recoveryCode);
+            //    emailSent = true;
+            //}
+            //catch (Exception ex)
+            //{
+            //    emailSent = false;
+            //    Console.WriteLine($"Password recovery email error: {ex.Message}");
+            //}
+
+            //model.ShowRecoveryCodeField = true;
+
+            //TempData["RecoveryUserId"] = user.UserId;
+
+            //if (!emailSent)
+            //{
+            //    ViewBag.RecoveryCode = recoveryCode;
+            //    TempData["RecoveryCode"] = recoveryCode;
+            //    TempData["EmailError"] = "The recovery email could not be sent. Please use the recovery code shown below.";
+            //}
+            //else
+            //{
+            //    TempData["Success"] = "A recovery code has been sent to your email address.";
+            //}
+            //return View("ForgotPassword", model);
+
             bool emailSent = false;
 
-            try
+            bool emailCredentialsAvailable =
+                !string.IsNullOrWhiteSpace(_configuration["EmailSettings:SenderEmail"]) &&
+                !string.IsNullOrWhiteSpace(_configuration["EmailSettings:SmtpServer"]) &&
+                !string.IsNullOrWhiteSpace(_configuration["EmailSettings:SmtpPort"]) &&
+                !string.IsNullOrWhiteSpace(_configuration["EmailSettings:Username"]) &&
+                !string.IsNullOrWhiteSpace(_configuration["EmailSettings:Password"]);
+
+            if (emailCredentialsAvailable)
             {
-                await _emailService.SendPasswordRecoveryCodeAsync(model.Email, recipientName, recoveryCode);
-                emailSent = true;
-            }
-            catch (Exception ex)
-            {
-                emailSent = false;
-                Console.WriteLine($"Password recovery email error: {ex.Message}");
+                try
+                {
+                    await _emailService.SendPasswordRecoveryCodeAsync(
+                        model.Email,
+                        recipientName,
+                        recoveryCode);
+
+                    emailSent = true;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Password recovery email error: {ex.Message}");
+                }
             }
 
             model.ShowRecoveryCodeField = true;
@@ -178,13 +222,17 @@ namespace TAMS.Controllers
             {
                 ViewBag.RecoveryCode = recoveryCode;
                 TempData["RecoveryCode"] = recoveryCode;
-                TempData["EmailError"] = "The recovery email could not be sent. Please use the recovery code shown below.";
+                TempData["EmailError"] =
+                    "The recovery email could not be sent. Please use the recovery code shown below.";
             }
             else
             {
-                TempData["Success"] = "A recovery code has been sent to your email address.";
+                TempData["Success"] =
+                    "A recovery code has been sent to your email address.";
             }
+
             return View("ForgotPassword", model);
+
         }
 
         [HttpPost]

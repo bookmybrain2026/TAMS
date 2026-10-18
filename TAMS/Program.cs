@@ -15,10 +15,19 @@ builder.Services.AddSession(options =>
 //MongoDB 
 builder.Services.AddSingleton<MongoDBContext>();
 
-//Email services
-builder.Services.AddScoped<IEmailService, EmailService>();
-builder.Services.AddHostedService<RecoveryCodeCleanupService>();
-builder.Services.AddHostedService<AppointmentReminderService>();
+// Email services
+builder.Services.AddSingleton<EmailQueue>();
+
+// Actual SMTP sender
+builder.Services.AddScoped<SmtpEmailService>();
+
+// Controllers use the queue-backed email service
+builder.Services.AddScoped<IEmailService, QueuedEmailService>();
+
+// Background workers
+builder.Services.AddHostedService<EmailQueueWorker>();
+builder.Services.AddHostedService<RecoveryCodeCleanupService>(); //
+builder.Services.AddHostedService<AppointmentReminderService>(); //
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();

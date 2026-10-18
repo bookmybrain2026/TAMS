@@ -46,7 +46,7 @@ namespace TAMS.Services
 
                         try
                         {
-                            // Only process appointments whose end time has passed.
+                            // Only process appointments whose end time has passed
                             if (now < appointment.EndDate)
                                 continue;
 
@@ -69,17 +69,17 @@ namespace TAMS.Services
 
                             var studentName = student == null ? "the student" : $"{student.FName} {student.LName}";
 
-                            // Reminder 1: one hour after the appointment ends.
+                            // Reminder 1: one hour after the appointment ends
                             if (!appointment.Reminder1Sent &&
                                 now >= appointment.EndDate.AddHours(1))
                             {
-                                // Recheck that the appointment is still scheduled.
+                                // Recheck that the appointment is still scheduled
                                 if (!await IsStillScheduledAsync(db, appointment.AppointmentId, stoppingToken))
                                 {
                                     continue;
                                 }
 
-                                // FIRST: Mark the reminder as sent in MongoDB.
+                                // FIRST: Mark the reminder as sent in MongoDB
                                 var reminder1Filter =
                                     Builders<Appointment>.Filter.Eq(a => a.AppointmentId, appointment.AppointmentId)
                                     & Builders<Appointment>.Filter.Eq(a => a.Status, "Scheduled")
@@ -113,17 +113,17 @@ namespace TAMS.Services
                                 }
                             }
 
-                            // Reminder 2: 24 hours after the appointment ends.
+                            // Reminder 2: 24 hours after the appointment ends
                             if (!appointment.Reminder2Sent &&
                                 now >= appointment.EndDate.AddHours(24))
                             {
-                                // Recheck that the appointment is still scheduled.
+                                // Recheck that the appointment is still scheduled
                                 if (!await IsStillScheduledAsync(db, appointment.AppointmentId, stoppingToken))
                                 {
                                     continue;
                                 }
 
-                                // FIRST: Mark the reminder as sent in MongoDB.
+                                // FIRST: Mark the reminder as sent in MongoDB
                                 var reminder2Filter =
                                     Builders<Appointment>.Filter.Eq(a => a.AppointmentId, appointment.AppointmentId)
                                     & Builders<Appointment>.Filter.Eq(a => a.Status, "Scheduled")
@@ -138,7 +138,7 @@ namespace TAMS.Services
                                     appointment.Reminder2Sent = true;
                                     _logger.LogInformation("24-hour reminder recorded for appointment {AppointmentId}.", appointment.AppointmentId);
 
-                                    // SECOND: Attempt email delivery independently.
+                                    // SECOND: Attempt email delivery independently
                                     try
                                     {
                                         await emailService.SendTutorAppointmentCompletionReminderAsync(tutor.Email, tutorName, studentName, appointment.AppointmentDate, appointment.EndDate, 24);
@@ -157,17 +157,17 @@ namespace TAMS.Services
                                 }
                             }
 
-                            // Reminder 3: 48 hours after the appointment ends.
+                            // Reminder 3: 48 hours after the appointment ends
                             if (!appointment.NeedsAdminFollowUp &&
                                 now >= appointment.EndDate.AddHours(48))
                             {
-                                // Recheck that the appointment is still scheduled.
+                                // Recheck that the appointment is still scheduled
                                 if (!await IsStillScheduledAsync(db, appointment.AppointmentId, stoppingToken))
                                 {
                                     continue;
                                 }
 
-                                // FIRST: Record the Admin follow-up flag in MongoDB.
+                                // FIRST: Record the Admin follow-up flag in MongoDB
                                 var followUpFilter =
                                     Builders<Appointment>.Filter.Eq(a => a.AppointmentId, appointment.AppointmentId)
                                     & Builders<Appointment>.Filter.Eq(a => a.Status, "Scheduled")
@@ -183,7 +183,7 @@ namespace TAMS.Services
                                     appointment.NeedsAdminFollowUp = true;
                                     _logger.LogInformation("Appointment {AppointmentId} flagged for Admin follow-up.", appointment.AppointmentId);
 
-                                    // SECOND: Attempt the optional tutor email independently.
+                                    // SECOND: Attempt the optional tutor email independently
                                     try
                                     {
                                         await emailService.SendTutorAppointmentAdminFollowUpAsync(tutor.Email, tutorName, studentName, appointment.AppointmentDate, appointment.EndDate);
@@ -203,7 +203,7 @@ namespace TAMS.Services
                                 }
                             }
 
-                            // 72 hours after the appointment ends, notify the Admin and remove all tutor reminders after an email succeeds.
+                            // 72 hours after the appointment ends, notify the Admin and remove all tutor reminders after an email succeeds
                             if (!appointment.AdminNotificationSent &&
                                 now >= appointment.EndDate.AddHours(72))
                             {
@@ -241,7 +241,7 @@ namespace TAMS.Services
                                     }
                                 }
 
-                                // Only remove the tutor reminders if an Admin email was successfully sent.
+                                // Only remove the tutor reminders if an Admin email was successfully sent
                                 if (adminEmailSent)
                                 {
                                     var adminNotificationFilter =

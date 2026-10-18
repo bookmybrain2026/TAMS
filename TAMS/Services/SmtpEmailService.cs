@@ -4,12 +4,12 @@ using MimeKit; //used to create the email message
 
 namespace TAMS.Services
 {
-    public class EmailService : IEmailService
+    public class SmtpEmailService : IEmailService
     {
         private readonly IConfiguration _configuration;
         //IConfiguration allows the class to read values from configuration files like appsetting.json
 
-        public EmailService(IConfiguration configuration) //runs when ASP.NET Core creates an EmailService object
+        public SmtpEmailService(IConfiguration configuration) //runs when ASP.NET Core creates an EmailService object
         {
             _configuration = configuration; //stores the configuration object in the class field so the email methods can use it
         }

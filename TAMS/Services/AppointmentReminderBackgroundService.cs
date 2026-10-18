@@ -5,6 +5,7 @@ using TAMS.Services;
 
 namespace TAMS.Services
 {
+    // Runs in the background to periodically check for appointment reminders
     public class AppointmentReminderBackgroundService : BackgroundService
     {
         private readonly IServiceScopeFactory _scopeFactory;
@@ -16,6 +17,7 @@ namespace TAMS.Services
             _logger = logger;
         }
 
+        // Runs automatically when this background service starts
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             _logger.LogInformation("Appointment reminder background service started.");
@@ -35,7 +37,7 @@ namespace TAMS.Services
                 catch (OperationCanceledException)
                     when (stoppingToken.IsCancellationRequested)
                 {
-                    break;
+                    break; 
                 }
                 catch (Exception ex)
                 {
