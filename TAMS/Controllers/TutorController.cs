@@ -308,17 +308,21 @@ namespace TAMS.Controllers
                 return RedirectToAction("Schedule", new { id = tutorId, month = date.Month, year = date.Year });
             }
 
-            var existingSchedules = dBContext.Schedule.Find(s => s.TutorId == tutorId && s.Date.Date == date.Date).ToList();
-            bool overlap = existingSchedules.Any(s => startTime < s.EndTime && endTime > s.StartTime);
-            if (overlap)
+            var existingSchedules = dBContext.Schedule.Find(s => s.TutorId == tutorId).ToList();
+
+            bool overlaps = existingSchedules.Any(s => s.Date.Date == date.Date && startTime < s.EndTime && endTime > s.StartTime );
+
+            if (overlaps)
             {
-                TempData["Error"] = "This schedule overlaps with an existing schedule.";
+                TempData["Error"] =
+                    "An existing schedule already overlaps with this time. " +
+                    "Please choose a different time or delete the existing schedule first.";
+
                 return RedirectToAction("Schedule", new { id = tutorId, month = date.Month, year = date.Year });
             }
 
             var lastSchedule = dBContext.Schedule.Find(_ => true).SortByDescending(s => s.ScheduleId).FirstOrDefault();
             int newScheduleId = lastSchedule == null ? 1 : lastSchedule.ScheduleId + 1;
-
             var schedule = new Schedule
             {
                 ScheduleId = newScheduleId,
@@ -328,8 +332,8 @@ namespace TAMS.Controllers
                 EndTime = endTime
             };
             dBContext.Schedule.InsertOne(schedule);
-            TempData["Success"] = "Schedule added successfully.";
 
+            TempData["Success"] = "Schedule added successfully.";
             return RedirectToAction("Schedule", new { id = tutorId, month = date.Month, year = date.Year });
         }
 
