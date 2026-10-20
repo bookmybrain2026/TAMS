@@ -1,4 +1,5 @@
-﻿using MailKit.Net.Smtp; //imports MailKit’s SMTP functionality
+﻿//Builds the message, authenticates with the SMTP server, and sends the email.
+using MailKit.Net.Smtp; //imports MailKit’s SMTP functionality
 using MailKit.Security; //imports security settings for the SMTP connection
 using MimeKit; //used to create the email message
 

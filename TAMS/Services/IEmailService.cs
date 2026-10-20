@@ -1,4 +1,5 @@
-﻿namespace TAMS.Services
+﻿//provides the common interface that allows the controller to request emails
+namespace TAMS.Services
 {
     public interface IEmailService
     {

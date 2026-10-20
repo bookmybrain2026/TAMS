@@ -29,26 +29,19 @@ namespace TAMS.Services
                 try
                 {
                     using var scope = _scopeFactory.CreateScope();
-
                     var db = scope.ServiceProvider.GetRequiredService<MongoDBContext>();
-
                     var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
-
-                    var appointments = await db.Appointments.Find(a => a.Status == "Scheduled")
-                        .ToListAsync(stoppingToken);
-
+                    var appointments = await db.Appointments.Find(a => a.Status == "Scheduled").ToListAsync(stoppingToken);
                     var now = DateTime.Now;
 
                     foreach (var appointment in appointments)
                     {
-                        if (stoppingToken.IsCancellationRequested)
-                            break;
+                        if (stoppingToken.IsCancellationRequested) { break; }
 
                         try
                         {
                             // Only process appointments whose end time has passed
-                            if (now < appointment.EndDate)
-                                continue;
+                            if (now < appointment.EndDate) { continue; }
 
                             var tutor = await db.Tutor.Find(t => t.TutorId == appointment.TutorId).FirstOrDefaultAsync(stoppingToken);
                             var student = await db.Student.Find(s => s.StudentId == appointment.StudentId).FirstOrDefaultAsync(stoppingToken);
@@ -60,18 +53,16 @@ namespace TAMS.Services
 
                             var tutorName = tutor == null ? "Unknown tutor" : $"{tutor.FName} {tutor.LName}";
                             var tutorEmail = tutor?.Email;
+                            var studentName = student == null ? "the student" : $"{student.FName} {student.LName}";
 
                             if (string.IsNullOrWhiteSpace(tutorEmail))
                             {
                                 _logger.LogWarning("Tutor email is missing for appointment {AppointmentId}. " +
                                     "Database reminders will still be processed.", appointment.AppointmentId);
-                            }
-
-                            var studentName = student == null ? "the student" : $"{student.FName} {student.LName}";
+                            }                         
 
                             // Reminder 1: one hour after the appointment ends
-                            if (!appointment.Reminder1Sent &&
-                                now >= appointment.EndDate.AddHours(1))
+                            if (!appointment.Reminder1Sent && now >= appointment.EndDate.AddHours(1))
                             {
                                 // Recheck that the appointment is still scheduled
                                 if (!await IsStillScheduledAsync(db, appointment.AppointmentId, stoppingToken))
@@ -80,12 +71,10 @@ namespace TAMS.Services
                                 }
 
                                 // FIRST: Mark the reminder as sent in MongoDB
-                                var reminder1Filter =
-                                    Builders<Appointment>.Filter.Eq(a => a.AppointmentId, appointment.AppointmentId)
+                                var reminder1Filter = Builders<Appointment>.Filter.Eq(a => a.AppointmentId, appointment.AppointmentId)
                                     & Builders<Appointment>.Filter.Eq(a => a.Status, "Scheduled")
                                     & Builders<Appointment>.Filter.Or(Builders<Appointment>.Filter.Eq(a => a.Reminder1Sent, false),
                                         Builders<Appointment>.Filter.Exists("Reminder1Sent", false));
-
                                 var reminder1Update = Builders<Appointment>.Update.Set(a => a.Reminder1Sent, true);
                                 var reminder1Result = await db.Appointments.UpdateOneAsync(reminder1Filter, reminder1Update, cancellationToken: stoppingToken);
 
@@ -114,8 +103,7 @@ namespace TAMS.Services
                             }
 
                             // Reminder 2: 24 hours after the appointment ends
-                            if (!appointment.Reminder2Sent &&
-                                now >= appointment.EndDate.AddHours(24))
+                            if (!appointment.Reminder2Sent && now >= appointment.EndDate.AddHours(24))
                             {
                                 // Recheck that the appointment is still scheduled
                                 if (!await IsStillScheduledAsync(db, appointment.AppointmentId, stoppingToken))
@@ -124,12 +112,10 @@ namespace TAMS.Services
                                 }
 
                                 // FIRST: Mark the reminder as sent in MongoDB
-                                var reminder2Filter =
-                                    Builders<Appointment>.Filter.Eq(a => a.AppointmentId, appointment.AppointmentId)
+                                var reminder2Filter = Builders<Appointment>.Filter.Eq(a => a.AppointmentId, appointment.AppointmentId)
                                     & Builders<Appointment>.Filter.Eq(a => a.Status, "Scheduled")
                                     & Builders<Appointment>.Filter.Or(Builders<Appointment>.Filter.Eq(a => a.Reminder2Sent, false),
                                         Builders<Appointment>.Filter.Exists("Reminder2Sent", false));
-
                                 var reminder2Update = Builders<Appointment>.Update.Set(a => a.Reminder2Sent, true);
                                 var reminder2Result = await db.Appointments.UpdateOneAsync(reminder2Filter, reminder2Update, cancellationToken: stoppingToken);
 
@@ -158,8 +144,7 @@ namespace TAMS.Services
                             }
 
                             // Reminder 3: 48 hours after the appointment ends
-                            if (!appointment.NeedsAdminFollowUp &&
-                                now >= appointment.EndDate.AddHours(48))
+                            if (!appointment.NeedsAdminFollowUp && now >= appointment.EndDate.AddHours(48))
                             {
                                 // Recheck that the appointment is still scheduled
                                 if (!await IsStillScheduledAsync(db, appointment.AppointmentId, stoppingToken))
@@ -168,14 +153,11 @@ namespace TAMS.Services
                                 }
 
                                 // FIRST: Record the Admin follow-up flag in MongoDB
-                                var followUpFilter =
-                                    Builders<Appointment>.Filter.Eq(a => a.AppointmentId, appointment.AppointmentId)
+                                var followUpFilter = Builders<Appointment>.Filter.Eq(a => a.AppointmentId, appointment.AppointmentId)
                                     & Builders<Appointment>.Filter.Eq(a => a.Status, "Scheduled")
                                     & Builders<Appointment>.Filter.Or(Builders<Appointment>.Filter.Eq(a => a.NeedsAdminFollowUp, false),
                                         Builders<Appointment>.Filter.Exists("NeedsAdminFollowUp", false));
-
                                 var followUpUpdate = Builders<Appointment>.Update.Set(a => a.NeedsAdminFollowUp, true);
-
                                 var followUpResult = await db.Appointments.UpdateOneAsync(followUpFilter, followUpUpdate, cancellationToken: stoppingToken);
 
                                 if (followUpResult.ModifiedCount > 0)
@@ -204,8 +186,7 @@ namespace TAMS.Services
                             }
 
                             // 72 hours after the appointment ends, notify the Admin and remove all tutor reminders after an email succeeds
-                            if (!appointment.AdminNotificationSent &&
-                                now >= appointment.EndDate.AddHours(72))
+                            if (!appointment.AdminNotificationSent && now >= appointment.EndDate.AddHours(72))
                             {
                                 if (!await IsStillScheduledAsync(db, appointment.AppointmentId, stoppingToken))
                                 {
@@ -244,21 +225,16 @@ namespace TAMS.Services
                                 // Only remove the tutor reminders if an Admin email was successfully sent
                                 if (adminEmailSent)
                                 {
-                                    var adminNotificationFilter =
-                                        Builders<Appointment>.Filter.Eq(a => a.AppointmentId, appointment.AppointmentId)
+                                    var adminNotificationFilter = Builders<Appointment>.Filter.Eq(a => a.AppointmentId, appointment.AppointmentId)
                                         & Builders<Appointment>.Filter.Eq(a => a.TutorId, appointment.TutorId)
                                         & Builders<Appointment>.Filter.Eq(a => a.Status, "Scheduled")
                                         & Builders<Appointment>.Filter.Ne(a => a.AdminNotificationSent, true);
 
-                                    var adminNotificationUpdate =
-                                        Builders<Appointment>.Update
-                                            .Set(a => a.AdminNotificationSent, true)
-                                            .Set(a => a.TutorReminder1Acknowledged, true)
-                                            .Set(a => a.TutorReminder2Acknowledged, true)
+                                    var adminNotificationUpdate = Builders<Appointment>.Update.Set(a => a.AdminNotificationSent, true)
+                                            .Set(a => a.TutorReminder1Acknowledged, true).Set(a => a.TutorReminder2Acknowledged, true)
                                             .Set(a => a.TutorReminder3Acknowledged, true);
 
                                     var result = await db.Appointments.UpdateOneAsync(adminNotificationFilter, adminNotificationUpdate, cancellationToken: stoppingToken);
-
                                     if (result.ModifiedCount > 0)
                                     {
                                         appointment.AdminNotificationSent = true;

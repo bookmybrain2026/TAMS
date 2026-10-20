@@ -4,7 +4,8 @@ using Microsoft.Extensions.Logging;
 
 namespace TAMS.Services;
 
-// Background service that takes emails from your queue and sends them without making users wait for the actual sending process.
+// Background service that takes emails from queue and sends them without making users wait
+
 public sealed class EmailQueueWorker : BackgroundService
 {
     private readonly EmailQueue _queue;

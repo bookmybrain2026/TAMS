@@ -7,36 +7,23 @@ public class RecoveryCodeCleanupService : BackgroundService
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<RecoveryCodeCleanupService> _logger;
 
-    public RecoveryCodeCleanupService(
-        IServiceScopeFactory scopeFactory,
-        ILogger<RecoveryCodeCleanupService> logger)
+    public RecoveryCodeCleanupService(IServiceScopeFactory scopeFactory, ILogger<RecoveryCodeCleanupService> logger)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
     }
 
-    protected override async Task ExecuteAsync(
-        CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
                 using var scope = _scopeFactory.CreateScope();
-
-                var db = scope.ServiceProvider
-                    .GetRequiredService<MongoDBContext>();
-
-                var filter = Builders<PasswordRecovery>.Filter
-                    .Eq(recovery => recovery.IsUsed, true);
-
-                var result = await db.PasswordRecoveries.DeleteManyAsync(
-                    filter,
-                    stoppingToken);
-
-                _logger.LogInformation(
-                    "Recovery code cleanup deleted {Count} used codes.",
-                    result.DeletedCount);
+                var db = scope.ServiceProvider.GetRequiredService<MongoDBContext>();
+                var filter = Builders<PasswordRecovery>.Filter.Eq(recovery => recovery.IsUsed, true);
+                var result = await db.PasswordRecoveries.DeleteManyAsync(filter, stoppingToken);
+                _logger.LogInformation("Recovery code cleanup deleted {Count} used codes.", result.DeletedCount);
             }
             catch (OperationCanceledException)
                 when (stoppingToken.IsCancellationRequested)
@@ -45,9 +32,7 @@ public class RecoveryCodeCleanupService : BackgroundService
             }
             catch (Exception ex)
             {
-                _logger.LogError(
-                    ex,
-                    "Recovery code cleanup failed.");
+                _logger.LogError(ex, "Recovery code cleanup failed.");
             }
 
             try

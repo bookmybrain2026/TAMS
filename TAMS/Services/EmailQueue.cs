@@ -1,7 +1,8 @@
-﻿using System.Threading.Channels;
+﻿//connects QueuedEmailService.cs and SmtpEmailService.cs
+//Stores pending email jobs in a bounded channel
+using System.Threading.Channels;
 
 namespace TAMS.Services;
-
 public sealed class EmailQueue
 {
     private readonly Channel<Func<IEmailService, Task>> _channel = Channel.CreateBounded<Func<IEmailService, Task>>(
