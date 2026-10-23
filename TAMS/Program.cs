@@ -29,6 +29,9 @@ builder.Services.AddHostedService<EmailQueueWorker>(); //Starts the background s
 builder.Services.AddHostedService<RecoveryCodeCleanupService>(); 
 builder.Services.AddHostedService<AppointmentReminderService>();
 
+builder.Services.AddScoped<UpcomingAppointmentReminderService>();
+builder.Services.AddHostedService<UpcomingAppointmentReminderBackgroundService>();
+
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 

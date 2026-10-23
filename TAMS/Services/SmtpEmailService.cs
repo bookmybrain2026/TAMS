@@ -514,6 +514,81 @@ namespace TAMS.Services
             await smtp.SendAsync(message);
             await smtp.DisconnectAsync(true);
         }
-       
+
+
+
+        public async Task SendStudentUpcomingAppointmentReminderAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate, int hoursBefore)
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.To.Add(new MailboxAddress(studentName, studentEmail));
+
+            message.Subject = hoursBefore == 24 ? "Reminder: Your Tutoring Appointment Is Tomorrow"
+                : "Reminder: Your Tutoring Appointment Is in One Hour";
+
+            string reminderText = hoursBefore == 24 ? "Your tutoring appointment is scheduled for tomorrow."
+                : "Your tutoring appointment starts in approximately one hour.";
+
+            message.Body = new TextPart("plain")
+            {
+                Text = $"""
+                    Hello {studentName},
+
+                    {reminderText}
+
+                    Tutor: {tutorName}
+                    Appointment Date: {appointmentDate:MMMM dd, yyyy}
+                    Appointment Time: {appointmentDate:h:mm tt}
+
+                    Please be ready for your scheduled tutoring session.
+
+                    Thank you for using TAMS.
+                    """
+            };
+
+            using var smtp = new SmtpClient();
+            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
+            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
+            await smtp.SendAsync(message);
+            await smtp.DisconnectAsync(true);
+        }
+
+        public async Task SendTutorUpcomingAppointmentReminderAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate, int hoursBefore)
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.To.Add(new MailboxAddress(tutorName, tutorEmail));
+
+            message.Subject = hoursBefore == 24 ? "Reminder: Your Tutoring Appointment Is Tomorrow"
+                : "Reminder: Your Tutoring Appointment Is in One Hour";
+
+            string reminderText = hoursBefore == 24 ? "You have a tutoring appointment scheduled for tomorrow."
+                : "Your tutoring appointment starts in approximately one hour.";
+
+            message.Body = new TextPart("plain")
+            {
+                Text = $"""
+                    Hello {tutorName},
+
+                    {reminderText}
+
+                    Student: {studentName}
+                    Appointment Date: {appointmentDate:MMMM dd, yyyy}
+                    Appointment Time: {appointmentDate:h:mm tt}
+
+                    Please prepare for your scheduled tutoring session.
+
+                    Thank you for using TAMS.
+                    """
+            };
+
+            using var smtp = new SmtpClient();
+            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
+            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
+            await smtp.SendAsync(message);
+            await smtp.DisconnectAsync(true);
+        }
+
+
     }
 }

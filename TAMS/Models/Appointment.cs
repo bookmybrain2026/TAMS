@@ -55,5 +55,12 @@ namespace TAMS.Models
 
         [BsonElement("TutorReminder3Acknowledged")]
         public bool TutorReminder3Acknowledged { get; set; } = false;
+
+        [BsonElement("Reminder24HoursBeforeSent")]
+        public bool Reminder24HoursBeforeSent { get; set; } = false;
+
+        [BsonElement("Reminder1HourBeforeSent")]
+        public bool Reminder1HourBeforeSent { get; set; } = false;
+
     }
 }

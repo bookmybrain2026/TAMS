@@ -99,5 +99,18 @@ namespace TAMS.Services
             return _queue.EnqueueAsync(sender =>
                 sender.SendStudentAppointmentRescheduledAsync(studentEmail, studentName, tutorName, newAppointmentDate)).AsTask();
         }
+
+        public Task SendStudentUpcomingAppointmentReminderAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate, int hoursBefore)
+        {
+            return _queue.EnqueueAsync(sender =>
+                sender.SendStudentUpcomingAppointmentReminderAsync(studentEmail, studentName, tutorName, appointmentDate, hoursBefore)).AsTask();
+        }
+
+        public Task SendTutorUpcomingAppointmentReminderAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate, int hoursBefore)
+        {
+            return _queue.EnqueueAsync(sender =>
+                sender.SendTutorUpcomingAppointmentReminderAsync(tutorEmail, tutorName, studentName, appointmentDate, hoursBefore)).AsTask();
+        }
+
     }
 }

@@ -282,7 +282,9 @@ namespace TAMS.Controllers
                     .Set(a => a.StudentId, studentId)
                     .Set(a => a.AppointmentDate, newStart)
                     .Set(a => a.EndDate, newEnd)
-                    .Set(a => a.Status, "Scheduled");
+                    .Set(a => a.Status, "Scheduled")
+                    .Set(a => a.Reminder24HoursBeforeSent, false)
+                    .Set(a => a.Reminder1HourBeforeSent, false);
 
                 var updateResult = dBContext.Appointments.UpdateOne(a => a.AppointmentId == appointmentId && a.StudentId == studentId && a.Status == "Scheduled", update);
 
