@@ -15,12 +15,34 @@
 }
 <body>
     <div class="student-dashboard">
+        @{
+            var studentReminderAppointments = ViewBag.StudentReminderAppointments as List<Appointment> ?? new List<Appointment>();
+            var studentReminderCount = studentReminderAppointments.Sum(a =>
+            (a.Reminder24HoursBeforeSent && !a.StudentReminder24HoursAcknowledged ? 1 : 0) + (a.Reminder1HourBeforeSent && !a.StudentReminder1HourAcknowledged ? 1 : 0));
+        }
+
         <header class="dashboard-header">
             <div>
                 <h1>Welcome, @Model.FName @Model.LName!</h1>
                 <p>Your tutoring journey, all in one place.</p>
             </div>
-            <span class="dashboard-tag">STUDENT PORTAL</span>
+
+            <div class="dashboard-header-actions">
+                <button type="button" class="student-notification-button" aria-label="Appointment reminders" aria-haspopup="dialog" aria-controls="studentReminderModal"
+                        onclick="openTutorModal('@Url.Action("Dashboard", "Student", new { id = Model.StudentId, showStudentReminders = true })', 'studentReminderModal')">
+
+                    <span class="notification-bell" aria-hidden="true">&#128276;</span>
+
+                    @if (studentReminderCount > 0)
+                    {
+                        <span class="student-notification-alert" aria-label="@studentReminderCount reminders require attention">
+                            @studentReminderCount
+                        </span>
+                    }
+                </button>
+
+                <span class="dashboard-tag">STUDENT PORTAL</span>
+            </div>
         </header>
 
         <div class="dashboard-grid">

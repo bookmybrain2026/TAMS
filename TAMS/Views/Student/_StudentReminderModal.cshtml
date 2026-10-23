@@ -1,0 +1,89 @@
+﻿@model List<TAMS.Models.Appointment>
+
+<div id="studentReminderModal" class="tutor-modal student-reminder-modal" role="dialog" aria-modal="true" aria-labelledby="studentReminderTitle" aria-hidden="false">
+    <div class="tutor-modal-content">
+        <div class="tutor-modal-header">
+            <h2 id="studentReminderTitle">
+                <span aria-hidden="true">&#128276;</span>
+                Upcoming Appointment Reminders
+            </h2>
+
+            <button type="button" class="tutor-modal-close" aria-label="Close reminders" onclick="closeTutorModal('studentReminderModal')">
+                &times;
+            </button>
+        </div>
+
+        <div class="tutor-modal-body">
+            @if (Model == null || !Model.Any(a => (a.Reminder24HoursBeforeSent &&
+                        !a.StudentReminder24HoursAcknowledged) || (a.Reminder1HourBeforeSent && !a.StudentReminder1HourAcknowledged)))
+            {
+                <div class="tutor-no-reminders">
+                    <h3>You're all caught up!</h3>
+                    <p>You have no unconfirmed appointment reminders.</p>
+                </div>
+            }
+            else
+            {
+                @foreach (var appointment in Model.OrderBy(a => a.AppointmentDate))
+                {
+                    var tutorName = appointment.Tutor == null ? "Your tutor" : $"{appointment.Tutor.FName} {appointment.Tutor.LName}";
+
+                    <div class="tutor-reminder-card">
+                        <h3>@tutorName</h3>
+
+                        <p>
+                            <strong>Appointment:</strong>
+                            @appointment.AppointmentDate.ToString("MMMM d, yyyy 'at' h:mm tt")
+                        </p>
+
+                        @if (appointment.Reminder24HoursBeforeSent && !appointment.StudentReminder24HoursAcknowledged)
+                        {
+                            <div class="tutor-reminder-item">
+                                <div>
+                                    <strong>24-hour reminder</strong>
+                                    <p>Your appointment reminder email was sent for your upcoming session.</p>
+                                </div>
+
+                                <form asp-controller="Student"
+                                      asp-action="ConfirmAppointmentReminder"
+                                      method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="appointmentId" value="@appointment.AppointmentId" />
+                                    <input type="hidden" name="reminderType" value="24Hours" />
+                                    <button type="submit" class="tutor-reminder-confirm-button">
+                                        Confirm
+                                    </button>
+                                </form>
+                            </div>
+                        }
+
+                        @if (appointment.Reminder1HourBeforeSent && !appointment.StudentReminder1HourAcknowledged)
+                        {
+                            <div class="tutor-reminder-item">
+                                <div>
+                                    <strong>1-hour reminder</strong>
+                                    <p>Your appointment reminder email was sent for your upcoming session.</p>
+                                </div>
+
+                                <form asp-controller="Student" asp-action="ConfirmAppointmentReminder" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="appointmentId" value="@appointment.AppointmentId" />
+                                    <input type="hidden" name="reminderType" value="1Hour" />
+                                    <button type="submit" class="tutor-reminder-confirm-button">
+                                        Confirm
+                                    </button>
+                                </form>
+                            </div>
+                        }
+                    </div>
+                }
+            }
+        </div>
+
+        <div class="tutor-modal-footer">
+            <button type="button" class="tutor-reminder-close-button" onclick="closeTutorModal('studentReminderModal')">
+                Close
+            </button>
+        </div>
+    </div>
+</div>

@@ -284,7 +284,9 @@ namespace TAMS.Controllers
                     .Set(a => a.EndDate, newEnd)
                     .Set(a => a.Status, "Scheduled")
                     .Set(a => a.Reminder24HoursBeforeSent, false)
-                    .Set(a => a.Reminder1HourBeforeSent, false);
+                    .Set(a => a.Reminder1HourBeforeSent, false)
+                    .Set(a => a.StudentReminder24HoursAcknowledged, false)
+                    .Set(a => a.StudentReminder1HourAcknowledged, false);
 
                 var updateResult = dBContext.Appointments.UpdateOne(a => a.AppointmentId == appointmentId && a.StudentId == studentId && a.Status == "Scheduled", update);
 
@@ -372,6 +374,7 @@ namespace TAMS.Controllers
 
             return RedirectToAction("Dashboard", "Student", new { id = studentId });
         }
+
 
     }
 }

@@ -623,3 +623,438 @@
 
     .student-dashboard .reviews-vertical-track .review-item { padding: 15px; }
 }
+
+/* =========================================
+   STUDENT DASHBOARD - REMINDER BUTTON
+   Styled to match the Tutor Dashboard
+========================================= */
+
+.dashboard-header-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 14px;
+    flex-shrink: 0;
+}
+
+.student-notification-button {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    flex-shrink: 0;
+    border: 1px solid #e2ded6;
+    border-radius: 12px;
+    background: #fff;
+    color: #343434;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+    .student-notification-button:hover {
+        background: #f7f3eb;
+        transform: translateY(-1px);
+    }
+
+    .student-notification-button:focus-visible {
+        outline: 3px solid #c58b35;
+        outline-offset: 3px;
+    }
+
+    .student-notification-button .notification-bell {
+        font-size: 24px;
+        line-height: 1;
+    }
+
+.student-notification-alert {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: #dc3545;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+
+/* =========================================
+   STUDENT REMINDER POPUP
+========================================= */
+
+#studentReminderModal.tutor-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.5);
+    box-sizing: border-box;
+}
+
+#studentReminderModal *,
+#studentReminderModal *::before,
+#studentReminderModal *::after {
+    box-sizing: border-box;
+}
+
+#studentReminderModal .tutor-modal-content {
+    position: relative;
+    width: min(720px, calc(100vw - 32px));
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid #e2ded6;
+    border-radius: 16px;
+    background: #fff;
+    color: #343434;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.22);
+    animation: studentReminderModalAppear 0.2s ease-out;
+}
+
+@keyframes studentReminderModalAppear {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.99);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+
+/* =========================================
+   POPUP HEADER
+========================================= */
+
+#studentReminderModal .tutor-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px 24px;
+    border-bottom: 1px solid #eee8df;
+    background: #fff;
+}
+
+    #studentReminderModal .tutor-modal-header h2 {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0;
+        color: #343434;
+        font-size: 1.35rem;
+        font-weight: 700;
+        line-height: 1.3;
+    }
+
+        #studentReminderModal .tutor-modal-header h2 i {
+            color: #c58b35;
+        }
+
+#studentReminderModal .tutor-modal-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #777;
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+    #studentReminderModal .tutor-modal-close:hover {
+        background: #f7f3eb;
+        color: #343434;
+    }
+
+    #studentReminderModal .tutor-modal-close:focus-visible {
+        outline: 3px solid #c58b35;
+        outline-offset: 2px;
+    }
+
+
+/* =========================================
+   POPUP BODY
+========================================= */
+
+#studentReminderModal .tutor-modal-body {
+    flex: 1;
+    min-height: 0;
+    padding: 22px 24px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+#studentReminderModal .tutor-reminder-card {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 16px;
+    padding: 18px;
+    border: 1px solid #e8e1d7;
+    border-left: 4px solid #c58b35;
+    border-radius: 10px;
+    background: #fffdf8;
+}
+
+    #studentReminderModal .tutor-reminder-card:last-child {
+        margin-bottom: 0;
+    }
+
+    #studentReminderModal .tutor-reminder-card h3 {
+        margin: 0 0 10px;
+        color: #343434;
+        font-size: 1.05rem;
+        font-weight: 700;
+    }
+
+    #studentReminderModal .tutor-reminder-card p {
+        margin: 0;
+        color: #666;
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+
+
+/* =========================================
+   24-HOUR AND 1-HOUR REMINDER ITEMS
+========================================= */
+
+#studentReminderModal .tutor-reminder-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 0;
+    border-top: 1px solid #eee8df;
+}
+
+    #studentReminderModal .tutor-reminder-item strong {
+        color: #343434;
+    }
+
+    #studentReminderModal .tutor-reminder-item p {
+        margin-top: 5px;
+        color: #666;
+        font-size: 0.92rem;
+        line-height: 1.5;
+    }
+
+    #studentReminderModal .tutor-reminder-item form {
+        display: inline-flex;
+        flex-shrink: 0;
+        margin: 0;
+    }
+
+
+/* =========================================
+   CONFIRM BUTTON
+========================================= */
+
+#studentReminderModal .tutor-reminder-confirm-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 36px;
+    padding: 9px 16px;
+    border: 1px solid #b9822e;
+    border-radius: 8px;
+    background: #b9822e;
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+    #studentReminderModal .tutor-reminder-confirm-button:hover {
+        border-color: #9e6d23;
+        background: #a97427;
+        transform: translateY(-1px);
+    }
+
+    #studentReminderModal .tutor-reminder-confirm-button:active {
+        transform: translateY(0);
+    }
+
+    #studentReminderModal .tutor-reminder-confirm-button:focus-visible {
+        outline: 3px solid rgba(197, 139, 53, 0.4);
+        outline-offset: 3px;
+    }
+
+
+/* =========================================
+   NO REMINDERS MESSAGE
+========================================= */
+
+#studentReminderModal .tutor-no-reminders {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 28px 16px;
+    text-align: center;
+}
+
+    #studentReminderModal .tutor-no-reminders h3 {
+        margin: 0 0 10px;
+        color: #343434;
+        font-size: 1.2rem;
+        font-weight: 700;
+    }
+
+    #studentReminderModal .tutor-no-reminders p {
+        margin: 0;
+        color: #666;
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+
+
+/* =========================================
+   POPUP FOOTER
+========================================= */
+
+#studentReminderModal .tutor-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid #eee8df;
+    background: #fff;
+}
+
+#studentReminderModal .tutor-reminder-close-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 9px 18px;
+    border: 1px solid #ded8cf;
+    border-radius: 8px;
+    background: #fff;
+    color: #343434;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+    #studentReminderModal .tutor-reminder-close-button:hover {
+        border-color: #c9bda9;
+        background: #f7f3eb;
+    }
+
+    #studentReminderModal .tutor-reminder-close-button:focus-visible {
+        outline: 3px solid #c58b35;
+        outline-offset: 3px;
+    }
+
+
+/* =========================================
+   RESPONSIVE DESIGN
+========================================= */
+
+@media (max-width: 600px) {
+    .dashboard-header-actions {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .student-notification-button {
+        width: 42px;
+        height: 42px;
+    }
+
+    #studentReminderModal.tutor-modal {
+        align-items: center;
+        padding: 10px;
+    }
+
+    #studentReminderModal .tutor-modal-content {
+        width: 100%;
+        max-height: 90vh;
+        border-radius: 12px;
+    }
+
+    #studentReminderModal .tutor-modal-header {
+        padding: 16px;
+    }
+
+        #studentReminderModal .tutor-modal-header h2 {
+            font-size: 1.15rem;
+        }
+
+    #studentReminderModal .tutor-modal-body {
+        padding: 16px;
+    }
+
+    #studentReminderModal .tutor-reminder-card {
+        padding: 14px;
+    }
+
+    #studentReminderModal .tutor-reminder-item {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+        #studentReminderModal .tutor-reminder-item form {
+            width: 100%;
+        }
+
+    #studentReminderModal .tutor-reminder-confirm-button {
+        width: 100%;
+        min-height: 40px;
+    }
+
+    #studentReminderModal .tutor-modal-footer {
+        padding: 14px 16px;
+    }
+
+    #studentReminderModal .tutor-reminder-close-button {
+        width: 100%;
+    }
+}
+
+
+/* =========================================
+   REDUCED MOTION ACCESSIBILITY
+========================================= */
+
+@media (prefers-reduced-motion: reduce) {
+    #studentReminderModal .tutor-modal-content {
+        animation: none;
+    }
+
+    .student-notification-button,
+    #studentReminderModal .tutor-reminder-confirm-button,
+    #studentReminderModal .tutor-reminder-close-button {
+        transition: none;
+    }
+}

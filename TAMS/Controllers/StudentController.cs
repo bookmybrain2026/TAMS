@@ -20,12 +20,12 @@ namespace TAMS.Controllers
         }
 
         [HttpGet]
-        public IActionResult Dashboard(int? id, string searchTerm = "")
+        public IActionResult Dashboard(int? id, string searchTerm = "", bool showStudentReminders = false)
         {
-            var loggedinstudentId = HttpContext.Session.GetInt32("StudentId");
-            if (loggedinstudentId == null) { return RedirectToAction("Login", "Login"); }
+            var loggedInStudentId = HttpContext.Session.GetInt32("StudentId");
+            if (loggedInStudentId == null) { return RedirectToAction("Login", "Login"); }
 
-            if (id == null){ return RedirectToAction("Login", "Login");}
+            if (id == null || loggedInStudentId.Value != id.Value) { return Unauthorized(); }
 
             var student = dBContext.Student.Find(s => s.StudentId == id.Value).FirstOrDefault();
 
@@ -74,7 +74,84 @@ namespace TAMS.Controllers
             ViewBag.Tutors = tutors;
             ViewBag.SearchTerm = searchTerm;
 
+            var studentReminderAppointments = student.Appointments
+                .Where(a => a.Status == "Scheduled")
+                .Where(a => (a.Reminder24HoursBeforeSent && !a.StudentReminder24HoursAcknowledged) || (a.Reminder1HourBeforeSent && !a.StudentReminder1HourAcknowledged))
+                .OrderBy(a => a.AppointmentDate).ToList();
+
+            ViewBag.StudentReminderAppointments = studentReminderAppointments;
+
+            if (showStudentReminders) { return PartialView("_StudentReminderModal", studentReminderAppointments); }
+
             return View("StudentDashboard", student);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ConfirmAppointmentReminder(int appointmentId, string reminderType)
+        {
+            var studentId = HttpContext.Session.GetInt32("StudentId");
+            if (studentId == null) { return RedirectToAction("Login", "Login"); }
+
+            if (reminderType != "24Hours" && reminderType != "1Hour")
+            {
+                TempData["ErrorMessage"] = "Invalid reminder selected.";
+                return RedirectToAction("Dashboard", new { id = studentId.Value });
+            }
+
+            var appointment = await dBContext.Appointments
+                .Find(a => a.AppointmentId == appointmentId && a.StudentId == studentId.Value).FirstOrDefaultAsync();
+
+            if (appointment == null)
+            {
+                TempData["ErrorMessage"] = "Appointment not found.";
+                return RedirectToAction("Dashboard", new { id = studentId.Value });
+            }
+
+            if (appointment.Status != "Scheduled")
+            {
+                TempData["ErrorMessage"] = "This appointment is no longer scheduled.";
+                return RedirectToAction("Dashboard", new { id = studentId.Value });
+            }
+
+            var filter = Builders<Appointment>.Filter.Eq(a => a.AppointmentId, appointmentId)
+                & Builders<Appointment>.Filter.Eq(a => a.StudentId, studentId.Value)
+                & Builders<Appointment>.Filter.Eq(a => a.Status, "Scheduled");
+            UpdateDefinition<Appointment> update;
+
+            if (reminderType == "24Hours")
+            {
+                if (!appointment.Reminder24HoursBeforeSent)
+                {
+                    TempData["ErrorMessage"] = "The 24-hour reminder has not been sent yet.";
+
+                    return RedirectToAction("Dashboard", new { id = studentId.Value });
+                }
+                filter &= Builders<Appointment>.Filter.Ne(a => a.StudentReminder24HoursAcknowledged, true);
+                update = Builders<Appointment>.Update.Set(a => a.StudentReminder24HoursAcknowledged, true);
+            }
+            else
+            {
+                if (!appointment.Reminder1HourBeforeSent)
+                {
+                    TempData["ErrorMessage"] = "The 1-hour reminder has not been sent yet.";
+                    return RedirectToAction("Dashboard", new { id = studentId.Value });
+                }
+                filter &= Builders<Appointment>.Filter.Ne(a => a.StudentReminder1HourAcknowledged, true);
+                update = Builders<Appointment>.Update.Set(a => a.StudentReminder1HourAcknowledged, true);
+            }
+
+            var result = await dBContext.Appointments.UpdateOneAsync(filter, update);
+
+            if (result.ModifiedCount > 0)
+            {
+                TempData["SuccessMessage"] = reminderType == "24Hours" ? "24-hour appointment reminder confirmed." : "1-hour appointment reminder confirmed.";
+            }
+            else
+            {
+                TempData["InfoMessage"] = "This reminder was already confirmed or the appointment has changed.";
+            }
+            return RedirectToAction("Dashboard", new { id = studentId.Value });
         }
 
         [HttpGet]
