@@ -911,55 +911,6 @@
     gap: 12px;
 }
 
-.admin-notification-button {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 46px;
-    height: 46px;
-    flex-shrink: 0;
-    border: 1px solid #e2ded6;
-    border-radius: 12px;
-    background: #fff;
-    color: #343434;
-    cursor: pointer;
-    transition: background-color 0.2s ease, transform 0.2s ease;
-}
-
-.admin-notification-button:hover {
-    background: #f7f3eb;
-    transform: translateY(-1px);
-}
-
-.admin-notification-button:focus-visible {
-    outline: 3px solid #c58b35;
-    outline-offset: 3px;
-}
-
-.notification-bell {
-    font-size: 24px;
-    line-height: 1;
-}
-
-.notification-alert {
-    position: absolute;
-    top: -6px;
-    right: -6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    border: 2px solid #fff;
-    border-radius: 50%;
-    background: #dc3545;
-    color: #fff;
-    font-size: 13px;
-    font-weight: 800;
-    line-height: 1;
-}
-
 .admin-follow-up-content {
     width: min(720px, calc(100vw - 32px));
     max-height: 85vh;
@@ -1037,9 +988,9 @@
         flex-direction: column;
     }
 
-        .dashboard-header .admin-primary-button {
-            width: 100%;
-        }
+    .dashboard-header .admin-primary-button {
+        width: 100%;
+    }
 
     .dashboard-summary, .management-grid, .admin-form-grid {
         grid-template-columns: 1fr;
@@ -1063,9 +1014,9 @@
         padding: 22px;
     }
 
-        .analytics-panel .admin-primary-button {
-            width: 100%;
-        }
+    .analytics-panel .admin-primary-button {
+        width: 100%;
+    }
 
     .status-summary {
         gap: 9px;
@@ -1145,10 +1096,10 @@
         transition: none;
     }
 
-        .report-download-actions .report-card:hover,
-        .report-download-actions .admin-primary-button:hover {
-            transform: none;
-        }
+    .report-download-actions .report-card:hover,
+    .report-download-actions .admin-primary-button:hover {
+        transform: none;
+    }
 }
 
 @media (max-width: 600px) {
@@ -1169,10 +1120,10 @@
         margin: auto 0;
     }
 
-        .tutor-modal-content h2 {
-            padding-right: 24px;
-            font-size: 20px;
-        }
+    .tutor-modal-content h2 {
+        padding-right: 24px;
+        font-size: 20px;
+    }
 
     .tutor-schedule-table-wrap .admin-table {
         min-width: 560px;
