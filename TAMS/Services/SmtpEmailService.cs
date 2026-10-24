@@ -9,10 +9,12 @@ namespace TAMS.Services
     {
         private readonly IConfiguration _configuration;
         //IConfiguration allows the class to read values from configuration files like appsetting.json
+        private readonly IWebHostEnvironment _environment;
 
-        public SmtpEmailService(IConfiguration configuration) //runs when ASP.NET Core creates an EmailService object
+        public SmtpEmailService(IConfiguration configuration, IWebHostEnvironment environment) //runs when ASP.NET Core creates an EmailService object
         {
             _configuration = configuration; //stores the configuration object in the class field so the email methods can use it
+            _environment = environment;
         }
 
         public async Task SendStudentAppointmentConfirmationAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate)
@@ -275,6 +277,8 @@ namespace TAMS.Services
         }
 
 
+
+        //Styling Done for PasswordRecoveryCode
         public async Task SendPasswordRecoveryCodeAsync(string studentEmail, string studentName, string recoveryCode)
         {
             var message = new MimeMessage();
@@ -282,20 +286,61 @@ namespace TAMS.Services
             message.To.Add(new MailboxAddress(studentName, studentEmail));
             message.Subject = "TAMS Password Recovery Code";
 
-            message.Body = new TextPart("plain") //email body
+            var builder = new BodyBuilder();
+
+            var templatePath = Path.Combine(_environment.ContentRootPath, "EmailTemplates", "PasswordRecovery.html"); //external HTML email template.
+            var html = await File.ReadAllTextAsync(templatePath);
+            var bannerPath = Path.Combine(_environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot"), "images", "banner.png");
+
+            string bannerHtml = "";
+
+            if (File.Exists(bannerPath))
             {
-                Text = $"""
+                var banner = builder.LinkedResources.Add(bannerPath);
+                banner.ContentId = Guid.NewGuid().ToString() + "@tams";
+
+                bannerHtml = $"""
+                    <img src="cid:{banner.ContentId}"
+                         alt="BookMyBrain" width="560"
+                         style="display:block;width:100%;max-width:560px;
+                                height:auto;border:0;margin:0 auto;">
+                    """;
+            }
+
+            var sName = System.Net.WebUtility.HtmlEncode(studentName);
+            var rCode = System.Net.WebUtility.HtmlEncode(recoveryCode);
+
+            html = html.Replace("{{BannerHtml}}", bannerHtml);
+            html = html.Replace("{{StudentName}}", sName);
+            html = html.Replace("{{RecoveryCode}}", rCode);
+
+            builder.HtmlBody = html;
+
+            // for email clients that cannot display HTML
+            builder.TextBody = $"""
+                TAMS Password Recovery
+
                 Hello {studentName},
-                "Your password recovery code is: {recoveryCode}
-                This code will expire in 10 minutes and can only be used once
-                If you did not request a password reset, you can ignore this email
+
+                We received a request to reset your password.
+
+                Your recovery code is: {recoveryCode}
+
+                This code expires in 10 minutes and can only be used once.
+
+                If you did not request a password reset, you can safely
+                ignore this email.
 
                 Thank you for using TAMS.
-                """
-            };
+
+                The BookMyBrain Team
+                Tutoring Appointment Management System
+                """;
+
+            message.Body = builder.ToMessageBody();
 
             using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]), MailKit.Security.SecureSocketOptions.StartTls);
+            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
             await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
             await smtp.SendAsync(message);
             await smtp.DisconnectAsync(true);
