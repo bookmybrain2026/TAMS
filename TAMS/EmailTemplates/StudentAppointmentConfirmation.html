@@ -1,0 +1,86 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TAMS Student Appointment Confirmation</title>
+</head>
+
+<body style="margin:0; padding:0; background-color:#F7F0E4; font-family:'Segoe UI',Arial,sans-serif; color:#35291F;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F7F0E4;">
+        <tr>
+            <td align="center" style="padding:30px 12px;">
+
+                <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0"
+                       style="width:100%; max-width:560px; background:#FFFFFF; border-radius:14px;">
+
+                    <tr>
+                        <td align="center" style="padding:0; background:#F4A51C;">
+                            {{BannerHtml}}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding:35px 30px;">
+
+                            <h1 style="margin:0 0 25px; color:#35291F; font-size:28px; line-height:1.3;">
+                                Appointment Confirmation
+                            </h1>
+
+                            <p style="color:#76634F; font-size:14px; line-height:1.8;">
+                                Hello {{StudentName}},
+                            </p>
+
+                            <p style="color:#76634F; font-size:14px; line-height:1.8;">
+                                This email confirms the appointment you booked through TAMS.
+                            </p>
+
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                                   style="background:#FFF8E8; border:1px solid #E9DECC; border-radius:10px; margin:25px 0;">
+                                <tr>
+                                    <td align="center" style="padding:25px 15px;">
+                                        <p style="margin:0 0 25px; color:#79512F; font-size:12px; font-weight:bold; letter-spacing:2px;">
+                                            Appointment Information
+                                        </p>
+
+                                        <p style="margin:0; color:#35291F; font-family:Consolas,'Courier New',monospace;
+                                                  font-size:15px; font-weight:normal; letter-spacing:4px; overflow-wrap:anywhere; word-break:break-word; text-align: left;">
+                                            <b>Date:</b> {{AppointmentDate}} <br>
+                                            <b>Subject:</b> {{Subject}} <br>
+                                            <b>Tutor:</b> {{TutorName}} <br>
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+
+
+                            <p style="margin:22px 0; color:#76634F; font-size:13px; line-height:1.8;">
+                                We will send a reminder for your appointment at a later date. <br>
+                                Appointment ID: {{AppointmentID}}
+                            </p>
+
+                            <hr style="border:0; border-top:1px solid #E9DECC; margin:28px 0 22px;">
+
+                            <p style="margin:0 0 6px; color:#79512F; font-size:13px; line-height:1.7; text-align:center;">
+                                Thank you for using TAMS.
+                            </p>
+
+                            <p style="margin:0; color:#35291F; font-size:14px; font-weight:bold; text-align:center;">
+                                The BookMyBrain Team
+                            </p>
+
+                        </td>
+                    </tr>
+                </table>
+
+                <p style="margin:18px 0 0; color:#8A7967; font-size:11px; text-align:center;">
+                    Tutoring Appointment Management System
+                </p>
+
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
