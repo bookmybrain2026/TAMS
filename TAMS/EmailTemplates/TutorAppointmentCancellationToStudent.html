@@ -1,11 +1,10 @@
-
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TAMS Student Appointment Cancellation By Admin</title>
+    <title>Student Appointment Cancellation by Tutor</title>
 </head>
 
 <body style="margin:0; padding:0; background-color:#F7F0E4; font-family:'Segoe UI',Arial,sans-serif; color:#35291F;">
@@ -26,7 +25,7 @@
                         <td style="padding:35px 30px;">
 
                             <h1 style="margin:0 0 25px; color:#35291F; font-size:28px; line-height:1.3;">
-                                Appointment Cancellation
+                                Appointment Cancellation by Tutor
                             </h1>
 
                             <p style="color:#76634F; font-size:14px; line-height:1.8;">
@@ -34,34 +33,38 @@
                             </p>
 
                             <p style="color:#76634F; font-size:14px; line-height:1.8;">
-                                This email is to inform you that an administrator has cancelled an upcoming appointment through TAMS.
+                                We are writing to inform you that your tutor has cancelled
+                                your scheduled appointment. Please review the cancellation
+                                details below.
                             </p>
 
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
                                    style="background:#f1e1e0; border:1px solid #f8d1cb; border-radius:10px; margin:25px 0;">
                                 <tr>
                                     <td align="center" style="padding:25px 15px;">
+
                                         <p style="margin:0 0 25px; color:#79512F; font-size:12px; font-weight:bold; letter-spacing:2px;">
                                             Cancelled Appointment Information
                                         </p>
 
                                         <p style="margin:0; color:#35291F; font-family:Consolas,'Courier New',monospace;
-                                                  font-size:15px; font-weight:normal; letter-spacing:4px; overflow-wrap:anywhere; word-break:break-word; text-align: left;">
-                                            <b>Tutor:</b> {{TutorName}} <br>
-                                            <b>Date:</b> {{AppointmentDate}} <br>
-                                            <b>Time:</b> {{AppointmentTime}} <br>
-                                            <b>Subject:</b> {{Subject}} <br>
-                                            <b> Status: </b> {{AppointmentStatus}} <br>
-                                            
+                                                  font-size:15px; font-weight:normal; line-height:2;
+                                                  overflow-wrap:anywhere; word-break:break-word; text-align:left;">
+                                            <b>Tutor:</b> {{TutorName}}<br>
+                                            <b>Date:</b> {{AppointmentDate}}<br>
+                                            <b>Time:</b> {{AppointmentTime}}<br>
+                                            <b>Status:</b> Cancelled<br>
+                                            <b>Cancelled By:</b> {{TutorName}}<br>
                                         </p>
+
                                     </td>
                                 </tr>
                             </table>
 
-
                             <p style="margin:22px 0; color:#76634F; font-size:13px; line-height:1.8;">
-                                Thank you for choosing TAMS. We hope to see you back. <br>
-                                Appointment ID: {{AppointmentID}}
+                                Please log in to TAMS to review your appointments and schedule
+                                another appointment if needed. If you have any questions,
+                                please contact the TAMS administrator.
                             </p>
 
                             <hr style="border:0; border-top:1px solid #E9DECC; margin:28px 0 22px;">

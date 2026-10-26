@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TAMS Tutor Appointment Cancellation</title>
+    <title>Student Appointment Cancellation - Send to Tutor</title>
 </head>
 
 <body style="margin:0; padding:0; background-color:#F7F0E4; font-family:'Segoe UI',Arial,sans-serif; color:#35291F;">
@@ -26,7 +26,7 @@
                         <td style="padding:35px 30px;">
 
                             <h1 style="margin:0 0 25px; color:#35291F; font-size:28px; line-height:1.3;">
-                                Appointment Cancellation
+                                Student Cancelled an Appointment
                             </h1>
 
                             <p style="color:#76634F; font-size:14px; line-height:1.8;">
@@ -34,7 +34,7 @@
                             </p>
 
                             <p style="color:#76634F; font-size:14px; line-height:1.8;">
-                                This email confirms that you have cancelled your upcoming appointment through TAMS.
+                                The following appointment has been cancelled by the student.
                             </p>
 
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
@@ -46,22 +46,19 @@
                                         </p>
 
                                         <p style="margin:0; color:#35291F; font-family:Consolas,'Courier New',monospace;
-                                                  font-size:15px; font-weight:normal; letter-spacing:4px; overflow-wrap:anywhere; word-break:break-word; text-align: left;">
+                                                  font-size:15px; font-weight:normal; letter-spacing:4px; overflow-wrap:anywhere; word-break:break-word; text-align:left;">
                                             <b>Student:</b> {{StudentName}} <br>
-                                            <b>Date:</b> {{AppointmentDate}} <br>
-                                            <b>Time:</b> {{AppointmentTime}} <br>
-                                            <b>Subject:</b> {{Subject}} <br>
-                                            <b> Status: </b> {{AppointmentStatus}} <br>
-                                            
+                                            <b>Appointment Date:</b> {{AppointmentDate}} <br>
+                                            <b>Appointment Time:</b> {{AppointmentTime}} <br>
+                                            <b>Status:</b> Cancelled <br>
+                                            <b>Cancelled By:</b> {{StudentName}}
                                         </p>
                                     </td>
                                 </tr>
                             </table>
 
-
                             <p style="margin:22px 0; color:#76634F; font-size:13px; line-height:1.8;">
-                                Thank you for choosing TAMS. <br>
-                                Appointment ID: {{AppointmentID}}
+                                Please review your schedule for the updated availability.
                             </p>
 
                             <hr style="border:0; border-top:1px solid #E9DECC; margin:28px 0 22px;">

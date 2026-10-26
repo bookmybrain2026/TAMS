@@ -16,13 +16,13 @@
     <None Update="EmailTemplates\PasswordRecovery.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="EmailTemplates\StudentAppointmentCancellation.html">
+    <None Update="EmailTemplates\StudentAppointmentCancellationToStudent.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="EmailTemplates\StudentAppointmentCancellationByAdmin.html">
+    <None Update="EmailTemplates\AppointmentCancellationByAdmin.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="EmailTemplates\StudentAppointmentCancellationByTutor.html">
+    <None Update="EmailTemplates\StudentAppointmentCancellationToTutor.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="EmailTemplates\StudentAppointmentConfirmation.html">
@@ -31,13 +31,13 @@
     <None Update="EmailTemplates\StudentAppointmentReminder.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="EmailTemplates\TutorAppointmentCancellation.html">
+    <None Update="EmailTemplates\TutorAppointmentCancellationToStudent.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="EmailTemplates\TutorAppointmentCancellationConfirmation.html">
+    <None Update="EmailTemplates\TutorAppointmentCancellationToTutor.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="EmailTemplates\TutorAppointmentNotification.html">
+    <None Update="EmailTemplates\TutorAppointmentConfirmation.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

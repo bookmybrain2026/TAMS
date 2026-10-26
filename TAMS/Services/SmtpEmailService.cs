@@ -123,7 +123,7 @@ namespace TAMS.Services
 
             var builder = new BodyBuilder();
 
-            var templatePath = Path.Combine(_environment.ContentRootPath, "EmailTemplates", "TutorAppointmentNotification.html");
+            var templatePath = Path.Combine(_environment.ContentRootPath, "EmailTemplates", "TutorAppointmentConfirmation.html");
             var html = await File.ReadAllTextAsync(templatePath);
             var bannerPath = Path.Combine(_environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot"), "images", "banner.png");
 
@@ -199,7 +199,7 @@ namespace TAMS.Services
 
             var builder = new BodyBuilder();
 
-            var templatePath = Path.Combine(_environment.ContentRootPath, "EmailTemplates", "StudentAppointmentCancellation.html");
+            var templatePath = Path.Combine(_environment.ContentRootPath, "EmailTemplates", "StudentAppointmentCancellationToStudent.html");
 
             var html = await File.ReadAllTextAsync(templatePath);
 
@@ -255,6 +255,162 @@ namespace TAMS.Services
                 TAMS administrator.
 
                 Thank you for choosing TAMS. We hope to see you back.
+                               
+                The BookMyBrain Team
+                Tutoring Appointment Management System
+                """;
+
+            message.Body = builder.ToMessageBody();
+
+            using var smtp = new SmtpClient();
+            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
+            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
+            await smtp.SendAsync(message);
+            await smtp.DisconnectAsync(true);
+        }
+
+        //Styling Done for SendTutorAppointmentCancellationAsync
+        public async Task SendTutorAppointmentCancellationAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate)
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.To.Add(new MailboxAddress(tutorName, tutorEmail));
+            message.Subject = "Student Cancelled an Appointment";
+
+            var builder = new BodyBuilder();
+
+            var templatePath = Path.Combine(_environment.ContentRootPath, "EmailTemplates", "StudentAppointmentCancellationToTutor.html");
+
+            var html = await File.ReadAllTextAsync(templatePath);
+
+            var bannerPath = Path.Combine(_environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot"), "images", "banner.png");
+
+            string bannerHtml = "";
+
+            if (File.Exists(bannerPath))
+            {
+                var banner = builder.LinkedResources.Add(bannerPath);
+                banner.ContentId = Guid.NewGuid().ToString() + "@tams";
+
+                bannerHtml = $"""
+            <img src="cid:{banner.ContentId}"
+                 alt="BookMyBrain" width="560"
+                 style="display:block;width:100%;max-width:560px;
+                        height:auto;border:0;margin:0 auto;">
+            """;
+            }
+
+            var localAppointmentDate = appointmentDate.AddHours(-5);
+
+            var formattedDate = localAppointmentDate.ToString("MMMM dd, yyyy");
+            var formattedTime = localAppointmentDate.ToString("h:mm tt");
+
+            var tName = System.Net.WebUtility.HtmlEncode(tutorName);
+            var sName = System.Net.WebUtility.HtmlEncode(studentName);
+            var aDate = System.Net.WebUtility.HtmlEncode(formattedDate);
+            var aTime = System.Net.WebUtility.HtmlEncode(formattedTime);
+
+            html = html.Replace("{{BannerHtml}}", bannerHtml);
+            html = html.Replace("{{TutorName}}", tName);
+            html = html.Replace("{{StudentName}}", sName);
+            html = html.Replace("{{AppointmentDate}}", aDate);
+            html = html.Replace("{{AppointmentTime}}", aTime);
+
+            builder.HtmlBody = html;
+
+            builder.TextBody = $"""
+                Hello {tutorName},
+
+                The following appointment has been cancelled by the student.
+
+                Student: {studentName}
+                Appointment Date: {formattedDate}
+                Appointment Time: {formattedTime}
+                Status: Cancelled
+                Cancelled By: {studentName}
+
+                Please review your schedule for the updated availability.
+
+                Thank you for using TAMS.
+                """;
+
+            message.Body = builder.ToMessageBody();
+
+            using var smtp = new SmtpClient();
+            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
+            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
+            await smtp.SendAsync(message);
+            await smtp.DisconnectAsync(true);
+        }
+
+        //Styling Done for SendStudentAppointmentCancelledByTutorAsync
+        public async Task SendStudentAppointmentCancelledByTutorAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate)
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.To.Add(new MailboxAddress(studentName, studentEmail));
+            message.Subject = "Appointment Cancelled by Tutor";
+
+            var builder = new BodyBuilder();
+
+            var templatePath = Path.Combine(_environment.ContentRootPath, "EmailTemplates", "TutorAppointmentCancellationToStudent.html");
+
+            var html = await File.ReadAllTextAsync(templatePath);
+
+            var bannerPath = Path.Combine(_environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot"), "images", "banner.png");
+
+            string bannerHtml = "";
+
+            if (File.Exists(bannerPath))
+            {
+                var banner = builder.LinkedResources.Add(bannerPath);
+                banner.ContentId = Guid.NewGuid().ToString() + "@tams";
+
+                bannerHtml = $"""
+                    <img src="cid:{banner.ContentId}"
+                         alt="BookMyBrain" width="560"
+                         style="display:block;width:100%;max-width:560px;
+                                height:auto;border:0;margin:0 auto;">
+                    """;
+            }
+
+            var localAppointmentDate = appointmentDate.AddHours(-5);
+
+            var formattedDate = localAppointmentDate.ToString("MMMM dd, yyyy");
+            var formattedTime = localAppointmentDate.ToString("h:mm tt");
+
+            var sName = System.Net.WebUtility.HtmlEncode(studentName);
+            var tName = System.Net.WebUtility.HtmlEncode(tutorName);
+            var aDate = System.Net.WebUtility.HtmlEncode(formattedDate);
+            var aTime = System.Net.WebUtility.HtmlEncode(formattedTime);
+
+            html = html.Replace("{{BannerHtml}}", bannerHtml);
+            html = html.Replace("{{StudentName}}", sName);
+            html = html.Replace("{{TutorName}}", tName);
+            html = html.Replace("{{AppointmentDate}}", aDate);
+            html = html.Replace("{{AppointmentTime}}", aTime);
+
+            builder.HtmlBody = html;
+
+            builder.TextBody = $"""
+                TAMS Appointment Cancellation Done by Tutor
+
+                Hello {studentName},
+
+                We are writing to inform you that your tutor has cancelled
+                your scheduled appointment.
+
+                Cancelled Appointment Information
+
+                Tutor: {tutorName}
+                Date: {formattedDate}
+                Time: {formattedTime}
+                Status: Cancelled
+
+                Please log in to TAMS to review your appointments and schedule
+                another appointment if needed.
+
+                If you have any questions, please contact the TAMS administrator.
 
                 Thank you for using TAMS.
 
@@ -271,78 +427,7 @@ namespace TAMS.Services
             await smtp.DisconnectAsync(true);
         }
 
-        public async Task SendTutorAppointmentCancellationAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate)
-        {
-            var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
-            message.To.Add(new MailboxAddress(tutorName, tutorEmail));
-            message.Subject = "Student Cancelled an Appointment";
-
-            message.Body = new TextPart("plain")
-            {
-                Text = $"""
-                    Hello {tutorName},
-
-                    The following appointment has been cancelled by the student.
-
-                    Student: {studentName}
-                    Appointment Date: {appointmentDate.AddHours(-5):MMMM dd, yyyy}
-                    Appointment Time: {appointmentDate.AddHours(-5):h:mm tt}
-                    Status: Cancelled
-                    Cancelled By: {studentName}
-
-                    Please review your schedule for the updated availability.
-
-                    Thank you for using TAMS.
-                    """
-            };
-
-            using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
-            await smtp.SendAsync(message);
-            await smtp.DisconnectAsync(true);
-        }
-
-
-
-        public async Task SendStudentAppointmentCancelledByTutorAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate)
-        {
-            var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
-            message.To.Add(new MailboxAddress(studentName, studentEmail));
-            message.Subject = "Appointment Cancelled by Tutor";
-
-            message.Body = new TextPart("plain")
-            {
-                Text = $"""
-                    Hello {studentName},
-
-                    We are writing to inform you that your tutor has cancelled
-                    your scheduled appointment.
-
-                    Tutor: {tutorName}
-                    Appointment Date: {appointmentDate.AddHours(-5):MMMM dd, yyyy}
-                    Appointment Time: {appointmentDate.AddHours(-5):h:mm tt}
-                    Status: Cancelled
-                    Cancelled By: {tutorName}
-
-                    Please log in to TAMS to review your appointments and
-                    schedule another appointment if needed.
-
-                    If you have any questions, please contact the TAMS administrator.
-
-                    Thank you for using TAMS.
-                    """
-            };
-
-            using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
-            await smtp.SendAsync(message);
-            await smtp.DisconnectAsync(true);
-        }
-
+        //Styling Done for SendTutorCancellationConfirmationAsync
         public async Task SendTutorCancellationConfirmationAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate)
         {
             var message = new MimeMessage();
@@ -350,27 +435,73 @@ namespace TAMS.Services
             message.To.Add(new MailboxAddress(tutorName, tutorEmail));
             message.Subject = "Appointment Cancellation Confirmation";
 
-            message.Body = new TextPart("plain")
+            var builder = new BodyBuilder();
+
+            var templatePath = Path.Combine(_environment.ContentRootPath, "EmailTemplates", "TutorAppointmentCancellationToTutor.html");
+            var html = await File.ReadAllTextAsync(templatePath);
+            var bannerPath = Path.Combine(_environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot"), "images", "banner.png");
+
+            string bannerHtml = string.Empty;
+
+            if (File.Exists(bannerPath))
             {
-                Text = $"""
-                    Hello {tutorName},
+                var banner = builder.LinkedResources.Add(bannerPath);
+                banner.ContentId = $"{Guid.NewGuid()}@tams";
 
-                    This email confirms that you have cancelled your appointment.
+                bannerHtml = $"""
+                    <img src="cid:{banner.ContentId}"
+                         alt="BookMyBrain"
+                         width="560"
+                         style="display:block;width:100%;max-width:560px;
+                                height:auto;border:0;margin:0 auto;">
+                    """;
+            }
 
-                    Student: {studentName}
-                    Appointment Date: {appointmentDate.AddHours(-5):MMMM dd, yyyy}
-                    Appointment Time: {appointmentDate.AddHours(-5):h:mm tt}
-                    Status: Cancelled
-                    Cancelled By: You
+            var localAppointmentDate = appointmentDate.AddHours(-5);
+            var formattedDate = localAppointmentDate.ToString("MMMM dd, yyyy");
+            var formattedTime = localAppointmentDate.ToString("h:mm tt");
 
-                    Please review your schedule to confirm the updated availability.
+            var eTutorName = System.Net.WebUtility.HtmlEncode(tutorName);
+            var eStudentName = System.Net.WebUtility.HtmlEncode(studentName);
+            var eDate = System.Net.WebUtility.HtmlEncode(formattedDate);
+            var eTime = System.Net.WebUtility.HtmlEncode(formattedTime);
 
-                    If you did not request this cancellation, please contact
-                    the TAMS administrator.
+            html = html.Replace("{{BannerHtml}}", bannerHtml);
+            html = html.Replace("{{TutorName}}", eTutorName);
+            html = html.Replace("{{StudentName}}", eStudentName);
+            html = html.Replace("{{AppointmentDate}}", eDate);
+            html = html.Replace("{{AppointmentTime}}", eTime);
 
-                    Thank you for using TAMS.
-                    """
-            };
+            builder.HtmlBody = html;
+
+            builder.TextBody = $"""
+                TAMS Appointment Cancellation Confirmation
+
+                Hello {tutorName},
+
+                This email confirms that you have cancelled your scheduled
+                appointment through TAMS.
+
+                Cancelled Appointment Information
+
+                Student: {studentName}
+                Appointment Date: {formattedDate}
+                Appointment Time: {formattedTime}
+                Status: Cancelled
+                Cancelled By: You
+
+                Please review your schedule to confirm the updated availability.
+
+                If you did not request this cancellation, please contact
+                the TAMS administrator.
+
+                Thank you for using TAMS.
+
+                The BookMyBrain Team
+                Tutoring Appointment Management System
+                """;
+
+            message.Body = builder.ToMessageBody();
 
             using var smtp = new SmtpClient();
             await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
@@ -379,36 +510,78 @@ namespace TAMS.Services
             await smtp.DisconnectAsync(true);
         }
 
-
-
+        //Styling Done for SendAdminCancelledAppointmentAsync
         public async Task SendAdminCancelledAppointmentAsync(string recipientEmail, string recipientName, string otherPersonName, DateTime appointmentDate, string recipientType)
         {
             var message = new MimeMessage();
             message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
             message.To.Add(new MailboxAddress(recipientName, recipientEmail));
             message.Subject = "Appointment Cancelled by Administrator";
-
             var otherPersonLabel = recipientType.Equals("student", StringComparison.OrdinalIgnoreCase) ? "Tutor" : "Student";
 
-            message.Body = new TextPart("plain")
+            var builder = new BodyBuilder();
+
+            var templatePath = Path.Combine(_environment.ContentRootPath, "EmailTemplates", "AppointmentCancellationByAdmin.html");
+            var html = await File.ReadAllTextAsync(templatePath);
+
+            var bannerPath = Path.Combine(_environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot"), "images", "banner.png");
+
+            string bannerHtml = string.Empty;
+
+            if (File.Exists(bannerPath))
             {
-                Text = $"""
-                    Hello {recipientName},
+                var banner = builder.LinkedResources.Add(bannerPath);
+                banner.ContentId = $"{Guid.NewGuid()}@tams";
 
-                    Your appointment has been cancelled by a TAMS administrator.
+                bannerHtml = $"""
+                    <img src="cid:{banner.ContentId}"
+                         alt="BookMyBrain"
+                         width="560"
+                         style="display:block;width:100%;max-width:560px;
+                                height:auto;border:0;margin:0 auto;">
+                    """;
+            }
 
-                    {otherPersonLabel}: {otherPersonName}
-                    Appointment Date: {appointmentDate.AddHours(-5):MMMM dd, yyyy}
-                    Appointment Time: {appointmentDate.AddHours(-5):h:mm tt}
-                    Status: Cancelled
-                    Cancelled By: TAMS Administrator
+            var localAppointmentDate = appointmentDate.AddHours(-5);
+            var formattedDate = localAppointmentDate.ToString("MMMM dd, yyyy");
+            var formattedTime = localAppointmentDate.ToString("h:mm tt");
 
-                    Please review your updated schedule. If you have any
-                    questions, please contact the TAMS administrator.
+            var eRecipientName = System.Net.WebUtility.HtmlEncode(recipientName);
+            var eOtherPersonName = System.Net.WebUtility.HtmlEncode(otherPersonName);
+            var encodedOtherPersonLabel = System.Net.WebUtility.HtmlEncode(otherPersonLabel);
+            var eDate = System.Net.WebUtility.HtmlEncode(formattedDate);
+            var eTime = System.Net.WebUtility.HtmlEncode(formattedTime);
 
-                    Thank you for using TAMS.
-                    """
-            };
+            html = html.Replace("{{BannerHtml}}", bannerHtml);
+            html = html.Replace("{{RecipientName}}", eRecipientName);
+            html = html.Replace("{{OtherPersonLabel}}", encodedOtherPersonLabel);
+            html = html.Replace("{{OtherPersonName}}", eOtherPersonName);
+            html = html.Replace("{{AppointmentDate}}", eDate);
+            html = html.Replace("{{AppointmentTime}}", eTime);
+
+            builder.HtmlBody = html;
+            builder.TextBody = $"""
+                TAMS Appointment Cancellation by Administrator
+
+                Hello {recipientName},
+
+                Your appointment has been cancelled by a TAMS administrator.
+
+                {otherPersonLabel}: {otherPersonName}
+                Appointment Date: {formattedDate}
+                Appointment Time: {formattedTime}
+                Status: Cancelled
+                Cancelled By: TAMS Administrator
+
+                Please review your updated schedule. If you have any questions,
+                please contact the TAMS administrator.
+
+                Thank you for using TAMS.
+
+                The BookMyBrain Team
+                Tutoring Appointment Management System
+                """;
+            message.Body = builder.ToMessageBody();
 
             using var smtp = new SmtpClient();
             await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
@@ -416,7 +589,6 @@ namespace TAMS.Services
             await smtp.SendAsync(message);
             await smtp.DisconnectAsync(true);
         }
-
 
 
         //Styling Done for PasswordRecoveryCode

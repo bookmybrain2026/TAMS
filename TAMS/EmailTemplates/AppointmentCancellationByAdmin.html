@@ -1,15 +1,14 @@
-
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TAMS Tutor Appointment Cancellation Confirmation</title>
+    <title>TAMS Appointment Cancellation by Administrator</title>
 </head>
 
 <body style="margin:0; padding:0; background-color:#F7F0E4; font-family:'Segoe UI',Arial,sans-serif; color:#35291F;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F7F0E4;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+           style="background:#F7F0E4;">
         <tr>
             <td align="center" style="padding:30px 12px;">
 
@@ -29,39 +28,40 @@
                                 Appointment Cancellation
                             </h1>
 
-                            <p style="color:#76634F; font-size:14px; line-height:1.8;">
-                                Hello {{TutorName}},
+                            <p style="margin:0 0 15px; color:#76634F; font-size:14px; line-height:1.8;">
+                                Hello {{RecipientName}},
                             </p>
 
-                            <p style="color:#76634F; font-size:14px; line-height:1.8;">
-                                This email confirms that an upcoming appointment has been cancelled through TAMS.
+                            <p style="margin:0 0 15px; color:#76634F; font-size:14px; line-height:1.8;">
+                                This email is to inform you that a TAMS administrator
+                                has cancelled your scheduled appointment. Please review
+                                the appointment details below.
                             </p>
 
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
                                    style="background:#f1e1e0; border:1px solid #f8d1cb; border-radius:10px; margin:25px 0;">
                                 <tr>
-                                    <td align="center" style="padding:25px 15px;">
-                                        <p style="margin:0 0 25px; color:#79512F; font-size:12px; font-weight:bold; letter-spacing:2px;">
-                                            Cancelled Appointment Information
+                                    <td style="padding:25px 20px;">
+
+                                        <p style="margin:0 0 20px; color:#79512F; font-size:12px; font-weight:bold; letter-spacing:2px; text-align:center;">
+                                            CANCELLED APPOINTMENT INFORMATION
                                         </p>
 
-                                        <p style="margin:0; color:#35291F; font-family:Consolas,'Courier New',monospace;
-                                                  font-size:15px; font-weight:normal; letter-spacing:4px; overflow-wrap:anywhere; word-break:break-word; text-align: left;">
-                                            <b>Student:</b> {{StudentName}} <br>
-                                            <b>Date:</b> {{AppointmentDate}} <br>
-                                            <b>Time:</b> {{AppointmentTime}} <br>
-                                            <b>Subject:</b> {{Subject}} <br>
-                                            <b> Status: </b> {{AppointmentStatus}} <br>
-                                            
+                                        <p style="margin:0; color:#35291F; font-size:14px; line-height:2; overflow-wrap:anywhere; word-break:break-word;">
+                                            <strong>{{OtherPersonLabel}}:</strong> {{OtherPersonName}}<br>
+                                            <strong>Date:</strong> {{AppointmentDate}}<br>
+                                            <strong>Time:</strong> {{AppointmentTime}}<br>
+                                            <strong>Status:</strong> Cancelled<br>
+                                            <strong>Cancelled By:</strong> TAMS Administrator
                                         </p>
+
                                     </td>
                                 </tr>
                             </table>
 
-
                             <p style="margin:22px 0; color:#76634F; font-size:13px; line-height:1.8;">
-                                Thank you for choosing TAMS. <br>
-                                Appointment ID: {{AppointmentID}}
+                                Please review your updated schedule. If you have any
+                                questions, please contact the TAMS administrator.
                             </p>
 
                             <hr style="border:0; border-top:1px solid #E9DECC; margin:28px 0 22px;">
