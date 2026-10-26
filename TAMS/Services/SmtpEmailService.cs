@@ -189,8 +189,7 @@ namespace TAMS.Services
             await smtp.DisconnectAsync(true);
         }
 
-
-
+        //Styling Done for SendStudentAppointmentCancellationAsync
         public async Task SendStudentAppointmentCancellationAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate)
         {
             var message = new MimeMessage();
@@ -198,25 +197,72 @@ namespace TAMS.Services
             message.To.Add(new MailboxAddress(studentName, studentEmail));
             message.Subject = "Appointment Cancellation Confirmation";
 
-            message.Body = new TextPart("plain")
+            var builder = new BodyBuilder();
+
+            var templatePath = Path.Combine(_environment.ContentRootPath, "EmailTemplates", "StudentAppointmentCancellation.html");
+
+            var html = await File.ReadAllTextAsync(templatePath);
+
+            var bannerPath = Path.Combine(_environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot"), "images", "banner.png");
+
+            string bannerHtml = "";
+
+            if (File.Exists(bannerPath))
             {
-                Text = $"""
-                    Hello {studentName},
+                var banner = builder.LinkedResources.Add(bannerPath);
+                banner.ContentId = Guid.NewGuid().ToString() + "@tams";
 
-                    This email confirms that you have cancelled your appointment.
+                bannerHtml = $"""
+                    <img src="cid:{banner.ContentId}"
+                         alt="BookMyBrain" width="560"
+                         style="display:block;width:100%;max-width:560px;
+                                height:auto;border:0;margin:0 auto;">
+                    """;
+            }
 
-                    Tutor: {tutorName}
-                    Appointment Date: {appointmentDate.AddHours(-5):MMMM dd, yyyy}
-                    Appointment Time: {appointmentDate.AddHours(-5):h:mm tt}
-                    Status: Cancelled
-                    Cancelled By: You
+            var localAppointmentDate = appointmentDate.AddHours(-5);
 
-                    If you did not request this cancellation, please contact the
-                    TAMS administrator.
+            var formattedDate = localAppointmentDate.ToString("MMMM dd, yyyy");
+            var formattedTime = localAppointmentDate.ToString("h:mm tt");
 
-                    Thank you for using TAMS.
-                    """
-            };
+            var sName = System.Net.WebUtility.HtmlEncode(studentName);
+            var tName = System.Net.WebUtility.HtmlEncode(tutorName);
+            var aDate = System.Net.WebUtility.HtmlEncode(formattedDate);
+            var aTime = System.Net.WebUtility.HtmlEncode(formattedTime);
+
+            html = html.Replace("{{BannerHtml}}", bannerHtml);
+            html = html.Replace("{{StudentName}}", sName);
+            html = html.Replace("{{TutorName}}", tName);
+            html = html.Replace("{{AppointmentDate}}", aDate);
+            html = html.Replace("{{AppointmentTime}}", aTime);
+
+            builder.HtmlBody = html;
+
+            builder.TextBody = $"""
+                TAMS Appointment Cancellation
+
+                Hello {studentName},
+
+                This email confirms that you have cancelled your upcoming appointment through TAMS.
+
+                Tutor: {tutorName}
+                Appointment Date: {formattedDate}
+                Appointment Time: {formattedTime}
+                Status: Cancelled
+                Cancelled By: You
+
+                If you did not request this cancellation, please contact the
+                TAMS administrator.
+
+                Thank you for choosing TAMS. We hope to see you back.
+
+                Thank you for using TAMS.
+
+                The BookMyBrain Team
+                Tutoring Appointment Management System
+                """;
+
+            message.Body = builder.ToMessageBody();
 
             using var smtp = new SmtpClient();
             await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
