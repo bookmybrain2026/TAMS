@@ -3,10 +3,7 @@
 @using TAMS.Models
 
 @{
-    var reminderAppointments =
-        ViewBag.TutorReminderAppointments as List<Appointment>
-        ?? new List<Appointment>();
-
+    var reminderAppointments = ViewBag.TutorReminderAppointments as List<Appointment> ?? new List<Appointment>();
     var now = DateTime.Now;
 }
 
@@ -15,7 +12,7 @@
         <div class="tutor-modal-header">
             <h2 id="tutorReminderTitle">
                 <i class="fas fa-bell" aria-hidden="true"></i>
-                Completion Reminders
+                Reminders
             </h2>
 
             <button type="button" class="tutor-modal-close" aria-label="Close reminders" onclick="closeTutorModal('tutorReminderModal')">
@@ -24,45 +21,54 @@
         </div>
 
         <div class="tutor-modal-body">
-            @if (!reminderAppointments.Any(a => a.Status == "Scheduled" &&
-                        ((!a.TutorReminder1Acknowledged && now >= a.EndDate.AddHours(1)) ||
-                        (!a.TutorReminder2Acknowledged && now >= a.EndDate.AddHours(24)) ||
-                        (!a.TutorReminder3Acknowledged && now >= a.EndDate.AddHours(48)))))
+
+            @{
+                var hasCompletionReminders = reminderAppointments.Any(a => a.Status == "Scheduled" &&
+                ((!a.TutorReminder1Acknowledged && now >= a.EndDate.AddHours(1)) ||
+                (!a.TutorReminder2Acknowledged && now >= a.EndDate.AddHours(24)) ||
+                (!a.TutorReminder3Acknowledged && now >= a.EndDate.AddHours(48))));
+
+                var hasAppointmentReminders = reminderAppointments.Any(a => a.Status == "Scheduled" && ((a.Reminder24HoursBeforeSent &&
+                !a.TutorAppointmentReminder24HoursAcknowledged) || (a.Reminder1HourBeforeSent &&
+                !a.TutorAppointmentReminder1HourAcknowledged)));
+            }
+
+            @if (!hasCompletionReminders && !hasAppointmentReminders)
             {
                 <div class="tutor-no-reminders">
                     <i class="fas fa-check-circle" aria-hidden="true"></i>
-                    <p>You have no pending completion reminders.</p>
+                    <p>You have no pending reminders.</p>
                 </div>
             }
             else
             {
                 <p class="tutor-reminder-intro">
-                    Please confirm each reminder after reviewing the appointment that needs your attention.
+                    Please review and confirm each reminder that needs your attention.
                 </p>
 
-                @foreach (var appointment in reminderAppointments)
+                @foreach (var appointment in reminderAppointments.Where(a => a.Status == "Scheduled").OrderBy(a => a.AppointmentDate))
                 {
-                    var reminderTypes = new List<(int Hours, string Label, bool IsDue)>();
-
-                    if (!appointment.TutorReminder1Acknowledged &&
-                    now >= appointment.EndDate.AddHours(1))
+                    var completionReminderTypes = new List<(int Hours, string Label)>();
+                    if (!appointment.TutorReminder1Acknowledged && now >= appointment.EndDate.AddHours(1))
                     {
-                        reminderTypes.Add((1, "1-hour completion reminder", true));
+                        completionReminderTypes.Add((1, "1-hour completion reminder"));
                     }
 
-                    if (!appointment.TutorReminder2Acknowledged &&
-                    now >= appointment.EndDate.AddHours(24))
+                    if (!appointment.TutorReminder2Acknowledged && now >= appointment.EndDate.AddHours(24))
                     {
-                        reminderTypes.Add((24, "24-hour completion reminder", true));
+                        completionReminderTypes.Add((24, "24-hour completion reminder"));
                     }
 
-                    if (!appointment.TutorReminder3Acknowledged &&
-                    now >= appointment.EndDate.AddHours(48))
+                    if (!appointment.TutorReminder3Acknowledged && now >= appointment.EndDate.AddHours(48))
                     {
-                        reminderTypes.Add((48, "48-hour completion reminder", true));
+                        completionReminderTypes.Add((48, "48-hour completion reminder"));
                     }
 
-                    if (reminderTypes.Any())
+                    var hasPendingAppointmentReminder = (appointment.Reminder24HoursBeforeSent &&
+                    !appointment.TutorAppointmentReminder24HoursAcknowledged) || (appointment.Reminder1HourBeforeSent &&
+                    !appointment.TutorAppointmentReminder1HourAcknowledged);
+
+                    @if (completionReminderTypes.Any() || hasPendingAppointmentReminder)
                     {
                         <div class="tutor-reminder-card">
                             <div class="tutor-reminder-appointment">
@@ -70,6 +76,11 @@
                                     Appointment
                                     <span>#@appointment.AppointmentId</span>
                                 </h3>
+
+                                <p>
+                                    <strong>Appointment date:</strong>
+                                    @appointment.AppointmentDate.ToString("MMM dd, yyyy h:mm tt")
+                                </p>
 
                                 <p>
                                     <strong>End date:</strong>
@@ -82,7 +93,50 @@
                                 </p>
                             </div>
 
-                            @foreach (var reminder in reminderTypes)
+                            @* Upcoming appointment reminders *@
+
+                            @if (appointment.Reminder24HoursBeforeSent && !appointment.TutorAppointmentReminder24HoursAcknowledged)
+                            {
+                                <div class="tutor-reminder-item">
+                                    <div class="tutor-reminder-details">
+                                        <i class="fas fa-clock" aria-hidden="true"></i>
+                                        <span>24-hour appointment reminder</span>
+                                    </div>
+
+                                    <form asp-controller="Tutor" asp-action="ConfirmTutorReminder" method="post" class="tutor-reminder-confirm-form">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="appointmentId" value="@appointment.AppointmentId" />
+                                        <input type="hidden" name="reminderType" value="24Hours" />
+                                        <button type="submit" class="tutor-reminder-confirm-button">
+                                            <i class="fas fa-check" aria-hidden="true"></i> Confirm
+                                        </button>
+                                    </form>
+                                </div>
+                            }
+
+                            @if (appointment.Reminder1HourBeforeSent && !appointment.TutorAppointmentReminder1HourAcknowledged)
+                            {
+                                <div class="tutor-reminder-item">
+                                    <div class="tutor-reminder-details">
+                                        <i class="fas fa-clock" aria-hidden="true"></i>
+                                        <span>1-hour appointment reminder</span>
+                                    </div>
+
+                                    <form asp-controller="Tutor" asp-action="ConfirmTutorReminder" method="post" class="tutor-reminder-confirm-form">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="appointmentId" value="@appointment.AppointmentId" />
+                                        <input type="hidden" name="reminderType" value="1Hour" />
+                                        <button type="submit" class="tutor-reminder-confirm-button">
+                                            <i class="fas fa-check" aria-hidden="true"></i> Confirm
+                                        </button>
+                                    </form>
+
+                                </div>
+                            }
+
+                            @* Completion reminders *@
+
+                            @foreach (var reminder in completionReminderTypes)
                             {
                                 <div class="tutor-reminder-item">
                                     <div class="tutor-reminder-details">

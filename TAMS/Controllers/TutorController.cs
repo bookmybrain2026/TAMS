@@ -82,18 +82,27 @@ namespace TAMS.Controllers
 
             tutor.Appointments = dBContext.Appointments.Find(a => a.TutorId == tutor.TutorId).ToList();
 
+
             var now = DateTime.Now;
 
             var tutorReminderAppointments = tutor.Appointments
                 .Where(a => a.Status == "Scheduled")
                 .Where(a =>
+                    // Completion reminders
                     (now >= a.EndDate.AddHours(1) && !a.TutorReminder1Acknowledged) ||
                     (now >= a.EndDate.AddHours(24) && !a.TutorReminder2Acknowledged) ||
-                    (now >= a.EndDate.AddHours(48) && !a.TutorReminder3Acknowledged))
-                .OrderBy(a => a.EndDate).ToList();
+                    (now >= a.EndDate.AddHours(48) && !a.TutorReminder3Acknowledged) ||
+
+                    // Upcoming appointment reminders
+                    (a.Reminder24HoursBeforeSent && !a.TutorAppointmentReminder24HoursAcknowledged) ||
+                    (a.Reminder1HourBeforeSent && !a.TutorAppointmentReminder1HourAcknowledged)
+                )
+                .OrderBy(a => a.AppointmentDate)
+                .ToList();
 
             ViewBag.TutorReminderAppointments = tutorReminderAppointments;
             ViewBag.ShowTutorReminders = showTutorReminders;
+
 
             foreach (var appointment in tutor.Appointments)
             {
@@ -116,12 +125,15 @@ namespace TAMS.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ConfirmTutorReminder(int appointmentId, int reminderHours)
+        public async Task<IActionResult> ConfirmTutorReminder(int appointmentId, int? reminderHours, string? reminderType)
         {
             var tutorId = HttpContext.Session.GetInt32("TutorId");
             if (tutorId == null) { return RedirectToAction("Login", "Login"); }
 
-            if (reminderHours != 1 && reminderHours != 24 && reminderHours != 48)
+            var isCompletionReminder = reminderHours == 1 || reminderHours == 24 || reminderHours == 48;
+            var isAppointmentReminder = reminderType == "24Hours" || reminderType == "1Hour";
+
+            if (!isCompletionReminder && !isAppointmentReminder)
             {
                 TempData["ErrorMessage"] = "Invalid reminder selected.";
                 return RedirectToAction("Dashboard", new { id = tutorId.Value });
@@ -143,41 +155,78 @@ namespace TAMS.Controllers
                 return RedirectToAction("Dashboard", new { id = tutorId.Value });
             }
 
-            if (DateTime.Now < appointment.EndDate.AddHours(reminderHours))
-            {
-                TempData["ErrorMessage"] = "This reminder is not available yet.";
-                return RedirectToAction("Dashboard", new { id = tutorId.Value });
-            }
-
-            var filter =
-                Builders<Appointment>.Filter.Eq(a => a.AppointmentId, appointmentId)
+            var filter = Builders<Appointment>.Filter.Eq(a => a.AppointmentId, appointmentId)
                 & Builders<Appointment>.Filter.Eq(a => a.TutorId, tutorId.Value)
                 & Builders<Appointment>.Filter.Eq(a => a.Status, "Scheduled");
             UpdateDefinition<Appointment> update;
 
-            switch (reminderHours)
+            string successMessage;
+
+            if (isCompletionReminder)
             {
-                case 1:
-                    filter &= Builders<Appointment>.Filter.Ne(a => a.TutorReminder1Acknowledged, true);
-                    update = Builders<Appointment>.Update.Set(a => a.TutorReminder1Acknowledged, true);
-                    break;
+                if (DateTime.Now < appointment.EndDate.AddHours(reminderHours!.Value))
+                {
+                    TempData["ErrorMessage"] = "This reminder is not available yet.";
+                    return RedirectToAction("Dashboard", new { id = tutorId.Value });
+                }
 
-                case 24:
-                    filter &= Builders<Appointment>.Filter.Ne(a => a.TutorReminder2Acknowledged, true);
-                    update = Builders<Appointment>.Update.Set(a => a.TutorReminder2Acknowledged, true);
-                    break;
+                switch (reminderHours.Value)
+                {
+                    case 1:
+                        filter &= Builders<Appointment>.Filter.Ne(a => a.TutorReminder1Acknowledged, true);
+                        update = Builders<Appointment>.Update.Set(a => a.TutorReminder1Acknowledged, true);
+                        break;
 
-                default: // 48 hours
-                    filter &= Builders<Appointment>.Filter.Ne(a => a.TutorReminder3Acknowledged, true);
-                    update = Builders<Appointment>.Update.Set(a => a.TutorReminder3Acknowledged, true);
-                    break;
+                    case 24:
+                        filter &= Builders<Appointment>.Filter.Ne(a => a.TutorReminder2Acknowledged, true);
+                        update = Builders<Appointment>.Update.Set(a => a.TutorReminder2Acknowledged, true);
+                        break;
+
+                    default: // 48 hours
+                        filter &= Builders<Appointment>.Filter.Ne(a => a.TutorReminder3Acknowledged, true);
+                        update = Builders<Appointment>.Update.Set(a => a.TutorReminder3Acknowledged, true);
+                        break;
+                }
+
+                successMessage = $"{reminderHours}-hour completion reminder confirmed.";
+            }
+            else
+            {
+                if (reminderType == "24Hours")
+                {
+                    if (!appointment.Reminder24HoursBeforeSent)
+                    {
+                        TempData["ErrorMessage"] = "The 24-hour appointment reminder is not available yet.";
+
+                        return RedirectToAction("Dashboard", new { id = tutorId.Value });
+                    }
+
+                    filter &= Builders<Appointment>.Filter.Ne(a => a.TutorAppointmentReminder24HoursAcknowledged, true);
+                    update = Builders<Appointment>.Update.Set(a => a.TutorAppointmentReminder24HoursAcknowledged, true);
+
+                    successMessage = "24-hour appointment reminder confirmed.";
+                }
+                else
+                {
+                    if (!appointment.Reminder1HourBeforeSent)
+                    {
+                        TempData["ErrorMessage"] = "The 1-hour appointment reminder is not available yet.";
+
+                        return RedirectToAction("Dashboard", new { id = tutorId.Value });
+                    }
+
+                    filter &= Builders<Appointment>.Filter.Ne(a => a.TutorAppointmentReminder1HourAcknowledged, true);
+                    update = Builders<Appointment>.Update.Set(a => a.TutorAppointmentReminder1HourAcknowledged, true);
+
+                    successMessage = "1-hour appointment reminder confirmed.";
+                }
             }
 
             var result = await dBContext.Appointments.UpdateOneAsync(filter, update);
 
             if (result.ModifiedCount > 0)
             {
-                TempData["SuccessMessage"] = $"{reminderHours}-hour reminder confirmed.";
+                TempData["SuccessMessage"] = successMessage;
             }
             else
             {
