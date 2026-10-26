@@ -113,6 +113,7 @@ namespace TAMS.Services
             await smtp.DisconnectAsync(true); //close the connection between application and email provider
         }
 
+        //Styling Done for SendTutorAppointmentNotificationAsync
         public async Task SendTutorAppointmentNotificationAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate)
         {
             var message = new MimeMessage();
@@ -120,21 +121,66 @@ namespace TAMS.Services
             message.To.Add(new MailboxAddress(tutorName, tutorEmail));
             message.Subject = "New Appointment Scheduled";
 
-            message.Body = new TextPart("plain")
+            var builder = new BodyBuilder();
+
+            var templatePath = Path.Combine(_environment.ContentRootPath, "EmailTemplates", "TutorAppointmentNotification.html");
+            var html = await File.ReadAllTextAsync(templatePath);
+            var bannerPath = Path.Combine(_environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot"), "images", "banner.png");
+
+            string bannerHtml = "";
+
+            if (File.Exists(bannerPath))
             {
-                Text = $"""
+                var banner = builder.LinkedResources.Add(bannerPath);
+                banner.ContentId = Guid.NewGuid().ToString() + "@tams";
+
+                bannerHtml = $"""
+                    <img src="cid:{banner.ContentId}"
+                         alt="BookMyBrain" width="560"
+                         style="display:block;width:100%;max-width:560px;
+                                height:auto;border:0;margin:0 auto;">
+                    """;
+            }
+
+            var localAppointmentDate = appointmentDate.AddHours(-5);
+
+            var formattedDate = localAppointmentDate.ToString("MMMM dd, yyyy");
+            var formattedTime = localAppointmentDate.ToString("h:mm tt");
+
+            var tName = System.Net.WebUtility.HtmlEncode(tutorName);
+            var sName = System.Net.WebUtility.HtmlEncode(studentName);
+            var aDate = System.Net.WebUtility.HtmlEncode(formattedDate);
+            var aTime = System.Net.WebUtility.HtmlEncode(formattedTime);
+
+            html = html.Replace("{{BannerHtml}}", bannerHtml);
+            html = html.Replace("{{TutorName}}", tName);
+            html = html.Replace("{{StudentName}}", sName);
+            html = html.Replace("{{AppointmentDate}}", aDate);
+            html = html.Replace("{{AppointmentTime}}", aTime);
+
+            builder.HtmlBody = html;
+
+            builder.TextBody = $"""
+                TAMS New Appointment Notification
+
                 Hello {tutorName},
 
                 A new appointment has been scheduled.
 
                 Student: {studentName}
-                Date: {appointmentDate.AddHours(-5):MMMM dd, yyyy}
-                Time: {appointmentDate.AddHours(-5):h:mm tt}
+                Date: {formattedDate}
+                Time: {formattedTime}
                 Status: Scheduled
 
+                We will send a reminder for your appointment at a later date.
+
                 Thank you for using TAMS.
-                """
-            };
+
+                The BookMyBrain Team
+                Tutoring Appointment Management System
+                """;
+
+            message.Body = builder.ToMessageBody();
 
             using var smtp = new SmtpClient();
             await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
