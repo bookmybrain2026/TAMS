@@ -17,9 +17,9 @@ namespace TAMS.Services
             _environment = environment;
         }
 
+        //Styling Done for SendStudentAppointmentConfirmationAsync
         public async Task SendStudentAppointmentConfirmationAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate)
-        //Student confirmation method //async allows the method to use await
-        {
+        { //async allows the method to use await
             var message = new MimeMessage(); //email message object
 
             message.From.Add(new MailboxAddress( //Sender's display name & email
@@ -30,21 +30,70 @@ namespace TAMS.Services
 
             message.Subject = "Appointment Confirmation"; //subject line
 
-            message.Body = new TextPart("plain") //email body
+            var builder = new BodyBuilder();
+
+            var templatePath = Path.Combine(_environment.ContentRootPath, "EmailTemplates", "StudentAppointmentConfirmation.html");
+
+            var html = await File.ReadAllTextAsync(templatePath);
+
+            var bannerPath = Path.Combine( _environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot"), "images", "banner.png");
+
+            string bannerHtml = "";
+
+            if (File.Exists(bannerPath))
             {
-                Text = $"""
+                var banner = builder.LinkedResources.Add(bannerPath);
+                banner.ContentId = Guid.NewGuid().ToString() + "@tams";
+
+                bannerHtml = $"""
+                    <img src="cid:{banner.ContentId}"
+                         alt="BookMyBrain" width="560"
+                         style="display:block;width:100%;max-width:560px;
+                                height:auto;border:0;margin:0 auto;">
+                    """;
+            }
+
+            var localAppointmentDate = appointmentDate.AddHours(-5);
+
+            var formattedDate = localAppointmentDate.ToString("MMMM dd, yyyy");
+            var formattedTime = localAppointmentDate.ToString("h:mm tt");
+
+            var sName = System.Net.WebUtility.HtmlEncode(studentName);
+            var tName = System.Net.WebUtility.HtmlEncode(tutorName);
+            var aDate = System.Net.WebUtility.HtmlEncode(formattedDate);
+            var aTime = System.Net.WebUtility.HtmlEncode(formattedTime);
+
+            html = html.Replace("{{BannerHtml}}", bannerHtml);
+            html = html.Replace("{{StudentName}}", sName);
+            html = html.Replace("{{TutorName}}", tName);
+            html = html.Replace("{{AppointmentDate}}", aDate);
+            html = html.Replace("{{AppointmentTime}}", aTime);
+
+            builder.HtmlBody = html;
+
+            builder.TextBody = $"""
+                TAMS Appointment Confirmation
+
                 Hello {studentName},
 
-                Your appointment has been successfully booked.
+                This email confirms the appointment you booked through TAMS.
+
+                Appointment Information
 
                 Tutor: {tutorName}
-                Date: {appointmentDate.AddHours(-5):MMMM dd, yyyy}
-                Time: {appointmentDate.AddHours(-5):h:mm tt}
+                Date: {formattedDate}
+                Time: {formattedTime}
                 Status: Scheduled
 
-                Thank you for using AMS.
-                """
-            };
+                We will send a reminder for your appointment at a later date.
+
+                Thank you for using TAMS.
+
+                The BookMyBrain Team
+                Tutoring Appointment Management System
+                """;
+
+            message.Body = builder.ToMessageBody();
 
             using var smtp = new SmtpClient(); //creates an SMTP client used to connect to the email provide
                                                //Using keyword ensure that the SMTP client is properly disposed of when the method finishes 
