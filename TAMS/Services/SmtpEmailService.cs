@@ -9,12 +9,12 @@ namespace TAMS.Services
     {
         private readonly IConfiguration _configuration;
         //IConfiguration allows the class to read values from configuration files like appsetting.json
-        private readonly IWebHostEnvironment _environment;
+        private readonly IWebHostEnvironment _environment; // Provides the application's file paths.
 
-        public SmtpEmailService(IConfiguration configuration, IWebHostEnvironment environment) //runs when ASP.NET Core creates an EmailService object
+        public SmtpEmailService(IConfiguration configuration, IWebHostEnvironment environment) //runs when ASP.NET Core creates an SmtpEmailService object
         {
             _configuration = configuration; //stores the configuration object in the class field so the email methods can use it
-            _environment = environment;
+            _environment = environment; //stors the application's environment information.
         }
 
         //Styling Done for SendStudentAppointmentConfirmationAsync
