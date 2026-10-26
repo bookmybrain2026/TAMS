@@ -590,7 +590,6 @@ namespace TAMS.Services
             await smtp.DisconnectAsync(true);
         }
 
-
         //Styling Done for PasswordRecoveryCode
         public async Task SendPasswordRecoveryCodeAsync(string studentEmail, string studentName, string recoveryCode)
         {
@@ -685,8 +684,6 @@ namespace TAMS.Services
             await smtp.SendAsync(message);
             await smtp.DisconnectAsync(true);
         }
-
-
 
 
         public async Task SendTutorAppointmentCompletionReminderAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate, DateTime endDate, int hoursAfterEnd)
@@ -813,8 +810,6 @@ namespace TAMS.Services
             await smtp.DisconnectAsync(true);
         }
 
-
-
         public async Task SendTutorAppointmentRescheduledAsync(string tutorEmail, string tutorName, string studentName, DateTime newAppointmentDate)
         {
             var message = new MimeMessage();
@@ -874,7 +869,7 @@ namespace TAMS.Services
         }
 
 
-
+        //Styling Done for SendStudentUpcomingAppointmentReminderAsync
         public async Task SendStudentUpcomingAppointmentReminderAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate, int hoursBefore)
         {
             var message = new MimeMessage();
@@ -887,22 +882,66 @@ namespace TAMS.Services
             string reminderText = hoursBefore == 24 ? "Your tutoring appointment is scheduled for tomorrow."
                 : "Your tutoring appointment starts in approximately one hour.";
 
-            message.Body = new TextPart("plain")
+            string reminderTime = hoursBefore == 24 ? "tomorrow" : "approximately one hour";
+
+            var builder = new BodyBuilder();
+
+            var templatePath = Path.Combine(_environment.ContentRootPath, "EmailTemplates", "StudentAppointmentReminder.html");
+
+            var html = await File.ReadAllTextAsync(templatePath);
+
+            var bannerPath = Path.Combine(_environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot"), "images", "banner.png");
+
+            string bannerHtml = "";
+
+            if (File.Exists(bannerPath))
             {
-                Text = $"""
-                    Hello {studentName},
+                var banner = builder.LinkedResources.Add(bannerPath);
+                banner.ContentId = Guid.NewGuid().ToString() + "@tams";
 
-                    {reminderText}
+                bannerHtml = $"""
+                    <img src="cid:{banner.ContentId}"
+                         alt="BookMyBrain" width="560"
+                         style="display:block;width:100%;max-width:560px;
+                                height:auto;border:0;margin:0 auto;">
+                    """;
+            }
+            
+            var formattedDate = appointmentDate.ToString("MMMM dd, yyyy");
+            var formattedTime = appointmentDate.ToString("h:mm tt");
 
-                    Tutor: {tutorName}
-                    Appointment Date: {appointmentDate:MMMM dd, yyyy}
-                    Appointment Time: {appointmentDate:h:mm tt}
+            var sName = System.Net.WebUtility.HtmlEncode(studentName);
+            var tName = System.Net.WebUtility.HtmlEncode(tutorName);
+            var aDate = System.Net.WebUtility.HtmlEncode(formattedDate);
+            var aTime = System.Net.WebUtility.HtmlEncode(formattedTime);
+            var rText = System.Net.WebUtility.HtmlEncode(reminderText);
+            var rTime = System.Net.WebUtility.HtmlEncode(reminderTime);
 
-                    Please be ready for your scheduled tutoring session.
+            html = html.Replace("{{BannerHtml}}", bannerHtml);
+            html = html.Replace("{{StudentName}}", sName);
+            html = html.Replace("{{TutorName}}", tName);
+            html = html.Replace("{{AppointmentDate}}", aDate);
+            html = html.Replace("{{AppointmentTime}}", aTime);
+            html = html.Replace("{{ReminderText}}", rText);
+            html = html.Replace("{{ReminderTime}}", rTime);
 
-                    Thank you for using TAMS.
-                    """
-            };
+            builder.HtmlBody = html;
+
+            builder.TextBody = $"""
+                Hello {studentName},
+
+                {reminderText}
+
+                Tutor: {tutorName}
+                Appointment Date: {formattedDate}
+                Appointment Time: {formattedTime}
+
+                Please be ready for your scheduled tutoring session.
+
+                Thank you for using TAMS.
+                """;
+
+            message.Body = builder.ToMessageBody();
 
             using var smtp = new SmtpClient();
             await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
@@ -911,6 +950,7 @@ namespace TAMS.Services
             await smtp.DisconnectAsync(true);
         }
 
+        //Styling Done for SendTutorUpcomingAppointmentReminderAsync
         public async Task SendTutorUpcomingAppointmentReminderAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate, int hoursBefore)
         {
             var message = new MimeMessage();
@@ -923,22 +963,66 @@ namespace TAMS.Services
             string reminderText = hoursBefore == 24 ? "You have a tutoring appointment scheduled for tomorrow."
                 : "Your tutoring appointment starts in approximately one hour.";
 
-            message.Body = new TextPart("plain")
+            string reminderTime = hoursBefore == 24 ? "tomorrow" : "approximately one hour";
+
+            var builder = new BodyBuilder();
+
+            var templatePath = Path.Combine(_environment.ContentRootPath, "EmailTemplates", "TutorAppointmentReminder.html");
+
+            var html = await File.ReadAllTextAsync(templatePath);
+
+            var bannerPath = Path.Combine(_environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot"), "images", "banner.png");
+
+            string bannerHtml = "";
+
+            if (File.Exists(bannerPath))
             {
-                Text = $"""
-                    Hello {tutorName},
+                var banner = builder.LinkedResources.Add(bannerPath);
+                banner.ContentId = Guid.NewGuid().ToString() + "@tams";
 
-                    {reminderText}
+                bannerHtml = $"""
+                    <img src="cid:{banner.ContentId}"
+                         alt="BookMyBrain" width="560"
+                         style="display:block;width:100%;max-width:560px;
+                                height:auto;border:0;margin:0 auto;">
+                    """;
+            }
 
-                    Student: {studentName}
-                    Appointment Date: {appointmentDate:MMMM dd, yyyy}
-                    Appointment Time: {appointmentDate:h:mm tt}
+            var formattedDate = appointmentDate.ToString("MMMM dd, yyyy");
+            var formattedTime = appointmentDate.ToString("h:mm tt");
 
-                    Please prepare for your scheduled tutoring session.
+            var tName = System.Net.WebUtility.HtmlEncode(tutorName);
+            var sName = System.Net.WebUtility.HtmlEncode(studentName);
+            var aDate = System.Net.WebUtility.HtmlEncode(formattedDate);
+            var aTime = System.Net.WebUtility.HtmlEncode(formattedTime);
+            var rText = System.Net.WebUtility.HtmlEncode(reminderText);
+            var rTime = System.Net.WebUtility.HtmlEncode(reminderTime);
 
-                    Thank you for using TAMS.
-                    """
-            };
+            html = html.Replace("{{BannerHtml}}", bannerHtml);
+            html = html.Replace("{{TutorName}}", tName);
+            html = html.Replace("{{StudentName}}", sName);
+            html = html.Replace("{{AppointmentDate}}", aDate);
+            html = html.Replace("{{AppointmentTime}}", aTime);
+            html = html.Replace("{{ReminderText}}", rText);
+            html = html.Replace("{{ReminderTime}}", rTime);
+
+            builder.HtmlBody = html;
+
+            builder.TextBody = $"""
+                Hello {tutorName},
+
+                {reminderText}
+
+                Student: {studentName}
+                Appointment Date: {formattedDate}
+                Appointment Time: {formattedTime}
+
+                Please prepare for your scheduled tutoring session.
+
+                Thank you for using TAMS.
+                """;
+
+            message.Body = builder.ToMessageBody();
 
             using var smtp = new SmtpClient();
             await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
@@ -946,7 +1030,6 @@ namespace TAMS.Services
             await smtp.SendAsync(message);
             await smtp.DisconnectAsync(true);
         }
-
 
     }
 }

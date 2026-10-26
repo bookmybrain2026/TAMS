@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TAMS Student Appointment Reminder</title>
+    <title>Student Appointment Reminder</title>
 </head>
 
 <body style="margin:0; padding:0; background-color:#F7F0E4; font-family:'Segoe UI',Arial,sans-serif; color:#35291F;">
@@ -34,7 +34,7 @@
                             </p>
 
                             <p style="color:#76634F; font-size:14px; line-height:1.8;">
-                                This email is a reminder for your upcoming tutoring appointment.
+                                {{ReminderText}}
                             </p>
 
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
@@ -56,21 +56,17 @@
                                         </p>
 
                                         <p style="margin:0; color:#35291F; font-family:Consolas,'Courier New',monospace;
-                                                  font-size:15px; font-weight:normal; letter-spacing:4px; overflow-wrap:anywhere; word-break:break-word; text-align: left;">
+                                                  font-size:15px; font-weight:normal; letter-spacing:4px; overflow-wrap:anywhere; word-break:break-word; text-align:left;">
                                             <b>Tutor:</b> {{TutorName}} <br>
-                                            <b>Date:</b> {{AppointmentDate}} <br>
-                                            <b>Time:</b> {{AppointmentTime}} <br>
-                                            <b>Subject:</b> {{Subject}} <br>
-                                            
+                                            <b>Appointment Date:</b> {{AppointmentDate}} <br>
+                                            <b>Appointment Time:</b> {{AppointmentTime}}
                                         </p>
                                     </td>
                                 </tr>
                             </table>
 
-
                             <p style="margin:22px 0; color:#76634F; font-size:13px; line-height:1.8;">
-                                If you would like to opt out from receiving reminders, please log into your account and disable appointment reminders from your dashboard. <br>
-                                Appointment ID: {{AppointmentID}}
+                                Please be ready for your scheduled tutoring session.
                             </p>
 
                             <hr style="border:0; border-top:1px solid #E9DECC; margin:28px 0 22px;">
