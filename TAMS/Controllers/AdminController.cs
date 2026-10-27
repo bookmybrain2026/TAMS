@@ -452,42 +452,30 @@ namespace TAMS.Controllers
                 return RedirectToAction("Dashboard");
             }
 
-            //var update = Builders<Appointment>.Update.Set(a => a.Status, "Cancelled");
-            //dBContext.Appointments.UpdateOne(a => a.AppointmentId == appointmentId, update);
             var admin = dBContext.Admin.Find(a => a.AdminId == adminId.Value).FirstOrDefault();
 
             if (admin == null)
             {
-                TempData["Error"] =
-                    "The administrator account could not be found.";
+                TempData["Error"] = "The administrator account could not be found.";
 
                 return RedirectToAction("Dashboard");
             }
 
-            var adminName =
-                $"{admin.FName} {admin.LName}".Trim();
+            var adminName = $"{admin.FName} {admin.LName}".Trim();
 
             if (string.IsNullOrWhiteSpace(adminName))
             {
                 adminName = $"Admin #{adminId.Value}";
             }
 
-            // Save cancellation details in MongoDB.
-            var update = Builders<Appointment>.Update
-                .Set(a => a.Status, "Cancelled")
-                .Set(a => a.CancelledByAdminId, adminId.Value)
-                .Set(a => a.CancelledByAdminName, adminName);
+            var update = Builders<Appointment>.Update.Set(a => a.Status, "Cancelled")
+                .Set(a => a.CancelledByAdminId, adminId.Value).Set(a => a.CancelledByAdminName, adminName);
 
-            var result = dBContext.Appointments.UpdateOne(
-                a => a.AppointmentId == appointmentId
-                     && a.Status == "Scheduled",
-                update);
+            var result = dBContext.Appointments.UpdateOne(a => a.AppointmentId == appointmentId && a.Status == "Scheduled", update);
 
-            // Protect against a concurrent cancellation.
             if (result.ModifiedCount == 0)
             {
                 TempData["Error"] = "The appointment could not be cancelled. " + "It may already have been cancelled.";
-
                 return RedirectToAction("Dashboard");
             }
 
@@ -498,15 +486,13 @@ namespace TAMS.Controllers
                 // Notify the student.
                 if (!string.IsNullOrWhiteSpace(student.Email))
                 {
-                    await _emailService.SendAdminCancelledAppointmentAsync(student.Email, studentName, tutorName, appointment.AppointmentDate.AddHours(5), "Student", adminName
-                    );
+                    await _emailService.SendAdminCancelledAppointmentAsync(student.Email, studentName, tutorName, appointment.AppointmentDate.AddHours(5), "Student", adminName);
                 }
 
                 // Notify the tutor.
                 if (!string.IsNullOrWhiteSpace(tutor.Email))
                 {
-                    await _emailService.SendAdminCancelledAppointmentAsync(tutor.Email, tutorName, studentName, appointment.AppointmentDate.AddHours(5), "Tutor", adminName
-                    );
+                    await _emailService.SendAdminCancelledAppointmentAsync(tutor.Email, tutorName, studentName, appointment.AppointmentDate.AddHours(5), "Tutor", adminName);
                 }
             }
             catch (Exception ex)
