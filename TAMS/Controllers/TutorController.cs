@@ -69,7 +69,7 @@ namespace TAMS.Controllers
         }
 
         [HttpGet]
-        public IActionResult Dashboard(int? id, bool showTutorReminders = false)
+        public IActionResult Dashboard(int? id, bool showTutorReminders = false, bool showAppointmentNotes = false, int? appointmentNotesId = null)
         {
             var tutorId = HttpContext.Session.GetInt32("TutorId");
             if (tutorId == null) { return RedirectToAction("Login", "Login"); }
@@ -120,6 +120,24 @@ namespace TAMS.Controllers
             ViewBag.Schedules = tutor.Schedules;
 
             if (showTutorReminders) { return PartialView("_TutorReminderModal", tutor); }
+
+            if (showAppointmentNotes)
+            {
+                if (appointmentNotesId == null) { return BadRequest(); }
+
+                var appointment = tutor.Appointments.FirstOrDefault(a =>
+                    a.AppointmentId == appointmentNotesId.Value && a.TutorId == tutor.TutorId && 
+                    a.Status == "Scheduled" && a.AppointmentDate >= DateTime.Now);
+
+                if (appointment == null) { return NotFound(); }
+
+                appointment.Student = dBContext.Student
+                    .Find(s => s.StudentId == appointment.StudentId)
+                    .FirstOrDefault();
+
+                return PartialView("_TutorAppointmentNotesModal", appointment);
+            }
+
             return View("TutorDashboard", tutor);
         }
 
@@ -543,6 +561,84 @@ namespace TAMS.Controllers
                 }
             }
             return RedirectToAction("Dashboard", "Tutor", new { id = appointment.TutorId });
+        }
+
+        [HttpGet]
+        public IActionResult AppointmentNotes(int appointmentId)
+        {
+            var tutorId = HttpContext.Session.GetInt32("TutorId");
+
+            if (tutorId == null) { return Unauthorized(); }
+
+            var appointment = dBContext.Appointments
+                .Find(a => a.AppointmentId == appointmentId && a.TutorId == tutorId.Value
+                    && a.Status == "Scheduled" && a.AppointmentDate >= DateTime.Now)
+                .FirstOrDefault();
+
+            if (appointment == null) { return NotFound(); }
+
+            appointment.Student = dBContext.Student
+                .Find(s => s.StudentId == appointment.StudentId)
+                .FirstOrDefault();
+
+            return PartialView("_TutorAppointmentNotesModal", appointment);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveAppointmentNotes(int appointmentId, string? tutorNotes)
+        {
+            var tutorId = HttpContext.Session.GetInt32("TutorId");
+
+            if (tutorId == null) { return Unauthorized(); }
+
+            if (tutorNotes?.Length > 2000)
+            {
+                TempData["Error"] = "Notes cannot exceed 2000 characters.";
+                return RedirectToAction(nameof(Dashboard), new { id = tutorId.Value });
+            }
+
+            var appointment = await dBContext.Appointments
+                .Find(a => a.AppointmentId == appointmentId && a.TutorId == tutorId.Value
+                    && a.Status == "Scheduled" && a.AppointmentDate >= DateTime.Now)
+                .FirstOrDefaultAsync();
+
+            if (appointment == null) { return NotFound(); }
+
+            var notes = tutorNotes?.Trim() ?? string.Empty;
+            var update = Builders<Appointment>.Update.Set(a => a.TutorNotes, notes);
+
+            await dBContext.Appointments.UpdateOneAsync(a => a.AppointmentId == appointmentId
+                    && a.TutorId == tutorId.Value && a.Status == "Scheduled", update);
+
+            TempData["Success"] = "Appointment notes saved successfully.";
+
+            return RedirectToAction(nameof(Dashboard), new { id = tutorId.Value });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteAppointmentNotes(int appointmentId)
+        {
+            var tutorId = HttpContext.Session.GetInt32("TutorId");
+
+            if (tutorId == null) { return Unauthorized(); }
+
+            var appointment = await dBContext.Appointments
+                .Find(a => a.AppointmentId == appointmentId && a.TutorId == tutorId.Value
+                    && a.Status == "Scheduled" && a.AppointmentDate >= DateTime.Now)
+                .FirstOrDefaultAsync();
+
+            if (appointment == null) { return NotFound(); }
+
+            var update = Builders<Appointment>.Update.Set(a => a.TutorNotes, string.Empty);
+
+            await dBContext.Appointments.UpdateOneAsync(a => a.AppointmentId == appointmentId
+                    && a.TutorId == tutorId.Value && a.Status == "Scheduled", update);
+
+            TempData["Success"] = "Appointment notes deleted successfully.";
+
+            return RedirectToAction(nameof(Dashboard), new { id = tutorId.Value });
         }
 
     }

@@ -80,5 +80,9 @@ namespace TAMS.Models
         [BsonElement("CancelledByAdminName")]
         public string? CancelledByAdminName { get; set; }
 
+        [BsonElement("TutorNotes")]
+        [StringLength(2000)]
+        public string TutorNotes { get; set; } = string.Empty;
+
     }
 }

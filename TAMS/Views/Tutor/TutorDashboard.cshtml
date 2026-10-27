@@ -346,6 +346,17 @@
                                                     Cancel
                                                 </button>
                                             </form>
+
+                                            <button type="button" class="tutor-button tutor-button-small tutor-button-primary" aria-haspopup="dialog"
+                                                onclick="openTutorModal('@Url.Action("Dashboard", "Tutor", new {
+                                                        id = Model.TutorId, showAppointmentNotes = true, appointmentNotesId = appointment.AppointmentId
+                                                    })',
+                                                    'TutorAppointmentNotesModal')">
+                                            <i class="fas fa-sticky-note" aria-hidden="true"></i>
+                                            @(string.IsNullOrWhiteSpace(appointment.TutorNotes)
+                                                ? "Add Notes" : "Edit Notes")
+                                            </button>
+
                                         </div>
                                     </td>
                                 </tr>

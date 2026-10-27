@@ -1,0 +1,87 @@
+﻿@model TAMS.Models.Appointment
+
+<div id="TutorAppointmentNotesModal" class="tutor-modal" role="dialog" aria-modal="true" aria-labelledby="tutorAppointmentNotesTitle">
+    <div class="tutor-modal-content">
+        <div class="tutor-modal-header">
+            <h2 id="tutorAppointmentNotesTitle">
+                <i class="fas fa-sticky-note" aria-hidden="true"></i>
+                Appointment Notes
+            </h2>
+
+            <button type="button" class="tutor-modal-close" aria-label="Close appointment notes"
+                    onclick="closeTutorModal('TutorAppointmentNotesModal')">
+                &times;
+            </button>
+        </div>
+
+        <div class="tutor-modal-body">
+            <div class="tutor-reminder-card">
+                <h3>
+                    Appointment #@Model.AppointmentId
+                </h3>
+
+                <p>
+                    <strong>Student:</strong>
+                    @if (Model.Student != null)
+                    {
+                        @($"{Model.Student.FName} {Model.Student.LName}")
+                    }
+                    else
+                    {
+                        @:Student unavailable
+                    }
+                </p>
+
+                <p>
+                    <strong>Date:</strong>
+                    @Model.AppointmentDate.ToString("MMM dd, yyyy h:mm tt")
+                </p>
+
+                <p>
+                    <strong>End date:</strong>
+                    @Model.EndDate.ToString("h:mm tt")
+                </p>
+            </div>
+
+            <form asp-controller="Tutor" asp-action="SaveAppointmentNotes" method="post">
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" name="appointmentId" value="@Model.AppointmentId" />
+
+                <div class="form-group">
+                    <label for="tutorNotes">
+                        Notes / Comments
+                    </label>
+
+                    <textarea id="tutorNotes" name="tutorNotes" class="form-control" rows="6" maxlength="2000"
+                              placeholder="Add meeting location, materials to bring, preparation instructions, or other appointment details...">@Model.TutorNotes</textarea>
+
+                    <small class="text-muted">
+                        Maximum 2000 characters.
+                    </small>
+                </div>
+
+                <div class="tutor-table-actions">
+                    <button type="submit" class="tutor-button tutor-button-success">
+                        <i class="fas fa-save" aria-hidden="true"></i>
+                        Save Notes
+                    </button>
+
+                    @if (!string.IsNullOrWhiteSpace(Model.TutorNotes))
+                    {
+                        <button type="submit" formaction="@Url.Action("DeleteAppointmentNotes", "Tutor")"
+                                formnovalidate class="tutor-button tutor-button-danger"
+                                onclick="return confirm('Delete the notes for this appointment?');">
+                            <i class="fas fa-trash" aria-hidden="true"></i>
+                            Delete Notes
+                        </button>
+                    }
+
+                    <button type="button" class="tutor-button" onclick="closeTutorModal('TutorAppointmentNotesModal')">
+                        Close
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -13,7 +13,9 @@
 }
 
 /*.tutor-dashboard *, .tutor-dashboard *::before, .tutor-dashboard *::after { box-sizing: border-box; }*/
-.tutor-dashboard *, .tutor-dashboard *::before, .tutor-dashboard *::after { box-sizing: border-box; }
+.tutor-dashboard *, .tutor-dashboard *::before, .tutor-dashboard *::after {
+    box-sizing: border-box;
+}
 
 .tutor-dashboard div.tutor-alert.tutor-alert-error {
     display: block !important;
@@ -195,9 +197,7 @@
     margin-bottom: 20px;
 }
 
-.tutor-section-header .tutor-eyebrow {
-    margin-bottom: 6px;
-}
+.tutor-section-header .tutor-eyebrow { margin-bottom: 6px; }
 
 .tutor-section-header h2 {
     margin: 0;
@@ -253,9 +253,7 @@
     font-weight: 900;
 }
 
-.tutor-profile-name {
-    min-width: 0;
-}
+.tutor-profile-name { min-width: 0; }
 
 .tutor-profile-name h3 {
     margin: 0 0 5px;
@@ -437,7 +435,6 @@
     color: var(--bmb-orange);
     font-size: 24px;
 }
-
 
 .tutor-download-form {
     margin: 0;
@@ -668,7 +665,9 @@
     box-sizing: border-box;
 }
 
-.tutor-focus-panel > .tutor-panel-heading, .tutor-focus-panel > .tutor-today-date { flex-shrink: 0; }
+.tutor-focus-panel > .tutor-panel-heading, .tutor-focus-panel > .tutor-today-date {
+    flex-shrink: 0;
+}
 
 .tutor-focus-panel > .tutor-focus-section {
     flex: 1 1 auto;
@@ -679,7 +678,6 @@
 }
 
 .tutor-focus-panel > .tutor-focus-footer { flex-shrink: 0; }
-
 
 .tutor-today-date {
     display: flex;
@@ -828,7 +826,9 @@
     overflow: hidden;
 }
 
-.tutor-schedule-panel .tutor-section-header, .tutor-reviews-panel .tutor-section-header { flex-shrink: 0; }
+.tutor-schedule-panel .tutor-section-header, .tutor-reviews-panel .tutor-section-header {
+    flex-shrink: 0;
+}
 
 .tutor-schedule-toolbar {
     display: flex;
@@ -1128,7 +1128,7 @@
     font-weight: 700;
 }
 
-#tutorReminderModal .tutor-reminder-appointment h3 span { color: #8b672d;}
+#tutorReminderModal .tutor-reminder-appointment h3 span { color: #8b672d; }
 
 #tutorReminderModal .tutor-reminder-appointment p {
     margin: 6px 0 0;
@@ -1192,13 +1192,13 @@
         min-height: auto;
     }
 
-        .tutor-quick-panel .tutor-quick-link {
-            padding: 12px 0;
-        }
+    .tutor-quick-panel .tutor-quick-link {
+        padding: 12px 0;
+    }
 
-        .tutor-quick-panel .tutor-mini-summary {
-            margin-top: 12px;
-        }
+    .tutor-quick-panel .tutor-mini-summary {
+        margin-top: 12px;
+    }
 
     .tutor-main-grid {
         grid-template-columns: minmax(0, 1.5fr) minmax(230px, 0.8fr);
@@ -1234,9 +1234,9 @@
         border-radius: 20px;
     }
 
-        .tutor-header-mark span {
-            font-size: 34px;
-        }
+    .tutor-header-mark span {
+        font-size: 34px;
+    }
 
     .tutor-overview-grid, .tutor-main-grid, .tutor-bottom-grid {
         grid-template-columns: minmax(0, 1fr);
@@ -1364,9 +1364,9 @@
         flex-direction: column;
     }
 
-        .tutor-schedule-toolbar .tutor-button {
-            width: 100%;
-        }
+    .tutor-schedule-toolbar .tutor-button {
+        width: 100%;
+    }
 
     .tutor-table-actions {
         flex-direction: column;
@@ -1374,9 +1374,9 @@
         min-width: 85px;
     }
 
-        .tutor-table-actions .tutor-button {
-            width: 100%;
-        }
+    .tutor-table-actions .tutor-button {
+        width: 100%;
+    }
 
     .tutor-dashboard-footer {
         flex-direction: column;
@@ -1400,14 +1400,18 @@
 }
 
 @media (max-width: 600px) {
-    .dashboard-header-actions { flex-wrap: wrap; }
+    .dashboard-header-actions {
+        flex-wrap: wrap;
+    }
 
     #tutorReminderModal.tutor-modal {
         align-items: center;
         padding: 10px;
     }
 
-    #tutorReminderModal .tutor-reminder-confirm-form { width: 100%; }
+    #tutorReminderModal .tutor-reminder-confirm-form {
+        width: 100%;
+    }
 
     #tutorReminderModal .tutor-reminder-confirm-button {
         width: 100%;
@@ -1416,5 +1420,215 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .tutor-notification-button { transition: none; }
+    .tutor-notification-button {
+        transition: none;
+    }
+}
+
+:is(#tutorReminderModal, #TutorAppointmentNotesModal) {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 1200 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow-y: auto;
+    padding: 20px;
+    background: rgba(48, 32, 20, .58);
+    backdrop-filter: blur(3px);
+}
+
+:is(#tutorReminderModal, #TutorAppointmentNotesModal) .tutor-modal-content {
+    position: relative;
+    width: 100%;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    padding: 30px;
+    border: 1px solid #eadfce;
+    border-radius: 17px;
+    background: #fffdf8;
+    color: #493323;
+    box-shadow: 0 20px 60px rgba(48, 32, 20, .24);
+    animation: tutorModalAppear .18s ease-out;
+}
+
+:is(#tutorReminderModal, #TutorAppointmentNotesModal) .tutor-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 12px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid #eee3d2;
+}
+
+:is(#tutorReminderModal, #TutorAppointmentNotesModal) .tutor-modal-header h2 {
+    margin: 0;
+    color: #493323;
+    font-size: 23px;
+    font-weight: 800;
+}
+
+:is(#tutorReminderModal, #TutorAppointmentNotesModal) .tutor-modal-header h2 i {
+    margin-right: 8px;
+    color: #d99020;
+}
+
+:is(#tutorReminderModal, #TutorAppointmentNotesModal) .tutor-modal-close {
+    position: absolute;
+    top: 13px;
+    right: 15px;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 9px;
+    background: #fff0cf;
+    color: #6b4525;
+    font-size: 27px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background .2s ease, transform .2s ease;
+}
+
+:is(#tutorReminderModal, #TutorAppointmentNotesModal) .tutor-modal-close:hover {
+    background: #ffe3a0;
+    transform: scale(1.04);
+}
+
+#TutorAppointmentNotesModal .tutor-modal-content {
+    max-width: 600px;
+}
+
+#TutorAppointmentNotesModal form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+#TutorAppointmentNotesModal label {
+    display: block;
+    margin-bottom: 7px;
+    color: #65452e;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+#TutorAppointmentNotesModal textarea {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 150px;
+    padding: 12px 14px;
+    border: 1px solid #e5d7c3;
+    border-radius: 10px;
+    outline: none;
+    background: #fffefa;
+    color: #493323;
+    font: inherit;
+    font-size: 14px;
+    line-height: 1.6;
+    resize: vertical;
+    transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+#TutorAppointmentNotesModal textarea:focus {
+    border-color: #d99020;
+    box-shadow: 0 0 0 3px rgba(244, 165, 28, .16);
+}
+
+#TutorAppointmentNotesModal small {
+    display: block;
+    margin-top: 6px;
+    color: #8b755b;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+#TutorAppointmentNotesModal .tutor-table-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid #eadfce;
+}
+
+#TutorAppointmentNotesModal .tutor-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 11px 18px;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.4;
+    cursor: pointer;
+    transition: background-color .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+
+#TutorAppointmentNotesModal .tutor-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(48, 32, 20, .12);
+}
+
+#TutorAppointmentNotesModal .tutor-button:focus-visible {
+    outline: 3px solid #d9a441;
+    outline-offset: 3px;
+}
+
+#TutorAppointmentNotesModal .tutor-button-success {
+    background: #426b45;
+    color: #fff;
+}
+
+#TutorAppointmentNotesModal .tutor-button-success:hover {
+    background: #345638;
+}
+
+#TutorAppointmentNotesModal .tutor-button-danger {
+    background: #a83d32;
+    color: #fff;
+}
+
+#TutorAppointmentNotesModal .tutor-button-danger:hover {
+    background: #872e26;
+}
+
+#TutorAppointmentNotesModal .tutor-button:not(.tutor-button-success):not(.tutor-button-danger) {
+    background: #fff0cf;
+    color: var(--bmb-brown, #65452e);
+    border-color: #f0dfbd;
+}
+
+#TutorAppointmentNotesModal .tutor-button:not(.tutor-button-success):not(.tutor-button-danger):hover {
+    background: #ffe3a0;
+}
+
+@media (max-width: 600px) {
+    :is(#tutorReminderModal, #TutorAppointmentNotesModal) {
+        padding: 12px;
+    }
+
+    :is(#tutorReminderModal, #TutorAppointmentNotesModal) .tutor-modal-content {
+        max-height: calc(100vh - 24px);
+        padding: 24px 18px;
+    }
+
+    :is(#tutorReminderModal, #TutorAppointmentNotesModal) .tutor-modal-header h2 {
+        padding-right: 28px;
+        font-size: 20px;
+    }
+
+    #TutorAppointmentNotesModal .tutor-table-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #TutorAppointmentNotesModal .tutor-button {
+        width: 100%;
+    }
 }
