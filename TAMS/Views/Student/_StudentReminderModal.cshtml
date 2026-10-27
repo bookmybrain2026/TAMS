@@ -36,6 +36,21 @@
                             @appointment.AppointmentDate.ToString("MMMM d, yyyy 'at' h:mm tt")
                         </p>
 
+                        <div class="student-reminder-tutor-notes">
+                            <h4>Tutor Notes</h4>
+
+                            @if (!string.IsNullOrWhiteSpace(appointment.TutorNotes))
+                            {
+                                <p>@appointment.TutorNotes</p>
+                            }
+                            else
+                            {
+                                <p class="student-reminder-no-notes">
+                                    No notes provided by the tutor.
+                                </p>
+                            }
+                        </div>
+
                         @if (appointment.Reminder24HoursBeforeSent && !appointment.StudentReminder24HoursAcknowledged)
                         {
                             <div class="tutor-reminder-item">

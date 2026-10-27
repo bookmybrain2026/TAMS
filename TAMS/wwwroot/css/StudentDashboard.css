@@ -851,3 +851,34 @@
     #studentReminderModal .tutor-reminder-confirm-button { width: 100%; }
 }
 
+/* Student Reminder - Tutor Notes */
+
+.student-reminder-tutor-notes {
+    margin-top: 16px;
+    padding: 16px 18px;
+    background: #fff8e8;
+    border: 1px solid #e9decc;
+    border-left: 4px solid #f4a51c;
+    border-radius: 10px;
+}
+
+    .student-reminder-tutor-notes h4 {
+        margin: 0 0 10px;
+        color: #79512f;
+        font-size: 14px;
+        font-weight: 800;
+    }
+
+    .student-reminder-tutor-notes p {
+        margin: 0;
+        color: #35291f;
+        font-size: 13px;
+        line-height: 1.7;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+    }
+
+    .student-reminder-tutor-notes .student-reminder-no-notes {
+        color: #8a7967;
+        font-style: italic;
+    }

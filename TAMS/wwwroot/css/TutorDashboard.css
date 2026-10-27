@@ -1450,6 +1450,7 @@
     color: #493323;
     box-shadow: 0 20px 60px rgba(48, 32, 20, .24);
     animation: tutorModalAppear .18s ease-out;
+    max-width: 600px;
 }
 
 :is(#tutorReminderModal, #TutorAppointmentNotesModal) .tutor-modal-header {
@@ -1497,9 +1498,9 @@
     transform: scale(1.04);
 }
 
-#TutorAppointmentNotesModal .tutor-modal-content {
+/*:is(#tutorReminderModal, #TutorAppointmentNotesModal) .tutor-modal-content {
     max-width: 600px;
-}
+}*/
 
 #TutorAppointmentNotesModal form {
     display: flex;

@@ -872,7 +872,7 @@ namespace TAMS.Services
 
 
         //Styling Done for SendStudentUpcomingAppointmentReminderAsync
-        public async Task SendStudentUpcomingAppointmentReminderAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate, int hoursBefore)
+        public async Task SendStudentUpcomingAppointmentReminderAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate, int hoursBefore, string? tutorNotes)
         {
             var message = new MimeMessage();
             message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
@@ -919,6 +919,13 @@ namespace TAMS.Services
             var rText = System.Net.WebUtility.HtmlEncode(reminderText);
             var rTime = System.Net.WebUtility.HtmlEncode(reminderTime);
 
+            var notesText = string.IsNullOrWhiteSpace(tutorNotes) ? "No notes provided by the tutor." : tutorNotes.Trim();
+
+            var encodedNotes = System.Net.WebUtility.HtmlEncode(notesText)
+                .Replace("\r\n", "\n")
+                .Replace("\r", "\n")
+                .Replace("\n", "<br>");
+
             html = html.Replace("{{BannerHtml}}", bannerHtml);
             html = html.Replace("{{StudentName}}", sName);
             html = html.Replace("{{TutorName}}", tName);
@@ -926,6 +933,7 @@ namespace TAMS.Services
             html = html.Replace("{{AppointmentTime}}", aTime);
             html = html.Replace("{{ReminderText}}", rText);
             html = html.Replace("{{ReminderTime}}", rTime);
+            html = html.Replace("{{TutorNotes}}", encodedNotes);
 
             builder.HtmlBody = html;
 
@@ -937,6 +945,9 @@ namespace TAMS.Services
                 Tutor: {tutorName}
                 Appointment Date: {formattedDate}
                 Appointment Time: {formattedTime}
+
+                Tutor Notes:
+                {notesText}
 
                 Please be ready for your scheduled tutoring session.
 

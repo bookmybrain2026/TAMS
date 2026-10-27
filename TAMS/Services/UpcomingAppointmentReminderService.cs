@@ -22,8 +22,7 @@ namespace TAMS.Services
         public async Task ProcessDueRemindersAsync(CancellationToken cancellationToken)
         {
             var now = DateTime.Now;
-            var appointments = await _db.Appointments.Find(a => a.Status == "Scheduled").ToListAsync(cancellationToken);
-
+            var appointments = await _db.Appointments .Find(a => a.Status == "Scheduled").ToListAsync(cancellationToken);
             foreach (var appointment in appointments)
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -32,11 +31,19 @@ namespace TAMS.Services
                 {
                     var start = appointment.AppointmentDate;
 
-                    // No reminders after an appointment has started.
-                    if (now >= start) { continue; }
-                    
-                    var tutor = await _db.Tutor.Find(t => t.TutorId == appointment.TutorId).FirstOrDefaultAsync(cancellationToken);
-                    var student = await _db.Student.Find(s => s.StudentId == appointment.StudentId).FirstOrDefaultAsync(cancellationToken);
+                    // Do not send reminders after an appointment starts.
+                    if (now >= start)
+                    {
+                        continue;
+                    }
+
+                    var tutor = await _db.Tutor
+                        .Find(t => t.TutorId == appointment.TutorId)
+                        .FirstOrDefaultAsync(cancellationToken);
+
+                    var student = await _db.Student
+                        .Find(s => s.StudentId == appointment.StudentId)
+                        .FirstOrDefaultAsync(cancellationToken);
 
                     if (tutor == null || student == null)
                     {
@@ -45,19 +52,18 @@ namespace TAMS.Services
                     }
 
                     string studentName = $"{student.FName} {student.LName}";
-
                     string tutorName = $"{tutor.FName} {tutor.LName}";
 
-                    // Send the 24-hour reminder during the period from 24 hours until 1 hour before the appointment
+                    // 24-hour reminder
                     if (!appointment.Reminder24HoursBeforeSent && now >= start.AddHours(-24) && now < start.AddHours(-1))
                     {
-                        await SendReminderAsync(appointment, student, tutor, studentName, tutorName, 24, cancellationToken);
+                        await SendReminderAsync(appointment, student.Email, tutor.Email, studentName, tutorName, 24, cancellationToken);
                     }
 
-                    // Send the 1-hour reminder during the final hour before the appointment
+                    // 1-hour reminder
                     if (!appointment.Reminder1HourBeforeSent && now >= start.AddHours(-1) && now < start)
                     {
-                        await SendReminderAsync(appointment, student, tutor, studentName, tutorName, 1, cancellationToken);
+                        await SendReminderAsync(appointment, student.Email, tutor.Email, studentName, tutorName, 1, cancellationToken);
                     }
                 }
                 catch (OperationCanceledException)
@@ -72,47 +78,52 @@ namespace TAMS.Services
             }
         }
 
-        private async Task SendReminderAsync(Appointment appointment, dynamic student, dynamic tutor, string studentName, string tutorName, int hoursBefore, CancellationToken cancellationToken)
+        private async Task SendReminderAsync(Appointment appointment, string? studentEmail, string? tutorEmail, string studentName, string tutorName, int hoursBefore, CancellationToken cancellationToken)
         {
-            // Recheck the status immediately before sending.
             var current = await _db.Appointments
                 .Find(a => a.AppointmentId == appointment.AppointmentId && a.Status == "Scheduled")
                 .FirstOrDefaultAsync(cancellationToken);
-
             if (current == null) { return; }
 
             bool alreadySent = hoursBefore == 24 ? current.Reminder24HoursBeforeSent : current.Reminder1HourBeforeSent;
 
             if (alreadySent) { return; }
 
-            // Both emails must succeed before the reminder is marked.
-            if (!string.IsNullOrWhiteSpace((string?)student.Email))
+            var now = DateTime.Now;
+            var start = current.AppointmentDate;
+
+            bool withinWindow = hoursBefore == 24 ? now >= start.AddHours(-24) && now < start.AddHours(-1) : now >= start.AddHours(-1) && now < start;
+
+            if (!withinWindow) { return; }
+
+            // Both email addresses are required before processing.
+            if (string.IsNullOrWhiteSpace(studentEmail))
             {
-                await _emailService.SendStudentUpcomingAppointmentReminderAsync(student.Email, studentName, tutorName, appointment.AppointmentDate, hoursBefore);
-            }
-            else
-            {
-                _logger.LogWarning("Student email missing for appointment {AppointmentId}.", appointment.AppointmentId);
+                _logger.LogWarning("Student email missing for appointment {AppointmentId}.", current.AppointmentId);
+                return;
             }
 
-            if (!string.IsNullOrWhiteSpace((string?)tutor.Email))
+            if (string.IsNullOrWhiteSpace(tutorEmail))
             {
-                await _emailService.SendTutorUpcomingAppointmentReminderAsync(tutor.Email, tutorName, studentName, appointment.AppointmentDate, hoursBefore);
-            }
-            else
-            {
-                _logger.LogWarning("Tutor email missing for appointment {AppointmentId}.", appointment.AppointmentId);
+                _logger.LogWarning("Tutor email missing for appointment {AppointmentId}.", current.AppointmentId);
+                return;
             }
 
-            var filter = Builders<Appointment>.Filter.Eq(a => a.AppointmentId, appointment.AppointmentId)
-                & Builders<Appointment>.Filter.Eq(a => a.Status, "Scheduled");
+            string tutorNotes = current.TutorNotes ?? string.Empty;
+
+            await _emailService.SendStudentUpcomingAppointmentReminderAsync(studentEmail, studentName, tutorName, current.AppointmentDate, hoursBefore, tutorNotes);
+
+            await _emailService.SendTutorUpcomingAppointmentReminderAsync(tutorEmail, tutorName, studentName, current.AppointmentDate, hoursBefore);
+
+            // Only mark the reminder after both emails succeed.
+            var filter = Builders<Appointment>.Filter.Eq(a => a.AppointmentId, current.AppointmentId)
+                & Builders<Appointment>.Filter.Eq(a => a.Status, "Scheduled")
+                & Builders<Appointment>.Filter.Eq(a => a.AppointmentDate, current.AppointmentDate);
 
             var flagFilter = hoursBefore == 24
-                ? Builders<Appointment>.Filter.Or(
-                    Builders<Appointment>.Filter.Eq(a => a.Reminder24HoursBeforeSent, false),
+                ? Builders<Appointment>.Filter.Or(Builders<Appointment>.Filter.Eq(a => a.Reminder24HoursBeforeSent, false),
                     Builders<Appointment>.Filter.Exists(nameof(Appointment.Reminder24HoursBeforeSent), false))
-                : Builders<Appointment>.Filter.Or(
-                    Builders<Appointment>.Filter.Eq(a => a.Reminder1HourBeforeSent, false),
+                : Builders<Appointment>.Filter.Or(Builders<Appointment>.Filter.Eq(a => a.Reminder1HourBeforeSent, false),
                     Builders<Appointment>.Filter.Exists(nameof(Appointment.Reminder1HourBeforeSent), false));
 
             filter &= flagFilter;
@@ -125,7 +136,7 @@ namespace TAMS.Services
 
             if (result.ModifiedCount > 0)
             {
-                _logger.LogInformation("{Hours}-hour reminder processed for appointment {AppointmentId}.", hoursBefore, appointment.AppointmentId);
+                _logger.LogInformation("{Hours}-hour reminder processed for appointment {AppointmentId}.", hoursBefore, current.AppointmentId);
             }
         }
     
