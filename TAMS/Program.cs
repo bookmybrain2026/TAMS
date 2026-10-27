@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Identity;
 using TAMS.Data;
+using TAMS.Models;
 using TAMS.Services;
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,6 +33,9 @@ builder.Services.AddHostedService<AppointmentReminderService>();
 
 builder.Services.AddScoped<UpcomingAppointmentReminderService>();
 builder.Services.AddHostedService<UpcomingAppointmentReminderBackgroundService>();
+
+//Pasword hashing service
+builder.Services.AddScoped<IPasswordHasher<Login>, PasswordHasher<Login>>();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();

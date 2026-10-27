@@ -3,6 +3,7 @@ using MongoDB.Driver;
 using TAMS.Data;
 using TAMS.Models;
 using TAMS.Services;
+using Microsoft.AspNetCore.Identity;
 
 namespace TAMS.Controllers
 {
@@ -11,12 +12,14 @@ namespace TAMS.Controllers
         private readonly MongoDBContext dBContext; //Provides access to MongoDB database
         private readonly IEmailService _emailService;
         private readonly IConfiguration _configuration;
+        private readonly IPasswordHasher<Login> _passwordHasher;
 
-        public LoginController( MongoDBContext dBContext, IEmailService emailService, IConfiguration configuration)
+        public LoginController( MongoDBContext dBContext, IEmailService emailService, IConfiguration configuration, IPasswordHasher<Login> passwordHasher)
         {
             this.dBContext = dBContext;
             _emailService = emailService;
             _configuration = configuration;
+            _passwordHasher = passwordHasher;
         }
 
         [HttpGet]
@@ -30,13 +33,32 @@ namespace TAMS.Controllers
         {
             if (!ModelState.IsValid) { return View(model); }
 
-            var user =  dBContext.Login.Find(u => u.Username == model.Username && u.Password == model.Password && u.Role == model.Role && u.isActive == true).FirstOrDefault();
+            var user = dBContext.Login
+                .Find(u => u.Username == model.Username && u.Role == model.Role && u.isActive)
+                .FirstOrDefault();
+
             if (user == null)
             {
                 ModelState.AddModelError("", "Invalid username, password, or role.");
                 return View(model);
             }
 
+            // Verify the hashed password.
+            var verificationResult = _passwordHasher.VerifyHashedPassword(user, user.Password, model.Password);
+
+            if (verificationResult == PasswordVerificationResult.Failed)
+            {
+                ModelState.AddModelError("", "Invalid username, password, or role.");
+                return View(model);
+            }
+
+            if (verificationResult == PasswordVerificationResult.SuccessRehashNeeded)
+            {
+                user.Password = _passwordHasher.HashPassword(user, model.Password);
+                dBContext.Login.ReplaceOne(u => u.UserId == user.UserId, user);
+            }
+
+            // Update the last login time.
             var update = Builders<Login>.Update.Set(u => u.LastLogin, DateTime.Now);
             dBContext.Login.UpdateOne(u => u.UserId == user.UserId, update);
 
@@ -47,22 +69,19 @@ namespace TAMS.Controllers
                         HttpContext.Session.SetInt32("StudentId", user.UserId);
                         return RedirectToAction("Dashboard", "Student", new { id = user.UserId });
                     }
-
                 case UserRole.Tutor:
                     {
                         HttpContext.Session.SetInt32("TutorId", user.UserId);
                         return RedirectToAction("Dashboard", "Tutor", new { id = user.UserId });
                     }
-
                 case UserRole.Administrator:
                     {
                         HttpContext.Session.SetInt32("AdminId", user.UserId);
                         return RedirectToAction("Dashboard", "Admin", new { id = user.UserId });
                     }
-
                 default:
                     {
-                        ModelState.AddModelError("", "Unknown user role."); 
+                        ModelState.AddModelError("", "Unknown user role.");
                         return View(model);
                     }
             }
@@ -172,11 +191,7 @@ namespace TAMS.Controllers
             {
                 try
                 {
-                    await _emailService.SendPasswordRecoveryCodeAsync(
-                        model.Email,
-                        recipientName,
-                        recoveryCode);
-
+                    await _emailService.SendPasswordRecoveryCodeAsync(model.Email, recipientName, recoveryCode);
                     emailSent = true;
                 }
                 catch (Exception ex)
@@ -193,13 +208,11 @@ namespace TAMS.Controllers
             {
                 ViewBag.RecoveryCode = recoveryCode;
                 TempData["RecoveryCode"] = recoveryCode;
-                TempData["EmailError"] =
-                    "The recovery email could not be sent. Please use the recovery code shown below.";
+                TempData["EmailError"] = "The recovery email could not be sent. Please use the recovery code shown below.";
             }
             else
             {
-                TempData["Success"] =
-                    "A recovery code has been sent to your email address.";
+                TempData["Success"] = "A recovery code has been sent to your email address.";
             }
 
             return View("ForgotPassword", model);
@@ -276,8 +289,8 @@ namespace TAMS.Controllers
                 return View("ForgotPassword", model);
             }
 
-            user.Password = model.NewPassword;
-            dBContext.Login.ReplaceOne(l => l.UserId == parsedUserId,user);
+            user.Password = _passwordHasher.HashPassword(user, model.NewPassword);
+            dBContext.Login.ReplaceOne(l => l.UserId == parsedUserId, user);
 
             dBContext.PasswordRecoveries.UpdateOne(r => r.UserId == parsedUserId && r.RecoveryCode == model.RecoveryCode, Builders<PasswordRecovery>.Update.Set(r => r.IsUsed, true));
 

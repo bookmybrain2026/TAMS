@@ -5,6 +5,7 @@ using System.Numerics;
 using TAMS.Data;
 using TAMS.Models;
 using TAMS.Services;
+using Microsoft.AspNetCore.Identity;
 
 namespace TAMS.Controllers
 {
@@ -12,11 +13,13 @@ namespace TAMS.Controllers
     {
         private readonly MongoDBContext dBContext;
         private readonly IEmailService _emailService;
+        private readonly IPasswordHasher<Login> _passwordHasher;
 
-        public StudentController(MongoDBContext dBContext, IEmailService emailService)
+        public StudentController(MongoDBContext dBContext, IEmailService emailService, IPasswordHasher<Login> passwordHasher)
         {
             this.dBContext = dBContext;
             _emailService = emailService;
+            _passwordHasher = passwordHasher;
         }
 
         [HttpGet]
@@ -279,11 +282,13 @@ namespace TAMS.Controllers
                 UserId = newUserId,
                 Role = UserRole.Student,
                 Username = model.Username,
-                Password = model.Password,
+                Password = "",
                 CreatedDate = DateTime.Now,
                 LastLogin = DateTime.Now,
                 isActive = true
             };
+
+            login.Password = _passwordHasher.HashPassword(login,  model.Password);
 
             var student = new Student
             {
