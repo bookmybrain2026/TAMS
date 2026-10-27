@@ -1,0 +1,79 @@
+﻿@model TAMS.Models.AdminRegistration
+
+@{
+    ViewData["Title"] = "Create Admin Account";
+}
+
+@section Styles {
+    <link href="~/css/CreateTutor.css" rel="stylesheet" asp-append-version="true" />
+}
+
+<div class="create-tutor-wrapper">
+    <div class="create-tutor-container">
+        <div class="create-tutor-panel">
+            <div class="create-tutor-brand">BookMy<span>Brain</span></div>
+            <h1 class="create-tutor-heading">Create Admin Account</h1>
+            <p class="create-tutor-subtitle">Set up a new administrator profile and login credentials.</p>
+
+            <form asp-controller="Admin" asp-action="CreateAdmin" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="FName" class="form-label">First Name</label>
+                        <input asp-for="FName" class="form-control" placeholder="Enter first name" autocomplete="given-name" />
+                        <span asp-validation-for="FName" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="LName" class="form-label">Last Name</label>
+                        <input asp-for="LName" class="form-control" placeholder="Enter last name" autocomplete="family-name" />
+                        <span asp-validation-for="LName" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="PhoneNumber" class="form-label">Phone Number</label>
+                    <input asp-for="PhoneNumber" class="form-control" placeholder="Enter phone number" autocomplete="tel" />
+                    <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label">Email</label>
+                    <input asp-for="Email" type="email" class="form-control" placeholder="Enter email address" autocomplete="email" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+
+                <hr class="create-tutor-divider" />
+                <h5 class="create-tutor-section-heading">Admin Login Information</h5>
+
+                <div class="mb-3">
+                    <label asp-for="Username" class="form-label">Username</label>
+                    <input asp-for="Username" class="form-control" placeholder="Create a username" autocomplete="username" />
+                    <span asp-validation-for="Username" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Password" class="form-label">Password</label>
+                    <input asp-for="Password" type="password" class="form-control" placeholder="Create a password (at least 8 characters)" autocomplete="new-password" />
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="ConfirmPassword" class="form-label">Confirm Password</label>
+                    <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="Confirm password" autocomplete="new-password" />
+                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                </div>
+
+                <div class="create-tutor-actions d-grid gap-2">
+                    <button type="submit" class="btn create-tutor-submit">Create Admin Account</button>
+                    <a asp-controller="Admin" asp-action="Dashboard" class="btn create-tutor-cancel">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

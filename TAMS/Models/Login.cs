@@ -30,6 +30,8 @@ namespace TAMS.Models
         public DateTime LastLogin { get; set; } = DateTime.Now;
 
         public bool isActive { get; set; } = true;
+
+        public int? CreatedBy { get; set; }
     }
 
     public enum UserRole

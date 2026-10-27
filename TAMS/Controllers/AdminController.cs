@@ -122,7 +122,8 @@ namespace TAMS.Controllers
                 Role = UserRole.Tutor,
                 CreatedDate = DateTime.Now,
                 LastLogin = DateTime.Now,
-                isActive = true
+                isActive = true,
+                CreatedBy = adminId.Value
             };
 
             newLogin.Password = _passwordHasher.HashPassword(newLogin, model.Password);
@@ -139,6 +140,78 @@ namespace TAMS.Controllers
             };
 
             dBContext.Tutor.InsertOne(newTutor);
+            return RedirectToAction("Dashboard");
+        }
+
+        [HttpGet]
+        public IActionResult CreateAdmin()
+        {
+            var adminId = HttpContext.Session.GetInt32("AdminId");
+            if (adminId == null) { return RedirectToAction("Login", "Login"); }
+
+            return View(new AdminRegistration());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult CreateAdmin(AdminRegistration model)
+        {
+            var adminId = HttpContext.Session.GetInt32("AdminId");
+            if (adminId == null) { return RedirectToAction("Login", "Login"); }
+
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            model.Username = model.Username?.Trim() ?? "";
+            model.FName = model.FName?.Trim() ?? "";
+            model.LName = model.LName?.Trim() ?? "";
+            model.PhoneNumber = model.PhoneNumber?.Trim() ?? "";
+            model.Email = model.Email?.Trim() ?? "";
+
+            if (dBContext.Login.Find(u => u.Username == model.Username).FirstOrDefault() != null)
+            {
+                ModelState.AddModelError(nameof(model.Username), "This username is already in use.");
+                return View(model);
+            }
+
+            if (dBContext.Admin.Find(a => a.Email == model.Email).FirstOrDefault() != null ||
+                dBContext.Tutor.Find(t => t.Email == model.Email).FirstOrDefault() != null ||
+                dBContext.Student.Find(s => s.Email == model.Email).FirstOrDefault() != null)
+            {
+                ModelState.AddModelError(nameof(model.Email), "This email address is already in use.");
+                return View(model);
+            }
+
+            var lastUser = dBContext.Login.Find(_ => true).SortByDescending(u => u.UserId).FirstOrDefault();
+            int newUserId = lastUser == null ? 1 : lastUser.UserId + 1;
+
+            var newLogin = new Login
+            {
+                UserId = newUserId,
+                Username = model.Username,
+                Password = "",
+                Role = UserRole.Administrator,
+                CreatedDate = DateTime.Now,
+                LastLogin = DateTime.Now,
+                isActive = true,
+                CreatedBy = adminId.Value
+            };
+            newLogin.Password = _passwordHasher.HashPassword(newLogin, model.Password);
+            dBContext.Login.InsertOne(newLogin);
+
+            var newAdmin = new Admin
+            {
+                AdminId = newUserId,
+                FName = model.FName,
+                LName = model.LName,
+                PhoneNumber = model.PhoneNumber,
+                Email = model.Email
+            };
+            dBContext.Admin.InsertOne(newAdmin);
+
+            TempData["Success"] = "Admin account created successfully.";
             return RedirectToAction("Dashboard");
         }
 
