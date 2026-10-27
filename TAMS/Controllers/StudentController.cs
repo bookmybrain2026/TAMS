@@ -158,6 +158,25 @@ namespace TAMS.Controllers
         }
 
         [HttpGet]
+        public IActionResult ViewAppointmentNotes(int appointmentId)
+        {
+            var studentId = HttpContext.Session.GetInt32("StudentId");
+            if (studentId == null) { return Unauthorized(); }
+
+            var appointment = dBContext.Appointments
+                .Find(a => a.AppointmentId == appointmentId && a.StudentId == studentId.Value)
+                .FirstOrDefault();
+
+            if (appointment == null) { return NotFound(); }
+
+            appointment.Tutor = dBContext.Tutor
+                .Find(t => t.TutorId == appointment.TutorId)
+                .FirstOrDefault();
+
+            return PartialView("_StudentAppointmentNotesModal", appointment);
+        }
+
+        [HttpGet]
         public IActionResult TutorProfile(int tutorId, int studentId)
         {
             var loggedinstudentId = HttpContext.Session.GetInt32("StudentId");

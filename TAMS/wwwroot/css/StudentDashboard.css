@@ -6,7 +6,7 @@
 }
 */
 .student-dashboard {
-/*    --bmb-cream: #fff0cf;
+    /*    --bmb-cream: #fff0cf;
     --bmb-yellow: #ffbd35;
     --bmb-orange: #f4a51c;
     --bmb-brown: #80451e;
@@ -207,7 +207,6 @@
     color: var(--bmb-white);
 }
 
-
 .student-dashboard .btn-danger {
     background: #c94c42;
     border-color: #c94c42;
@@ -231,7 +230,6 @@
     border-color: var(--bmb-dark);
     color: var(--bmb-white);
 }
-
 
 .student-dashboard .table-responsive {
     width: 100%;
@@ -285,7 +283,6 @@
     font-weight: 800;
 }
 
-
 .student-dashboard .tutors-card > h2, .student-dashboard .tutors-card > p, .student-dashboard .tutors-card > form { flex-shrink: 0; }
 
 .student-dashboard .tutors-card > p {
@@ -295,9 +292,7 @@
     line-height: 1.5;
 }
 
-
 .student-dashboard .tutors-card > form { margin-bottom: 12px; }
-
 
 .student-dashboard .tutors-card > .row {
     flex: 1 1 0;
@@ -310,7 +305,6 @@
     margin-top: 0;
     margin-bottom: 0;
 }
-
 
 .student-dashboard .tutor-card {
     height: auto;
@@ -455,7 +449,7 @@
     -webkit-overflow-scrolling: touch;
 }
 
-.student-dashboard .reviews-vertical-scroll::-webkit-scrollbar { width: 9px;}
+.student-dashboard .reviews-vertical-scroll::-webkit-scrollbar { width: 9px; }
 
 .student-dashboard .reviews-vertical-scroll::-webkit-scrollbar-track {
     background: #fff0cf;
@@ -522,7 +516,6 @@
     font-size: 0.9rem;
 }
 
-
 .dashboard-header-actions {
     display: flex;
     align-items: center;
@@ -531,43 +524,45 @@
     flex-shrink: 0;
 }
 
-#studentReminderModal .tutor-reminder-card h3 {
+:is(#studentReminderModal, #studentAppointmentNotesModal) .tutor-reminder-card h3 {
     margin: 0 0 10px;
     color: #343434;
     font-size: 1.05rem;
     font-weight: 700;
 }
 
-#studentReminderModal .tutor-reminder-card p {
+:is(#studentReminderModal, #studentAppointmentNotesModal) .tutor-reminder-card p {
     margin: 0;
     color: #666;
     font-size: 0.95rem;
     line-height: 1.6;
 }
 
-#studentReminderModal .tutor-reminder-item strong { color: #343434; }
+:is(#studentReminderModal, #studentAppointmentNotesModal) .tutor-reminder-item strong {
+    color: #343434;
+}
 
-#studentReminderModal .tutor-reminder-item p {
+:is(#studentReminderModal, #studentAppointmentNotesModal) .tutor-reminder-item p {
     margin-top: 5px;
     color: #666;
     font-size: 0.92rem;
     line-height: 1.5;
 }
 
-#studentReminderModal .tutor-reminder-item form {
+:is(#studentReminderModal, #studentAppointmentNotesModal) .tutor-reminder-item form {
     display: inline-flex;
     flex-shrink: 0;
     margin: 0;
 }
 
-#studentReminderModal .tutor-no-reminders h3 {
+:is(#studentReminderModal, #studentAppointmentNotesModal) .tutor-no-reminders h3 {
     margin: 0 0 10px;
     color: #343434;
     font-size: 1.2rem;
     font-weight: 700;
 }
 
-#studentReminderModal .tutor-no-reminders p {
+:is(#studentReminderModal, #studentAppointmentNotesModal) .tutor-no-reminders p {
     margin: 0;
     color: #666;
     font-size: 0.95rem;
@@ -681,14 +676,178 @@
         gap: 8px;
     }
 
-    #studentReminderModal.tutor-modal {
+    :is(#studentReminderModal, #studentAppointmentNotesModal).tutor-modal {
         align-items: center;
         padding: 10px;
     }
 
-    #studentReminderModal .tutor-reminder-item form { width: 100%; }
+    :is(#studentReminderModal, #studentAppointmentNotesModal) .tutor-reminder-item form {
+        width: 100%;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .student-notification-button { transition: none; }
+    .student-notification-button {
+        transition: none;
+    }
 }
+
+:is(#studentReminderModal, #studentAppointmentNotesModal).tutor-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1055;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.55);
+    overflow-y: auto;
+}
+
+:is(#studentReminderModal, #studentAppointmentNotesModal).tutor-modal.show,
+:is(#studentReminderModal, #studentAppointmentNotesModal).tutor-modal.active,
+:is(#studentReminderModal, #studentAppointmentNotesModal).tutor-modal[style*="display: flex"],
+:is(#studentReminderModal, #studentAppointmentNotesModal).tutor-modal[style*="display: block"] {
+    display: flex !important;
+}
+
+:is(#studentReminderModal, #studentAppointmentNotesModal) .tutor-modal-content {
+    width: 100%;
+    max-width: 560px;
+    max-height: calc(100vh - 40px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.25);
+}
+
+:is(#studentReminderModal, #studentAppointmentNotesModal) .tutor-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 20px 24px;
+    background: var(--bmb-yellow, #ffbd35);
+}
+
+:is(#studentReminderModal, #studentAppointmentNotesModal) .tutor-modal-header h2 {
+    margin: 0;
+    color: var(--bmb-dark, #302014);
+    font-size: 1.3rem;
+    font-weight: 800;
+}
+
+:is(#studentReminderModal, #studentAppointmentNotesModal) .tutor-modal-close {
+    border: 0;
+    background: transparent;
+    color: var(--bmb-dark, #302014);
+    font-size: 1.8rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+:is(#studentReminderModal, #studentAppointmentNotesModal) .tutor-modal-body {
+    padding: 24px;
+    overflow-y: auto;
+}
+
+:is(#studentReminderModal, #studentAppointmentNotesModal) .tutor-reminder-card {
+    padding: 18px;
+    background: var(--bmb-soft, #fffdf8);
+    border: 1px solid var(--bmb-border, #e7d8bf);
+    border-radius: 12px;
+}
+
+:is(#studentReminderModal, #studentAppointmentNotesModal) .tutor-reminder-item {
+    margin-top: 16px;
+    padding: 14px;
+    background: #fff6e4;
+    border: 1px solid var(--bmb-border, #e7d8bf);
+    border-radius: 10px;
+    overflow-wrap: anywhere;
+}
+
+:is(#studentReminderModal, #studentAppointmentNotesModal) .tutor-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 16px 24px;
+    border-top: 1px solid var(--bmb-border, #e7d8bf);
+}
+
+:is(#studentReminderModal, #studentAppointmentNotesModal) .tutor-reminder-close-button {
+    padding: 10px 20px;
+    background: var(--bmb-yellow, #ffbd35);
+    color: var(--bmb-dark, #302014);
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+:is(#studentReminderModal, #studentAppointmentNotesModal) .tutor-reminder-close-button:hover {
+    background: var(--bmb-orange, #f4a51c);
+}
+
+@media (max-width: 600px) {
+    :is(#studentReminderModal, #studentAppointmentNotesModal) .tutor-modal-content {
+        max-height: calc(100vh - 20px);
+    }
+
+    :is(#studentReminderModal, #studentAppointmentNotesModal) .tutor-modal-body {
+        padding: 16px;
+    }
+}
+
+#studentReminderModal .tutor-modal-body { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 14px;
+}
+
+#studentReminderModal .tutor-reminder-card { margin: 0; }
+
+#studentReminderModal .tutor-reminder-item { 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; 
+    gap: 14px; 
+}
+
+#studentReminderModal .tutor-reminder-item > div { 
+    flex: 1; 
+    min-width: 0; 
+
+}
+
+#studentReminderModal .tutor-reminder-confirm-button { 
+    padding: 10px 16px; 
+    border: 0; 
+    border-radius: 8px; 
+    background: var(--bmb-yellow, #ffbd35); 
+    color: var(--bmb-dark, #302014); 
+    font-weight: 700; 
+    cursor: pointer; 
+
+}
+
+#studentReminderModal .tutor-reminder-confirm-button:hover { background: var(--bmb-orange, #f4a51c); }
+
+#studentReminderModal .tutor-no-reminders { 
+    padding: 20px; 
+    text-align: center; 
+    background: var(--bmb-soft, #fffdf8); 
+    border: 1px solid var(--bmb-border, #e7d8bf); 
+    border-radius: 12px; 
+}
+
+@media (max-width: 600px) { 
+    #studentReminderModal .tutor-reminder-item { 
+        flex-direction: column; 
+        align-items: stretch; 
+    } 
+
+    #studentReminderModal .tutor-reminder-confirm-button { width: 100%; }
+}
+

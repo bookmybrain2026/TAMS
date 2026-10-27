@@ -189,6 +189,11 @@
                                                         Reschedule
                                                     </a>
 
+                                                    <button type="button" class="btn btn-info btn-sm" aria-haspopup="dialog" aria-controls="studentAppointmentNotesModal"
+                                                            onclick="openTutorModal('@Url.Action("ViewAppointmentNotes", "Student", new { appointmentId = appt.AppointmentId })', 'studentAppointmentNotesModal')">
+                                                        View Notes
+                                                    </button>
+
                                                     <form asp-controller="Student" asp-action="CancelAppointment" method="post" onsubmit="return confirm('Are you sure you want to cancel this appointment?');">
                                                         @Html.AntiForgeryToken()
                                                         <input type="hidden" name="appointmentId" value="@appt.AppointmentId" />
@@ -196,6 +201,7 @@
                                                             Cancel
                                                         </button>
                                                     </form>
+                                                    
                                                 </div>
                                             }
                                             else
