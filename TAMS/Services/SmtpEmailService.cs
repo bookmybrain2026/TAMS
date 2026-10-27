@@ -511,7 +511,7 @@ namespace TAMS.Services
         }
 
         //Styling Done for SendAdminCancelledAppointmentAsync
-        public async Task SendAdminCancelledAppointmentAsync(string recipientEmail, string recipientName, string otherPersonName, DateTime appointmentDate, string recipientType)
+        public async Task SendAdminCancelledAppointmentAsync(string recipientEmail, string recipientName, string otherPersonName, DateTime appointmentDate, string recipientType, string adminName)
         {
             var message = new MimeMessage();
             message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
@@ -551,6 +551,7 @@ namespace TAMS.Services
             var encodedOtherPersonLabel = System.Net.WebUtility.HtmlEncode(otherPersonLabel);
             var eDate = System.Net.WebUtility.HtmlEncode(formattedDate);
             var eTime = System.Net.WebUtility.HtmlEncode(formattedTime);
+            var eAdminName = System.Net.WebUtility.HtmlEncode(adminName);
 
             html = html.Replace("{{BannerHtml}}", bannerHtml);
             html = html.Replace("{{RecipientName}}", eRecipientName);
@@ -558,6 +559,7 @@ namespace TAMS.Services
             html = html.Replace("{{OtherPersonName}}", eOtherPersonName);
             html = html.Replace("{{AppointmentDate}}", eDate);
             html = html.Replace("{{AppointmentTime}}", eTime);
+            html = html.Replace("{{CancelledByAdminName}}", eAdminName);
 
             builder.HtmlBody = html;
             builder.TextBody = $"""
@@ -571,7 +573,7 @@ namespace TAMS.Services
                 Appointment Date: {formattedDate}
                 Appointment Time: {formattedTime}
                 Status: Cancelled
-                Cancelled By: TAMS Administrator
+                Cancelled By: {adminName}
 
                 Please review your updated schedule. If you have any questions,
                 please contact the TAMS administrator.

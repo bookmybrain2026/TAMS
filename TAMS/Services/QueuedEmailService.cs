@@ -58,10 +58,10 @@ namespace TAMS.Services
                 sender.SendTutorCancellationConfirmationAsync(tutorEmail, tutorName, studentName, appointmentDate)).AsTask();
         }
 
-        public Task SendAdminCancelledAppointmentAsync(string recipientEmail, string recipientName, string otherPersonName, DateTime appointmentDate, string recipientType)
+        public Task SendAdminCancelledAppointmentAsync(string recipientEmail, string recipientName, string otherPersonName, DateTime appointmentDate, string recipientType, string adminName)
         {
             return _queue.EnqueueAsync(sender =>
-                sender.SendAdminCancelledAppointmentAsync(recipientEmail, recipientName, otherPersonName, appointmentDate, recipientType)).AsTask();
+                sender.SendAdminCancelledAppointmentAsync(recipientEmail, recipientName, otherPersonName, appointmentDate, recipientType, adminName)).AsTask();
         }
 
         public Task SendReviewReminderAsync(string studentEmail, string studentName, string tutorName)

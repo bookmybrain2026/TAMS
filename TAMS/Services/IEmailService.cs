@@ -15,7 +15,7 @@ namespace TAMS.Services
 
         Task SendTutorCancellationConfirmationAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate);
 
-        Task SendAdminCancelledAppointmentAsync(string recipientEmail, string recipientName, string otherPersonName, DateTime appointmentDate, string recipientType);
+        Task SendAdminCancelledAppointmentAsync(string recipientEmail, string recipientName, string otherPersonName, DateTime appointmentDate, string recipientType, string adminName);
 
         Task SendReviewReminderAsync(string studentEmail, string studentName, string tutorName);
 
