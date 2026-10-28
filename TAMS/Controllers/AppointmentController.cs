@@ -167,12 +167,12 @@ namespace TAMS.Controllers
 
             try
             {
-                if (!string.IsNullOrWhiteSpace(student.Email))
+                if (!student.DisableEmailNotifications && !string.IsNullOrWhiteSpace(student.Email))
                 {
                     await _emailService.SendStudentAppointmentConfirmationAsync(student.Email, studentName, tutorName, newStart.AddHours(5));
                 }
 
-                if (!string.IsNullOrWhiteSpace(tutor.Email))
+                if (!tutor.DisableEmailNotifications && !string.IsNullOrWhiteSpace(tutor.Email))
                 {
                     await _emailService.SendTutorAppointmentNotificationAsync(tutor.Email, tutorName, studentName, newStart.AddHours(5));
                 }
@@ -331,12 +331,14 @@ namespace TAMS.Controllers
             {
                 if (sameTutor)
                 {
-                    if (!string.IsNullOrWhiteSpace(student.Email))
+                    //if (!string.IsNullOrWhiteSpace(student.Email))
+                    if (!student.DisableEmailNotifications && !string.IsNullOrWhiteSpace(student.Email))
                     {
                         await _emailService.SendStudentAppointmentRescheduledAsync(student.Email, studentName, newTutorName, newStart.AddHours(0));
                     }
 
-                    if (!string.IsNullOrWhiteSpace(newTutor.Email))
+                    //if (!string.IsNullOrWhiteSpace(newTutor.Email))
+                    if (!newTutor.DisableEmailNotifications && !string.IsNullOrWhiteSpace(newTutor.Email))
                     {
                         await _emailService.SendTutorAppointmentRescheduledAsync(newTutor.Email, newTutorName, studentName, newStart.AddHours(5));
                     }
@@ -344,20 +346,20 @@ namespace TAMS.Controllers
                 else
                 {
                     // Confirm the replacement appointment to the student.
-                    if (!string.IsNullOrWhiteSpace(student.Email))
+                    if (!student.DisableEmailNotifications && !string.IsNullOrWhiteSpace(student.Email))
                     {
                         await _emailService.SendStudentAppointmentConfirmationAsync(student.Email, studentName, newTutorName, newStart.AddHours(5));
                     }
 
                     // Notify the previous tutor about the cancelled appointment
-                    if (previousTutor != null &&
+                    if (previousTutor != null && !previousTutor.DisableEmailNotifications &&
                         !string.IsNullOrWhiteSpace(previousTutor.Email))
                     {
                         await _emailService.SendTutorAppointmentCancellationAsync(previousTutor.Email, $"{previousTutor.FName} {previousTutor.LName}", studentName, oldAppointmentDate.AddHours(5));
                     }
 
                     // Notify the newly selected tutor about the new appointment
-                    if (!string.IsNullOrWhiteSpace(newTutor.Email))
+                    if (!newTutor.DisableEmailNotifications && !string.IsNullOrWhiteSpace(newTutor.Email))
                     {
                         await _emailService.SendTutorAppointmentNotificationAsync(newTutor.Email, newTutorName, studentName, newStart.AddHours(5));
                     }

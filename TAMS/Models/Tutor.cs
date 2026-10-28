@@ -49,5 +49,7 @@ namespace TAMS.Models
 
         public int ReviewCount { get; set; }
 
+        public bool DisableEmailNotifications { get; set; } = false;
+
     }
 }

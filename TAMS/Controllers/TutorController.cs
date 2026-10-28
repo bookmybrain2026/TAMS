@@ -304,7 +304,8 @@ namespace TAMS.Controllers
                 .Set(t => t.Email, model.Email)
                 .Set(t => t.PhoneNumber, model.PhoneNumber)
                 .Set(t => t.Subject, model.Subject)
-                .Set(t => t.TutoringCourseIds, validCourseIds);
+                .Set(t => t.TutoringCourseIds, validCourseIds)
+                .Set(t => t.DisableEmailNotifications, model.DisableEmailNotifications);
 
             var result = dBContext.Tutor.UpdateOne(t => t.TutorId == tutorId.Value, update);
 
@@ -500,13 +501,13 @@ namespace TAMS.Controllers
             try
             {
                 // Notify the student that the tutor cancelled
-                if (!string.IsNullOrWhiteSpace(student.Email))
+                if (!student.DisableEmailNotifications && !string.IsNullOrWhiteSpace(student.Email))
                 {
                     await _emailService.SendStudentAppointmentCancelledByTutorAsync(student.Email, studentName, tutorName, appointment.AppointmentDate);
                 }
 
                 // Confirm the cancellation to the tutor
-                if (!string.IsNullOrWhiteSpace(tutor.Email))
+                if (!tutor.DisableEmailNotifications && !string.IsNullOrWhiteSpace(tutor.Email))
                 {
                     await _emailService.SendTutorCancellationConfirmationAsync(tutor.Email, tutorName, studentName, appointment.AppointmentDate);
                 }
@@ -550,7 +551,7 @@ namespace TAMS.Controllers
                     var studentName = $"{student.FName} {student.LName}";
                     var tutorName = $"{tutor.FName} {tutor.LName}";
 
-                    if (student != null && tutor != null && !string.IsNullOrWhiteSpace(student.Email))
+                    if (student != null && tutor != null && !student.DisableEmailNotifications && !string.IsNullOrWhiteSpace(student.Email))
                     {
                         await _emailService.SendReviewReminderAsync(student.Email, studentName, tutorName);
                     }

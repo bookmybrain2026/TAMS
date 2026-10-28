@@ -484,13 +484,13 @@ namespace TAMS.Controllers
             try
             {
                 // Notify the student.
-                if (!string.IsNullOrWhiteSpace(student.Email))
+                if (!student.DisableEmailNotifications && !string.IsNullOrWhiteSpace(student.Email))
                 {
                     await _emailService.SendAdminCancelledAppointmentAsync(student.Email, studentName, tutorName, appointment.AppointmentDate.AddHours(5), "Student", adminName);
                 }
 
                 // Notify the tutor.
-                if (!string.IsNullOrWhiteSpace(tutor.Email))
+                if (!tutor.DisableEmailNotifications && !string.IsNullOrWhiteSpace(tutor.Email))
                 {
                     await _emailService.SendAdminCancelledAppointmentAsync(tutor.Email, tutorName, studentName, appointment.AppointmentDate.AddHours(5), "Tutor", adminName);
                 }
@@ -550,7 +550,7 @@ namespace TAMS.Controllers
                 var student = await dBContext.Student.Find(s => s.StudentId == appointment.StudentId).FirstOrDefaultAsync();
                 var tutor = await dBContext.Tutor.Find(t => t.TutorId == appointment.TutorId).FirstOrDefaultAsync();
 
-                if (student != null && tutor != null && !string.IsNullOrWhiteSpace(student.Email))
+                if (student != null && tutor != null && !student.DisableEmailNotifications && !string.IsNullOrWhiteSpace(student.Email))
                 {
                     var studentName = $"{student.FName} {student.LName}";
                     var tutorName = $"{tutor.FName} {tutor.LName}";

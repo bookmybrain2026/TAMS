@@ -69,7 +69,7 @@
                 </div>
 
                 <button class="btn btn-primary mt-3" type="button" data-bs-toggle="collapse" data-bs-target="#editForm" aria-expanded="false" aria-controls="editForm">
-                    Update Information
+                    Update Account Information
                 </button>
 
                 @* Update Info *@
@@ -102,6 +102,16 @@
                         <div class="mb-3">
                             <label asp-for="DOB" class="form-label">Date of Birth </label>
                             <input class="form-control" asp-for="DOB" type="date" />
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" asp-for="DisableEmailNotifications" />
+                            <label class="form-check-label" asp-for="DisableEmailNotifications">
+                                Disable Email Notifications
+                            </label>
+                            <div class="form-text">
+                                You can change this preference at any time.
+                            </div>
                         </div>
 
                         <button type="submit" class="btn btn-success mt-2">Save Changes</button>

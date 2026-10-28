@@ -38,6 +38,7 @@ namespace TAMS.Models
         public virtual List<Appointment> Appointments { get; set; } = new List<Appointment>();
         public List<Review> AwaitingReviews { get; set; } = new List<Review>();
 
+        public bool DisableEmailNotifications { get; set; } = false;
 
     }
 }

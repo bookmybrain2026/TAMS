@@ -86,7 +86,11 @@ namespace TAMS.Services
                                     // SECOND: Attempt email delivery independently.
                                     try
                                     {
-                                        await emailService.SendTutorAppointmentCompletionReminderAsync(tutor.Email, tutorName, studentName, appointment.AppointmentDate, appointment.EndDate, 1);
+                                        if (!tutor.DisableEmailNotifications && !string.IsNullOrWhiteSpace(tutor.Email))
+                                        {
+                                            await emailService.SendTutorAppointmentCompletionReminderAsync(
+                                                tutor.Email, tutorName, studentName, appointment.AppointmentDate, appointment.EndDate, 1);
+                                        }
                                         _logger.LogInformation("One-hour reminder email sent for appointment {AppointmentId}.", appointment.AppointmentId);
                                     }
                                     catch (OperationCanceledException)
@@ -127,7 +131,11 @@ namespace TAMS.Services
                                     // SECOND: Attempt email delivery independently
                                     try
                                     {
-                                        await emailService.SendTutorAppointmentCompletionReminderAsync(tutor.Email, tutorName, studentName, appointment.AppointmentDate, appointment.EndDate, 24);
+                                        if (!tutor.DisableEmailNotifications && !string.IsNullOrWhiteSpace(tutor.Email))
+                                        {
+                                            await emailService.SendTutorAppointmentCompletionReminderAsync(
+                                                tutor.Email, tutorName, studentName, appointment.AppointmentDate, appointment.EndDate, 24);
+                                        }
                                         _logger.LogInformation("24-hour reminder email sent for appointment {AppointmentId}.", appointment.AppointmentId);
                                     }
                                     catch (OperationCanceledException)
@@ -168,7 +176,11 @@ namespace TAMS.Services
                                     // SECOND: Attempt the optional tutor email independently
                                     try
                                     {
-                                        await emailService.SendTutorAppointmentAdminFollowUpAsync(tutor.Email, tutorName, studentName, appointment.AppointmentDate, appointment.EndDate);
+                                        if (!tutor.DisableEmailNotifications && !string.IsNullOrWhiteSpace(tutor.Email))
+                                        {
+                                            await emailService.SendTutorAppointmentAdminFollowUpAsync(
+                                                tutor.Email, tutorName, studentName, appointment.AppointmentDate, appointment.EndDate);
+                                        }
                                         _logger.LogInformation("48-hour Admin follow-up email sent for appointment {AppointmentId}.",
                                             appointment.AppointmentId);
                                     }

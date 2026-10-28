@@ -207,11 +207,11 @@ namespace TAMS.Controllers
             var loggedinstudentId = HttpContext.Session.GetInt32("StudentId");
             if (loggedinstudentId == null) { return RedirectToAction("Login", "Login"); }
 
-            var student =
-                dBContext.Student
-                .Find(s => s.StudentId == updatedStudent.StudentId).FirstOrDefault();
+            var student = dBContext.Student.Find(s => s.StudentId == updatedStudent.StudentId).FirstOrDefault();
 
             if (student == null){return NotFound(); }
+
+            if (loggedinstudentId.Value != updatedStudent.StudentId) { return Unauthorized(); }
 
             var update =
                 Builders<Student>.Update
@@ -219,7 +219,8 @@ namespace TAMS.Controllers
                 .Set(s => s.LName, updatedStudent.LName)
                 .Set(s => s.Email, updatedStudent.Email)
                 .Set(s => s.PhoneNumber, updatedStudent.PhoneNumber)
-                .Set(s => s.DOB, updatedStudent.DOB);
+                .Set(s => s.DOB, updatedStudent.DOB)
+                .Set(s => s.DisableEmailNotifications, updatedStudent.DisableEmailNotifications);
             dBContext.Student.UpdateOne(s => s.StudentId == updatedStudent.StudentId,update);
 
             return RedirectToAction("Dashboard", new { id = updatedStudent.StudentId });
@@ -354,11 +355,11 @@ namespace TAMS.Controllers
 
             try
             {
-                if (!string.IsNullOrWhiteSpace(student.Email))
+                if (!student.DisableEmailNotifications && !string.IsNullOrWhiteSpace(student.Email))
                 {
                     await _emailService.SendStudentAppointmentCancellationAsync(student.Email, studentName, tutorName, appointment.AppointmentDate.AddHours(5));
                 }
-                if (!string.IsNullOrWhiteSpace(tutor.Email))
+                if (!tutor.DisableEmailNotifications && !string.IsNullOrWhiteSpace(tutor.Email))
                 {
                     await _emailService.SendTutorAppointmentCancellationAsync(tutor.Email, tutorName,  studentName, appointment.AppointmentDate.AddHours(5));
                 }

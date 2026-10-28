@@ -57,13 +57,15 @@ namespace TAMS.Services
                     // 24-hour reminder
                     if (!appointment.Reminder24HoursBeforeSent && now >= start.AddHours(-24) && now < start.AddHours(-1))
                     {
-                        await SendReminderAsync(appointment, student.Email, tutor.Email, studentName, tutorName, 24, cancellationToken);
+                        await SendReminderAsync(appointment, student.DisableEmailNotifications ? null : student.Email,
+                                                tutor.DisableEmailNotifications ? null : tutor.Email, studentName, tutorName, 24, cancellationToken);
                     }
 
                     // 1-hour reminder
                     if (!appointment.Reminder1HourBeforeSent && now >= start.AddHours(-1) && now < start)
                     {
-                        await SendReminderAsync(appointment, student.Email, tutor.Email, studentName, tutorName, 1, cancellationToken);
+                        await SendReminderAsync(appointment, student.DisableEmailNotifications ? null : student.Email, 
+                                                tutor.DisableEmailNotifications ? null : tutor.Email, studentName, tutorName, 1, cancellationToken);
                     }
                 }
                 catch (OperationCanceledException)
@@ -96,24 +98,24 @@ namespace TAMS.Services
 
             if (!withinWindow) { return; }
 
-            // Both email addresses are required before processing.
-            if (string.IsNullOrWhiteSpace(studentEmail))
+            if (string.IsNullOrWhiteSpace(studentEmail) && string.IsNullOrWhiteSpace(tutorEmail))
             {
-                _logger.LogWarning("Student email missing for appointment {AppointmentId}.", current.AppointmentId);
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(tutorEmail))
-            {
-                _logger.LogWarning("Tutor email missing for appointment {AppointmentId}.", current.AppointmentId);
                 return;
             }
 
             string tutorNotes = current.TutorNotes ?? string.Empty;
 
-            await _emailService.SendStudentUpcomingAppointmentReminderAsync(studentEmail, studentName, tutorName, current.AppointmentDate, hoursBefore, tutorNotes);
+            if (!string.IsNullOrWhiteSpace(studentEmail))
+            {
+                await _emailService.SendStudentUpcomingAppointmentReminderAsync(
+                    studentEmail, studentName, tutorName, current.AppointmentDate, hoursBefore, tutorNotes);
+            }
 
-            await _emailService.SendTutorUpcomingAppointmentReminderAsync(tutorEmail, tutorName, studentName, current.AppointmentDate, hoursBefore);
+            if (!string.IsNullOrWhiteSpace(tutorEmail))
+            {
+                await _emailService.SendTutorUpcomingAppointmentReminderAsync(
+                    tutorEmail, tutorName, studentName, current.AppointmentDate, hoursBefore);
+            }
 
             // Only mark the reminder after both emails succeed.
             var filter = Builders<Appointment>.Filter.Eq(a => a.AppointmentId, current.AppointmentId)
