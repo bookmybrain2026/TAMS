@@ -812,30 +812,70 @@ namespace TAMS.Services
             await smtp.DisconnectAsync(true);
         }
 
+        //Styling donw for SendTutorAppointmentRescheduledAsync
         public async Task SendTutorAppointmentRescheduledAsync(string tutorEmail, string tutorName, string studentName, DateTime newAppointmentDate)
         {
             var message = new MimeMessage();
             message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
             message.To.Add(new MailboxAddress(tutorName, tutorEmail));
             message.Subject = "Appointment Rescheduled";
-            
-            message.Body = new TextPart("plain")
+
+            var builder = new BodyBuilder();
+
+            var templatePath = Path.Combine(_environment.ContentRootPath, "EmailTemplates", "TutorAppointmentReschedule.html");
+
+            var html = await File.ReadAllTextAsync(templatePath);
+
+            var bannerPath = Path.Combine(_environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot"), "images", "banner.png");
+
+            string bannerHtml = "";
+
+            if (File.Exists(bannerPath))
             {
-                Text = $"""
-                    Hello {tutorName},
+                var banner = builder.LinkedResources.Add(bannerPath);
+                banner.ContentId = Guid.NewGuid().ToString() + "@tams";
 
-                    An existing tutoring appointment has been rescheduled.
+                bannerHtml = $"""
+                    <img src="cid:{banner.ContentId}"
+                         alt="BookMyBrain" width="560"
+                         style="display:block;width:100%;max-width:560px;
+                                height:auto;border:0;margin:0 auto;">
+                    """;
+            }
 
-                    Student: {studentName}
-                    New Appointment Date: {newAppointmentDate.AddHours(-5):MMMM dd, yyyy}
-                    New Appointment Time: {newAppointmentDate.AddHours(-5):h:mm tt}
-                    Status: Scheduled
+            var formattedDate = newAppointmentDate.AddHours(-5).ToString("MMMM dd, yyyy");
+            var formattedTime = newAppointmentDate.AddHours(-5).ToString("h:mm tt");
 
-                    Please review your updated schedule in TAMS.
+            var tName = System.Net.WebUtility.HtmlEncode(tutorName);
+            var sName = System.Net.WebUtility.HtmlEncode(studentName);
+            var aDate = System.Net.WebUtility.HtmlEncode(formattedDate);
+            var aTime = System.Net.WebUtility.HtmlEncode(formattedTime);
 
-                    Thank you for using TAMS.
-                    """
-                        };
+            html = html.Replace("{{BannerHtml}}", bannerHtml);
+            html = html.Replace("{{TutorName}}", tName);
+            html = html.Replace("{{StudentName}}", sName);
+            html = html.Replace("{{AppointmentDate}}", aDate);
+            html = html.Replace("{{AppointmentTime}}", aTime);
+            html = html.Replace("{{Status}}", "Scheduled");
+
+            builder.HtmlBody = html;
+
+            builder.TextBody = $"""
+                Hello {tutorName},
+
+                An existing tutoring appointment has been rescheduled.
+
+                Student: {studentName}
+                New Appointment Date: {formattedDate}
+                New Appointment Time: {formattedTime}
+                Status: Scheduled
+
+                Please review your updated schedule in TAMS.
+
+                Thank you for using TAMS.
+                """;
+
+            message.Body = builder.ToMessageBody();
 
             using var smtp = new SmtpClient();
             await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
@@ -844,24 +884,68 @@ namespace TAMS.Services
             await smtp.DisconnectAsync(true);
         }
 
+        //Styling done for SendStudentAppointmentRescheduledAsync
         public async Task SendStudentAppointmentRescheduledAsync(string studentEmail, string studentName, string tutorName, DateTime newAppointmentDate)
         {
             var message = new MimeMessage();
             message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
-            message.To.Add(new MailboxAddress(studentName, studentEmail));
+            message.To.Add(MailboxAddress.Parse(studentEmail));
             message.Subject = "Appointment Rescheduled";
-            var formattedDate = newAppointmentDate.ToString("dddd, MMMM d, yyyy 'at' h:mm tt");
 
-            message.Body = new TextPart("plain")
+            var builder = new BodyBuilder();
+
+            var templatePath = Path.Combine(_environment.ContentRootPath, "EmailTemplates", "StudentAppointmentReschedule.html");
+
+            var html = await File.ReadAllTextAsync(templatePath);
+
+            var bannerPath = Path.Combine(_environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot"), "images", "banner.png");
+
+            string bannerHtml = "";
+
+            if (File.Exists(bannerPath))
             {
-                Text =
-                    $"Hello {studentName},\n\n" +
-                    "Your tutoring appointment has been successfully rescheduled.\n\n" +
-                    $"Tutor: {tutorName}\n" +
-                    $"New appointment date and time: {formattedDate}\n\n" +
-                    "Please contact your tutor if you have any questions.\n\n" +
-                    "Thank you."
-            };
+                var banner = builder.LinkedResources.Add(bannerPath);
+                banner.ContentId = Guid.NewGuid().ToString() + "@tams";
+
+                bannerHtml = $"""
+                    <img src="cid:{banner.ContentId}"
+                         alt="BookMyBrain" width="560"
+                         style="display:block;width:100%;max-width:560px;
+                                height:auto;border:0;margin:0 auto;">
+                    """;
+            }
+
+            var formattedDate = newAppointmentDate.ToString("MMMM dd, yyyy");
+            var formattedTime = newAppointmentDate.ToString("h:mm tt");
+
+            var sName = System.Net.WebUtility.HtmlEncode(studentName);
+            var tName = System.Net.WebUtility.HtmlEncode(tutorName);
+            var aDate = System.Net.WebUtility.HtmlEncode(formattedDate);
+            var aTime = System.Net.WebUtility.HtmlEncode(formattedTime);
+
+            html = html.Replace("{{BannerHtml}}", bannerHtml);
+            html = html.Replace("{{StudentName}}", sName);
+            html = html.Replace("{{TutorName}}", tName);
+            html = html.Replace("{{AppointmentDate}}", aDate);
+            html = html.Replace("{{AppointmentTime}}", aTime);
+
+            builder.HtmlBody = html;
+
+            builder.TextBody = $"""
+                Hello {studentName},
+
+                Your tutoring appointment has been successfully rescheduled.
+
+                Tutor: {tutorName}
+                New Appointment Date: {formattedDate}
+                New Appointment Time: {formattedTime}
+
+                Please contact your tutor if you have any questions.
+
+                Thank you.
+                """;
+
+            message.Body = builder.ToMessageBody();
 
             using var smtp = new MailKit.Net.Smtp.SmtpClient();
             await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);

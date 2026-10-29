@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TAMS Tutor Appointment Rescheduled</title>
+    <title>Tutor Appointment Rescheduled</title>
 </head>
 
 <body style="margin:0; padding:0; background-color:#F7F0E4; font-family:'Segoe UI',Arial,sans-serif; color:#35291F;">
@@ -34,8 +34,18 @@
                             </p>
 
                             <p style="color:#76634F; font-size:14px; line-height:1.8;">
-                                This email is to confirm that your upcoming appointment has been rescheduled.
+                                An existing tutoring appointment has been rescheduled.
                             </p>
+
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                                   style="background:rgb(212, 243, 208); border-left:4px solid #9bdaab;">
+                                <tr>
+                                    <td style="padding:14px 16px; color:#114603; font-size:13px; line-height:1.7;">
+                                        <strong>Important:</strong>
+                                        Your tutoring appointment has been rescheduled. Please review the updated appointment information below.
+                                    </td>
+                                </tr>
+                            </table>
 
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
                                    style="background:#FFF8E8; border:1px solid #E9DECC; border-radius:10px; margin:25px 0;">
@@ -46,20 +56,19 @@
                                         </p>
 
                                         <p style="margin:0; color:#35291F; font-family:Consolas,'Courier New',monospace;
-                                                  font-size:15px; font-weight:normal; letter-spacing:4px; overflow-wrap:anywhere; word-break:break-word; text-align: left;">
+                                                  font-size:15px; font-weight:normal; letter-spacing:4px;
+                                                  overflow-wrap:anywhere; word-break:break-word; text-align:left;">
                                             <b>Student:</b> {{StudentName}} <br>
-                                            <b>Date:</b> {{AppointmentDate}} <br>
-                                            <b>Time:</b> {{AppointmentTime}} <br>
-                                            <b>Subject:</b> {{Subject}} <br>
-                                            <b>Status:</b> {{Status}} <br>
+                                            <b>New Appointment Date:</b> {{AppointmentDate}} <br>
+                                            <b>New Appointment Time:</b> {{AppointmentTime}} <br>
+                                            <b>Status:</b> {{Status}}
                                         </p>
                                     </td>
                                 </tr>
                             </table>
 
                             <p style="margin:22px 0; color:#76634F; font-size:13px; line-height:1.8;">
-                                We will send a reminder for your appointment at a later date. <br>
-                                Appointment ID: {{AppointmentID}}
+                                Please review your updated schedule in TAMS.
                             </p>
 
                             <hr style="border:0; border-top:1px solid #E9DECC; margin:28px 0 22px;">
