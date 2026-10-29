@@ -848,7 +848,7 @@ namespace TAMS.Services
         {
             var message = new MimeMessage();
             message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
-            message.To.Add(MailboxAddress.Parse(studentEmail));
+            message.To.Add(new MailboxAddress(studentName, studentEmail));
             message.Subject = "Appointment Rescheduled";
             var formattedDate = newAppointmentDate.ToString("dddd, MMMM d, yyyy 'at' h:mm tt");
 
