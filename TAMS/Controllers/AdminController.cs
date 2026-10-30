@@ -211,7 +211,7 @@ namespace TAMS.Controllers
             };
             dBContext.Admin.InsertOne(newAdmin);
 
-            TempData["Success"] = "Admin account created successfully.";
+            TempData["AdminDashboardSuccess"] = "Admin account created successfully.";
             return RedirectToAction("Dashboard");
         }
 
@@ -226,7 +226,7 @@ namespace TAMS.Controllers
 
             if (tutor == null)
             {
-                TempData["Error"] = "The selected tutor could not be found.";
+                TempData["AdminDashboardError"] = "The selected tutor could not be found.";
                 return RedirectToAction("Dashboard");
             }
 
@@ -238,14 +238,14 @@ namespace TAMS.Controllers
 
             if (string.IsNullOrWhiteSpace(fName) || string.IsNullOrWhiteSpace(lName) || string.IsNullOrWhiteSpace(subject) || string.IsNullOrWhiteSpace(email))
             {
-                TempData["Error"] = "Please complete all required tutor fields.";
+                TempData["AdminDashboardError"] = "Please complete all required tutor fields.";
                 return RedirectToAction("Dashboard", new { editTutorId = tutorId });
             }
 
             var duplicateEmail = dBContext.Tutor.Find(t => t.Email == email && t.TutorId != tutorId).FirstOrDefault();
             if (duplicateEmail != null)
             {
-                TempData["Error"] = "Another tutor is already using this email.";
+                TempData["AdminDashboardError"] = "Another tutor is already using this email.";
                 return RedirectToAction("Dashboard", new { editTutorId = tutorId });
             }
 
@@ -257,7 +257,7 @@ namespace TAMS.Controllers
                 .Set(t => t.PhoneNumber, phoneNumber);
             dBContext.Tutor.UpdateOne(t => t.TutorId == tutorId, update);
 
-            TempData["Success"] = "Tutor information updated successfully.";
+            TempData["AdminDashboardSuccess"] = "Tutor information updated successfully.";
             return RedirectToAction("Dashboard");
         }
 
@@ -373,26 +373,26 @@ namespace TAMS.Controllers
 
             if (date.Date < today)
             {
-                TempData["Error"] = "You cannot add a schedule slot for a date that has already passed.";
+                TempData["AdminSchedulerError"] = "You cannot add a schedule slot for a date that has already passed.";
                 return RedirectToAction("Scheduler", new { month = date.Month, year = date.Year });
             }
 
             if (date.Date == today && startTime <= now.TimeOfDay)
             {
-                TempData["Error"] = "You cannot add a schedule slot with a start time that has already passed. Please choose a future time.";
+                TempData["AdminSchedulerError"] = "You cannot add a schedule slot with a start time that has already passed. Please choose a future time.";
                 return RedirectToAction("Scheduler", new { month = date.Month, year = date.Year });
             }
 
             if (endTime <= startTime)
             {
-                TempData["Error"] = "End time must be after start time.";
+                TempData["AdminSchedulerError"] = "End time must be after start time.";
                 return RedirectToAction("Scheduler", new { month = date.Month, year = date.Year });
             }
 
             var tutor = dBContext.Tutor.Find(t => t.TutorId == tutorId).FirstOrDefault();
             if (tutor == null)
             {
-                TempData["Error"] = "The selected tutor was not found.";
+                TempData["AdminSchedulerError"] = "The selected tutor was not found.";
                 return RedirectToAction("Scheduler", new { month = date.Month, year = date.Year });
             }
 
@@ -400,7 +400,7 @@ namespace TAMS.Controllers
             bool overlaps = existingSlots.Any(s => s.Date.Date == date.Date && startTime < s.EndTime && endTime > s.StartTime);
             if (overlaps)
             {
-                TempData["Error"] = "An existing schedule already overlaps with this time for the selected tutor. " + "If you want to add this time, please delete the preexisting schedule first.";
+                TempData["AdminSchedulerError"] = "An existing schedule already overlaps with this time for the selected tutor. " + "If you want to add this time, please delete the preexisting schedule first.";
                 return RedirectToAction("Scheduler", new { month = date.Month, year = date.Year });
             }
 
@@ -415,7 +415,7 @@ namespace TAMS.Controllers
                 EndTime = endTime
             };
             dBContext.Schedule.InsertOne(schedule);
-            TempData["Success"] = "Schedule added successfully.";
+            TempData["AdminSchedulerSuccess"] = "Schedule added successfully.";
 
             return RedirectToAction("Scheduler", new { month = date.Month, year = date.Year });
         }
@@ -434,7 +434,7 @@ namespace TAMS.Controllers
 
             if (appointment.Status?.Trim() != "Scheduled")
             {
-                TempData["Error"] = "Only scheduled appointments can be cancelled.";
+                TempData["AdminDashboardError"] = "Only scheduled appointments can be cancelled.";
                 return RedirectToAction("Dashboard");
             }
 
@@ -448,7 +448,7 @@ namespace TAMS.Controllers
 
             if (student == null || tutor == null)
             {
-                TempData["Error"] = "The appointment could not be cancelled because the associated student or tutor could not be found.";
+                TempData["AdminDashboardError"] = "The appointment could not be cancelled because the associated student or tutor could not be found.";
                 return RedirectToAction("Dashboard");
             }
 
@@ -456,7 +456,7 @@ namespace TAMS.Controllers
 
             if (admin == null)
             {
-                TempData["Error"] = "The administrator account could not be found.";
+                TempData["AdminDashboardError"] = "The administrator account could not be found.";
 
                 return RedirectToAction("Dashboard");
             }
@@ -475,7 +475,7 @@ namespace TAMS.Controllers
 
             if (result.ModifiedCount == 0)
             {
-                TempData["Error"] = "The appointment could not be cancelled. " + "It may already have been cancelled.";
+                TempData["AdminDashboardError"] = "The appointment could not be cancelled. " + "It may already have been cancelled.";
                 return RedirectToAction("Dashboard");
             }
 
@@ -498,7 +498,7 @@ namespace TAMS.Controllers
             catch (Exception ex)
             {
                 Console.WriteLine($"Cancellation email failed: {ex.Message}");
-                TempData["Error"] = "The appointment was cancelled, but a notification email could not be sent.";
+                TempData["AdminDashboardError"] = "The appointment was cancelled, but a notification email could not be sent.";
             }
             return RedirectToAction("Dashboard");
         }
@@ -512,7 +512,7 @@ namespace TAMS.Controllers
 
             if (appointment.Status != "Scheduled" || !appointment.AdminNotificationSent)
             {
-                TempData["ErrorMessage"] = "This appointment cannot be completed until the Admin notification has been sent.";
+                TempData["AdminDashboardError"] = "This appointment cannot be completed until the Admin notification has been sent.";
                 return RedirectToAction("AdminDashboard");
             }
 
@@ -528,7 +528,7 @@ namespace TAMS.Controllers
 
             if (result.ModifiedCount == 0)
             {
-                TempData["ErrorMessage"] = "The appointment could not be completed. It may have already been updated.";
+                TempData["AdminDashboardError"] = "The appointment could not be completed. It may have already been updated.";
                 return RedirectToAction("AdminDashboard");
             }
 
@@ -562,7 +562,7 @@ namespace TAMS.Controllers
                 Console.WriteLine($"Review reminder email failed: {ex.Message}");
             }
 
-            TempData["SuccessMessage"] = $"Appointment #{appointmentId} has been marked as completed.";
+            TempData["AdminDashboardSuccess"] = $"Appointment #{appointmentId} has been marked as completed.";
 
             return RedirectToAction("Dashboard");
         }
@@ -577,7 +577,7 @@ namespace TAMS.Controllers
             var slot = dBContext.Schedule.Find(s => s.ScheduleId == scheduleId).FirstOrDefault();
             if (slot == null)
             {
-                TempData["Error"] = "Schedule slot not found.";
+                TempData["AdminDashboardError"] = "Schedule slot not found.";
                 return RedirectToAction("Dashboard");
             }
 
@@ -593,14 +593,14 @@ namespace TAMS.Controllers
 
             if (hasAppointments)
             {
-                TempData["Error"] =
+                TempData["AdminDashboardError"] =
                     "You cannot delete this schedule slot because it has a scheduled appointment. " +
                     "Please cancel or remove the associated appointment first.";
                 return RedirectToAction("Dashboard", new { viewTutorId = tutorId });
             }
             dBContext.Schedule.DeleteOne(s => s.ScheduleId == scheduleId && s.TutorId == tutorId);
 
-            TempData["Success"] = "Schedule deleted successfully.";
+            TempData["AdminDashboardSuccess"] = "Schedule deleted successfully.";
             return RedirectToAction("Dashboard", new { viewTutorId = tutorId });
         }
 

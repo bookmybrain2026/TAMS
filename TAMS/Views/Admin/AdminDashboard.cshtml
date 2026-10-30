@@ -22,17 +22,17 @@
 
 <body>
     <div class="admin-dashboard">
-        @if (TempData["Error"] != null)
+        @if (TempData["AdminDashboardError"] != null)
         {
             <div class="admin-alert admin-alert-error" role="alert">
-                <span class="admin-alert-icon" aria-hidden="true">⚠</span><span>@TempData["Error"]</span>
+                <span class="admin-alert-icon" aria-hidden="true">⚠</span><span>@TempData["AdminDashboardError"]</span>
             </div>
         }
 
-        @if (TempData["Success"] != null)
+        @if (TempData["AdminDashboardSuccess"] != null)
         {
             <div class="admin-alert admin-alert-success" role="status">
-                <span class="admin-alert-icon" aria-hidden="true">✓</span><span>@TempData["Success"]</span>
+                <span class="admin-alert-icon" aria-hidden="true">✓</span><span>@TempData["AdminDashboardSuccess"]</span>
             </div>
         }
         <header class="dashboard-header">

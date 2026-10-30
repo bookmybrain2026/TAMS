@@ -48,20 +48,20 @@
         </header>
 
         <section class="admin-scheduler-card">
-            @if (TempData["Error"] != null)
+            @if (TempData["AdminSchedulerError"] != null)
             {
                 <div class="admin-scheduler-message admin-scheduler-message-error"
                      role="alert">
                     <strong>Schedule Conflict</strong>
-                    <p>@TempData["Error"]</p>
+                    <p>@TempData["AdminSchedulerError"]</p>
                 </div>
             }
 
-            @if (TempData["Success"] != null)
+            @if (TempData["AdminSchedulerSuccess"] != null)
             {
                 <div class="admin-scheduler-message admin-scheduler-message-success"
                      role="status">
-                    @TempData["Success"]
+                    @TempData["AdminSchedulerSuccess"]
                 </div>
             }
             <div class="admin-scheduler-toolbar">
