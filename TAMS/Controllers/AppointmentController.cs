@@ -86,7 +86,7 @@ namespace TAMS.Controllers
 
             if (schedule.TutorId != tutorId || schedule.Date.Date != date.Date || schedule.StartTime != startTime)
             {
-                TempData["Error"] = "Invalid appointment selection.";
+                TempData["AppointmentError"] = "Invalid appointment selection.";
                 return RedirectToAction("Scheduler", new { tutorId, studentId, month = date.Month, year = date.Year });
             }
 
@@ -95,7 +95,7 @@ namespace TAMS.Controllers
 
             if (newEnd <= newStart)
             {
-                TempData["Error"] = "The selected schedule has an invalid time.";
+                TempData["AppointmentError"] = "The selected schedule has an invalid time.";
                 return RedirectToAction("Scheduler", new { tutorId, studentId, month = date.Month, year = date.Year });
             }
 
@@ -117,7 +117,7 @@ namespace TAMS.Controllers
                     }
                     else
                     {
-                        TempData["Error"] = "An existing appointment has an invalid time. " + "Please contact the administrator.";
+                        TempData["AppointmentError"] = "An existing appointment has an invalid time. " + "Please contact the administrator.";
                         return RedirectToAction("Scheduler", new { tutorId, studentId, month = date.Month, year = date.Year });
                     }
                 }
@@ -129,13 +129,13 @@ namespace TAMS.Controllers
                 {
                     if (existing.StudentId == studentId)
                     {
-                        TempData["Error"] = "You already have an appointment during this time.";
+                        TempData["AppointmentError"] = "You already have an appointment during this time.";
                         return RedirectToAction("Scheduler", new { tutorId, studentId, month = date.Month, year = date.Year });
                     }
 
                     if (existing.TutorId == tutorId)
                     {
-                        TempData["Error"] = "This tutor already has an appointment during this time.";
+                        TempData["AppointmentError"] = "This tutor already has an appointment during this time.";
                         return RedirectToAction("Scheduler", new { tutorId, studentId, month = date.Month, year = date.Year });
                     }
                 }
@@ -144,7 +144,7 @@ namespace TAMS.Controllers
             var existingScheduleBooking = dBContext.Appointments.Find(a => a.ScheduleId == scheduleId && a.Status == "Scheduled").FirstOrDefault();
             if (existingScheduleBooking != null)
             {
-                TempData["Error"] = "This schedule has already been booked.";
+                TempData["AppointmentError"] = "This schedule has already been booked.";
                 return RedirectToAction("Scheduler", new {tutorId, studentId, month = date.Month, year = date.Year });
             }
 
@@ -182,7 +182,7 @@ namespace TAMS.Controllers
                 Console.WriteLine($"Email failed: {ex.Message}");
             }
 
-            TempData["Success"] = "Appointment booked successfully!";
+            TempData["AppointmentSuccess"] = "Appointment booked successfully!";
 
             return RedirectToAction("Dashboard", "Student", new { id = studentId });
         }
@@ -212,7 +212,7 @@ namespace TAMS.Controllers
 
             if (schedule.TutorId != tutorId || schedule.Date.Date != date.Date || schedule.StartTime != startTime)
             {
-                TempData["Error"] = "Invalid appointment selection.";
+                TempData["AppointmentError"] = "Invalid appointment selection.";
                 return RedirectToAction("Scheduler", new { tutorId, studentId, month = date.Month, year = date.Year, rescheduleAppointmentId = appointmentId });
             }
             
@@ -221,7 +221,7 @@ namespace TAMS.Controllers
 
             if (newStart <= DateTime.Now || newEnd <= newStart)
             {
-                TempData["Error"] = "Please select a valid future appointment time.";
+                TempData["AppointmentError"] = "Please select a valid future appointment time.";
                 return RedirectToAction("Scheduler", new { tutorId, studentId, month = date.Month, year = date.Year, rescheduleAppointmentId = appointmentId });
             }
 
@@ -239,7 +239,7 @@ namespace TAMS.Controllers
 
                     if (existingSchedule == null)
                     {
-                        TempData["Error"] = "An existing appointment has invalid time information.";
+                        TempData["AppointmentError"] = "An existing appointment has invalid time information.";
                         return RedirectToAction("Scheduler", new { tutorId, studentId, month = date.Month, year = date.Year, rescheduleAppointmentId = appointmentId });
                     }
                     existingStart = existingSchedule.Date.Date.Add(existingSchedule.StartTime);
@@ -249,7 +249,7 @@ namespace TAMS.Controllers
                 bool overlaps = newStart < existingEnd && newEnd > existingStart;
                 if (overlaps)
                 {
-                    TempData["Error"] = existing.StudentId == studentId
+                    TempData["AppointmentError"] = existing.StudentId == studentId
                         ? "You already have an appointment during this time."
                         : "This tutor already has an appointment during this time.";
                     return RedirectToAction("Scheduler", new { tutorId, studentId, month = date.Month, year = date.Year, rescheduleAppointmentId = appointmentId });
@@ -262,7 +262,7 @@ namespace TAMS.Controllers
 
             if (slotBooking != null)
             {
-                TempData["Error"] = "This time slot has already been booked. Please select another.";
+                TempData["AppointmentError"] = "This time slot has already been booked. Please select another.";
                 return RedirectToAction("Scheduler", new { tutorId, studentId, month = date.Month, year = date.Year, rescheduleAppointmentId = appointmentId });
             }
 
@@ -292,7 +292,7 @@ namespace TAMS.Controllers
 
                 if (updateResult.MatchedCount != 1)
                 {
-                    TempData["Error"] = "The appointment could not be rescheduled. Please try again.";
+                    TempData["AppointmentError"] = "The appointment could not be rescheduled. Please try again.";
                     return RedirectToAction("Scheduler", new { tutorId, studentId, month = date.Month, year = date.Year, rescheduleAppointmentId = appointmentId });
                 }
             }
@@ -319,7 +319,7 @@ namespace TAMS.Controllers
                 {
                     // if the original appointment could not be cancelled after inserting the replacement delete it
                     dBContext.Appointments.DeleteOne( a => a.AppointmentId == replacement.AppointmentId && a.StudentId == studentId && a.Status == "Scheduled");
-                    TempData["Error"] = "The original appointment changed while rescheduling. Please try again.";
+                    TempData["AppointmentError"] = "The original appointment changed while rescheduling. Please try again.";
                     return RedirectToAction("Scheduler", new { tutorId, studentId, month = date.Month, year = date.Year, rescheduleAppointmentId = appointmentId });
                 }
             }
@@ -370,7 +370,7 @@ namespace TAMS.Controllers
                 Console.WriteLine($"Rescheduling email error: {ex.Message}");
             }
 
-            TempData["Success"] = sameTutor
+            TempData["AppointmentSuccess"] = sameTutor
                 ? "Your appointment has been rescheduled with the same tutor."
                 : "Your previous appointment was cancelled and a new appointment was scheduled.";
 

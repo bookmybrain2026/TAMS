@@ -36,19 +36,19 @@
 
 
 <div class="tutor-dashboard">
-    @if (TempData["Error"] != null)
+    @if (TempData["TutorDashboardError"] != null)
     {
         <div class="tutor-alert tutor-alert-error" role="alert">
             <span class="tutor-alert-icon">⚠</span>
-            <span>@TempData["Error"]</span>
+            <span>@TempData["TutorDashboardError"]</span>
         </div>
     }
 
-    @if (TempData["Success"] != null)
+    @if (TempData["TutorDashboardSuccess"] != null)
     {
         <div class="tutor-alert tutor-alert-success" role="status">
             <span class="tutor-alert-icon">✓</span>
-            <span>@TempData["Success"]</span>
+            <span>@TempData["TutorDashboardSuccess"]</span>
         </div>
     }
 

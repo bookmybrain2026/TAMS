@@ -25,14 +25,14 @@
 }
 
 <div class="schedule-page">
-    @if (TempData["Error"] != null)
+    @if (TempData["TutorScheduleError"] != null)
     {
-        <div class="schedule-alert schedule-alert-error">@TempData["Error"]</div>
+        <div class="schedule-alert schedule-alert-error">@TempData["TutorScheduleError"]</div>
     }
 
-    @if (TempData["Success"] != null)
+    @if (TempData["TutorScheduleSuccess"] != null)
     {
-        <div class="schedule-alert schedule-alert-success">@TempData["Success"]</div>
+        <div class="schedule-alert schedule-alert-success">@TempData["TutorScheduleSuccess"]</div>
     }
 
     <header class="schedule-header">

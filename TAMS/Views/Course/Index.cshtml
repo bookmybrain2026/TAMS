@@ -62,14 +62,14 @@
                 <span class="count-pill"> @courses.Count courses </span>
             </div>
 
-            @if (TempData["SuccessMessage"] != null)
+            @if (TempData["CourseSuccess"] != null)
             {
-                <div class="course-alert alert-success" role="status"> @TempData["SuccessMessage"] </div>
+                <div class="course-alert alert-success" role="status"> @TempData["CourseSuccess"] </div>
             }
 
-            @if (TempData["ErrorMessage"] != null)
+            @if (TempData["CourseError"] != null)
             {
-                <div class="course-alert alert-error" role="alert"> @TempData["ErrorMessage"] </div>
+                <div class="course-alert alert-error" role="alert"> @TempData["CourseError"] </div>
             }
 
             <div class="directory-search">

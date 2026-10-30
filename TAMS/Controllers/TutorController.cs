@@ -153,7 +153,7 @@ namespace TAMS.Controllers
 
             if (!isCompletionReminder && !isAppointmentReminder)
             {
-                TempData["ErrorMessage"] = "Invalid reminder selected.";
+                TempData["TutorReminderError"] = "Invalid reminder selected.";
                 return RedirectToAction("Dashboard", new { id = tutorId.Value });
             }
 
@@ -163,13 +163,13 @@ namespace TAMS.Controllers
 
             if (appointment == null)
             {
-                TempData["ErrorMessage"] = "Appointment not found.";
+                TempData["TutorReminderError"] = "Appointment not found.";
                 return RedirectToAction("Dashboard", new { id = tutorId.Value });
             }
 
             if (appointment.Status != "Scheduled")
             {
-                TempData["ErrorMessage"] = "This appointment is no longer scheduled.";
+                TempData["TutorReminderError"] = "This appointment is no longer scheduled.";
                 return RedirectToAction("Dashboard", new { id = tutorId.Value });
             }
 
@@ -184,7 +184,7 @@ namespace TAMS.Controllers
             {
                 if (DateTime.Now < appointment.EndDate.AddHours(reminderHours!.Value))
                 {
-                    TempData["ErrorMessage"] = "This reminder is not available yet.";
+                    TempData["TutorReminderError"] = "This reminder is not available yet.";
                     return RedirectToAction("Dashboard", new { id = tutorId.Value });
                 }
 
@@ -214,7 +214,7 @@ namespace TAMS.Controllers
                 {
                     if (!appointment.Reminder24HoursBeforeSent)
                     {
-                        TempData["ErrorMessage"] = "The 24-hour appointment reminder is not available yet.";
+                        TempData["TutorReminderError"] = "The 24-hour appointment reminder is not available yet.";
 
                         return RedirectToAction("Dashboard", new { id = tutorId.Value });
                     }
@@ -228,7 +228,7 @@ namespace TAMS.Controllers
                 {
                     if (!appointment.Reminder1HourBeforeSent)
                     {
-                        TempData["ErrorMessage"] = "The 1-hour appointment reminder is not available yet.";
+                        TempData["TutorReminderError"] = "The 1-hour appointment reminder is not available yet.";
 
                         return RedirectToAction("Dashboard", new { id = tutorId.Value });
                     }
@@ -244,7 +244,7 @@ namespace TAMS.Controllers
 
             if (result.ModifiedCount > 0)
             {
-                TempData["SuccessMessage"] = successMessage;
+                TempData["TutorReminderSuccess"] = successMessage;
             }
             else
             {
@@ -285,7 +285,7 @@ namespace TAMS.Controllers
                         $"{x.Key}: {e.ErrorMessage} {e.Exception?.Message}"))
                     .ToList();
 
-                TempData["ErrorMessage"] = "Profile was not saved. " + string.Join(" | ", errors);
+                TempData["TutorProfileError"] = "Profile was not saved. " + string.Join(" | ", errors);
                 LoadProfileData();
                 return View(model);
             }
@@ -311,10 +311,10 @@ namespace TAMS.Controllers
 
             if (result.MatchedCount == 0)
             {
-                TempData["ErrorMessage"] = "Tutor profile was not found in the database.";
+                TempData["TutorProfileError"] = "Tutor profile was not found in the database.";
                 return RedirectToAction(nameof(Profile));
             }
-            TempData["SuccessMessage"] = "Your profile has been updated successfully.";
+            TempData["TutorProfileSuccess"] = "Your profile has been updated successfully.";
             return RedirectToAction(nameof(Profile));
         }
 
@@ -360,19 +360,19 @@ namespace TAMS.Controllers
 
             if (date.Date < today)
             {
-                TempData["Error"] = "You cannot add a schedule for a date that has already passed.";
+                TempData["TutorScheduleError"] = "You cannot add a schedule for a date that has already passed.";
                 return RedirectToAction("Schedule", new { id = tutorId, month = date.Month, year = date.Year });
             }
 
             if (date.Date == today && startTime <= now.TimeOfDay)
             {
-                TempData["Error"] = "You cannot add a schedule with a start time that has already passed. Please choose a future time.";
+                TempData["TutorScheduleError"] = "You cannot add a schedule with a start time that has already passed. Please choose a future time.";
                 return RedirectToAction("Schedule", new { id = tutorId, month = date.Month, year = date.Year });
             }
 
             if (endTime <= startTime)
             {
-                TempData["Error"] = "End time must be after start time.";
+                TempData["TutorScheduleError"] = "End time must be after start time.";
                 return RedirectToAction("Schedule", new { id = tutorId, month = date.Month, year = date.Year });
             }
 
@@ -382,7 +382,7 @@ namespace TAMS.Controllers
 
             if (overlaps)
             {
-                TempData["Error"] =
+                TempData["TutorScheduleError"] =
                     "An existing schedule already overlaps with this time. " +
                     "Please choose a different time or delete the existing schedule first.";
 
@@ -401,7 +401,7 @@ namespace TAMS.Controllers
             };
             dBContext.Schedule.InsertOne(schedule);
 
-            TempData["Success"] = "Schedule added successfully.";
+            TempData["TutorScheduleSuccess"] = "Schedule added successfully.";
             return RedirectToAction("Schedule", new { id = tutorId, month = date.Month, year = date.Year });
         }
 
@@ -427,14 +427,14 @@ namespace TAMS.Controllers
 
             if (hasAppointments)
             {
-                TempData["Error"] =
+                TempData["TutorDashboardError"] =
                     "You cannot delete this schedule slot because it has a scheduled appointment. " +
                     "Please cancel or remove the associated appointment first.";
                 return RedirectToAction("Dashboard", new { id = tutorId.Value });
             }
             dBContext.Schedule.DeleteOne(s => s.ScheduleId == scheduleId && s.TutorId == tutorId.Value);
 
-            TempData["Success"] = "Schedule deleted successfully.";
+            TempData["TutorDashboardSuccess"] = "Schedule deleted successfully.";
             return RedirectToAction("Dashboard", new { id = tutorId.Value });
         }
 
@@ -444,7 +444,7 @@ namespace TAMS.Controllers
             var tutorId = HttpContext.Session.GetInt32("TutorId");
             if (tutorId == null) { return RedirectToAction("Login", "Login"); }
 
-            if (tutorId.Value != id) {return Unauthorized(); }
+            if (tutorId.Value != id) { return Unauthorized(); }
 
             var tutor = dBContext.Tutor.Find(t => t.TutorId == id).FirstOrDefault();
 
@@ -453,23 +453,34 @@ namespace TAMS.Controllers
             int targetMonth = month ?? DateTime.Today.Month;
             int targetYear = year ?? DateTime.Today.Year;
 
-            var startOfMonth = new DateTime(targetYear, targetMonth, 1);
-            var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
+            if (targetMonth < 1 || targetMonth > 12 || targetYear < 1 || targetYear > 9999)
+            {
+                return BadRequest();
+            }
 
-            var appointments = dBContext.Appointments.Find(a => a.TutorId == id && a.AppointmentDate >= startOfMonth && a.AppointmentDate <= endOfMonth).ToList();
+            var startOfMonth = new DateTime(targetYear, targetMonth, 1);
+            var endOfMonth = startOfMonth.AddMonths(1);
+
+            var appointments = dBContext.Appointments
+                .Find(a =>
+                    a.TutorId == id &&
+                    (a.Status == "Scheduled" || a.Status == "Cancelled") &&
+                    a.AppointmentDate >= startOfMonth && a.AppointmentDate < startOfMonth.AddMonths(1))
+                .ToList();
 
             foreach (var appointment in appointments)
             {
                 appointment.Student = dBContext.Student.Find(s => s.StudentId == appointment.StudentId).FirstOrDefault();
             }
 
-            ViewBag.TutorId = id;
+            ViewBag.TutorId = tutorId.Value;
             ViewBag.Month = targetMonth;
             ViewBag.Year = targetYear;
             ViewBag.Appointments = appointments;
 
             return View("ScheduleCalendar");
         }
+
 
         [HttpPost]
         public async Task<IActionResult> CancelAppointment(int appointmentId)
@@ -595,7 +606,7 @@ namespace TAMS.Controllers
 
             if (tutorNotes?.Length > 2000)
             {
-                TempData["Error"] = "Notes cannot exceed 2000 characters.";
+                TempData["TutorDashboardError"] = "Notes cannot exceed 2000 characters.";
                 return RedirectToAction(nameof(Dashboard), new { id = tutorId.Value });
             }
 
@@ -612,7 +623,7 @@ namespace TAMS.Controllers
             await dBContext.Appointments.UpdateOneAsync(a => a.AppointmentId == appointmentId
                     && a.TutorId == tutorId.Value && a.Status == "Scheduled", update);
 
-            TempData["Success"] = "Appointment notes saved successfully.";
+            TempData["TutorDashboardSuccess"] = "Appointment notes saved successfully.";
 
             return RedirectToAction(nameof(Dashboard), new { id = tutorId.Value });
         }
@@ -637,7 +648,7 @@ namespace TAMS.Controllers
             await dBContext.Appointments.UpdateOneAsync(a => a.AppointmentId == appointmentId
                     && a.TutorId == tutorId.Value && a.Status == "Scheduled", update);
 
-            TempData["Success"] = "Appointment notes deleted successfully.";
+            TempData["TutorDashboardSuccess"] = "Appointment notes deleted successfully.";
 
             return RedirectToAction(nameof(Dashboard), new { id = tutorId.Value });
         }

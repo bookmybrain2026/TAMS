@@ -38,12 +38,12 @@ namespace TAMS.Controllers
             var existingSubject = dBContext.Subject.Find(s => s.Code == model.Code).FirstOrDefault();
             if (existingSubject != null)
             {
-                TempData["ErrorMessage"] = "A subject with this code already exists.";
+                TempData["SubjectError"] = "A subject with this code already exists.";
                 return RedirectToAction(nameof(Index));
             }
 
             dBContext.Subject.InsertOne(model);
-            TempData["SuccessMessage"] = "Subject was successfully created.";
+            TempData["SubjectSuccess"] = "Subject was successfully created.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -56,7 +56,7 @@ namespace TAMS.Controllers
 
             if (!ModelState.IsValid)
             {
-                TempData["ErrorMessage"] = "Please enter valid subject information.";
+                TempData["SubjectError"] = "Please enter valid subject information.";
                 return RedirectToAction(nameof(Index));
             }
 
@@ -66,14 +66,14 @@ namespace TAMS.Controllers
             var duplicateSubject = dBContext.Subject.Find(s => s.Code == model.Code && s.SubjectId != id).FirstOrDefault();
             if (duplicateSubject != null)
             {
-                TempData["ErrorMessage"] = "A subject with this code already exists.";
+                TempData["SubjectError"] = "A subject with this code already exists.";
                 return RedirectToAction(nameof(Index));
             }
 
             var update = Builders<Subject>.Update.Set(s => s.Code, model.Code).Set(s => s.Name, model.Name);
             dBContext.Subject.UpdateOne(s => s.SubjectId == id, update);
 
-            TempData["SuccessMessage"] = "Subject was successfully updated.";
+            TempData["SubjectSuccess"] = "Subject was successfully updated.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -90,13 +90,13 @@ namespace TAMS.Controllers
             var coursesExist = dBContext.Course.Find(c => c.SubjectCode == subject.Code).Any();
             if (coursesExist)
             {
-                TempData["ErrorMessage"] = "This subject cannot be deleted because courses are associated with it.";
+                TempData["SubjectError"] = "This subject cannot be deleted because courses are associated with it.";
                 return RedirectToAction(nameof(Index));
             }
 
             dBContext.Subject.DeleteOne(s => s.SubjectId == id);
 
-            TempData["SuccessMessage"] = "Subject was successfully deleted.";
+            TempData["SubjectSuccess"] = "Subject was successfully deleted.";
             return RedirectToAction(nameof(Index));
         }
     

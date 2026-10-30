@@ -48,13 +48,13 @@
             </div>
             <span class="count-pill"> @subjects.Count subjects </span>
         </div>
-        @if (TempData["SuccessMessage"] != null)
+        @if (TempData["SubjectSuccess"] != null)
         {
-            <div class="subject-alert alert-success" role="status"> @TempData["SuccessMessage"] </div>
+            <div class="subject-alert alert-success" role="status"> @TempData["SubjectSuccess"] </div>
         }
-        @if (TempData["ErrorMessage"] != null)
+        @if (TempData["SubjectError"] != null)
         {
-            <div class="subject-alert alert-error" role="alert"> @TempData["ErrorMessage"] </div>
+            <div class="subject-alert alert-error" role="alert"> @TempData["SubjectError"] </div>
         }
 
         <div class="directory-search">

@@ -22,17 +22,17 @@
         <p>Manage your personal information and tutoring courses.</p>
     </div>
 
-    @if (TempData["SuccessMessage"] != null)
+    @if (TempData["TutorProfileSuccess"] != null)
     {
         <div class="alert tutor-alert-success" role="alert">
-            <strong>Success!</strong> @TempData["SuccessMessage"]
+            <strong>Success!</strong> @TempData["TutorProfileSuccess"]
         </div>
     }
 
-    @if (TempData["ErrorMessage"] != null)
+    @if (TempData["TutorProfileError"] != null)
     {
         <div class="alert tutor-alert-error" role="alert">
-            <strong>Error:</strong> @TempData["ErrorMessage"]
+            <strong>Error:</strong> @TempData["TutorProfileError"]
         </div>
     }
 

@@ -212,7 +212,7 @@ namespace TAMS.Controllers
             }
             else
             {
-                TempData["Success"] = "A recovery code has been sent to your email address.";
+                TempData["EmailSuccess"] = "A recovery code has been sent to your email address.";
             }
 
             return View("ForgotPassword", model);
@@ -294,7 +294,7 @@ namespace TAMS.Controllers
 
             dBContext.PasswordRecoveries.UpdateOne(r => r.UserId == parsedUserId && r.RecoveryCode == model.RecoveryCode, Builders<PasswordRecovery>.Update.Set(r => r.IsUsed, true));
 
-            TempData["Success"] = "Password updated successfully. Please log in.";
+            TempData["EmailSuccess"] = "Password updated successfully. Please log in.";
             return RedirectToAction("Login");
         }
 

@@ -99,19 +99,19 @@
         </section>
     }
 
-    @if (TempData["Error"] != null)
+    @if (TempData["AppointmentError"] != null)
     {
         <div class="scheduler-alert scheduler-alert-error" role="alert">
             <strong>Unable to complete booking</strong>
-            <span>@TempData["Error"]</span>
+            <span>@TempData["AppointmentError"]</span>
         </div>
     }
 
-    @if (TempData["Success"] != null)
+    @if (TempData["AppointmentSuccess"] != null)
     {
         <div class="scheduler-alert scheduler-alert-success" role="status">
             <strong>Success</strong>
-            <span>@TempData["Success"]</span>
+            <span>@TempData["AppointmentSuccess"]</span>
         </div>
     }
 

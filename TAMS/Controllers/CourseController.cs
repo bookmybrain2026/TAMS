@@ -46,19 +46,19 @@ namespace TAMS.Controllers
             var existingCourse =  dBContext.Course.Find(c => c.CourseCode == model.CourseCode).FirstOrDefault();
             if (existingCourse != null)
             {
-                TempData["ErrorMessage"] = "A course with this course code already exists.";
+                TempData["CourseError"] = "A course with this course code already exists.";
                 return RedirectToAction(nameof(Index));
             }
 
             var subjectExists = dBContext.Subject.Find(s => s.Code == model.SubjectCode).Any();
             if (!subjectExists)
             {
-                TempData["ErrorMessage"] = "The selected subject does not exist.";
+                TempData["CourseError"] = "The selected subject does not exist.";
                 return RedirectToAction(nameof(Index));
             }
             dBContext.Course.InsertOne(model);
 
-            TempData["SuccessMessage"] = "Course was successfully created.";
+            TempData["CourseSuccess"] = "Course was successfully created.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -71,7 +71,7 @@ namespace TAMS.Controllers
 
             if (!ModelState.IsValid)
             {
-                TempData["ErrorMessage"] = "Please enter valid course information.";
+                TempData["CourseError"] = "Please enter valid course information.";
                 return RedirectToAction(nameof(Index));
             }
             var existingCourse = dBContext.Course.Find(c => c.CourseId == id).FirstOrDefault();
@@ -80,14 +80,14 @@ namespace TAMS.Controllers
             var duplicateCourse = dBContext.Course.Find(c => c.CourseCode == model.CourseCode && c.CourseId != id).FirstOrDefault();
             if (duplicateCourse != null)
             {
-                TempData["ErrorMessage"] = "A course with this course code already exists.";
+                TempData["CourseError"] = "A course with this course code already exists.";
                 return RedirectToAction(nameof(Index));
             }
 
             var subjectExists = dBContext.Subject.Find(s => s.Code == model.SubjectCode).Any();
             if (!subjectExists)
             {
-                TempData["ErrorMessage"] = "The selected subject does not exist.";
+                TempData["CourseError"] = "The selected subject does not exist.";
                 return RedirectToAction(nameof(Index));
             }
 
@@ -98,7 +98,7 @@ namespace TAMS.Controllers
 
             dBContext.Course.UpdateOne(c => c.CourseId == id, update);
 
-            TempData["SuccessMessage"] = "Course was successfully updated.";
+            TempData["CourseSuccess"] = "Course was successfully updated.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -114,7 +114,7 @@ namespace TAMS.Controllers
             if (course == null) { return NotFound(); }
             dBContext.Course.DeleteOne( c => c.CourseId == id);
 
-            TempData["SuccessMessage"] = "Course was successfully deleted.";
+            TempData["CourseSuccess"] = "Course was successfully deleted.";
             return RedirectToAction(nameof(Index));
         }
     }
