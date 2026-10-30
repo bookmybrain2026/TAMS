@@ -778,6 +778,7 @@ namespace TAMS.Services
             await client.DisconnectAsync(true);
         }
 
+        //Styling Done for SendAdminAppointmentFollowUpAsync
         public async Task SendAdminAppointmentFollowUpAsync(string adminEmail, string tutorName, string studentName, DateTime appointmentDate, DateTime endDate, int appointmentId)
         {
             var message = new MimeMessage();
@@ -785,25 +786,73 @@ namespace TAMS.Services
             message.To.Add(MailboxAddress.Parse(adminEmail));
             message.Subject = $"Action Required: Appointment #{appointmentId} Needs Review";
 
-            message.Body = new TextPart("plain")
+            var builder = new BodyBuilder();
+
+            var templatePath = Path.Combine(_environment.ContentRootPath, "EmailTemplates", "AdminAppointmentFollowUp.html");
+            var html = await File.ReadAllTextAsync(templatePath);
+
+            var bannerPath = Path.Combine(_environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot"), "images", "banner.png");
+
+            string bannerHtml = "";
+
+            if (File.Exists(bannerPath))
             {
-                Text = $"""
-                    Appointment Requires Admin Review
+                var banner = builder.LinkedResources.Add(bannerPath);
+                banner.ContentId = Guid.NewGuid().ToString() + "@tams";
 
-                    The following appointment is still marked as scheduled
-                    72 hours after its end time.
+                bannerHtml = $"""
+                    <img src="cid:{banner.ContentId}"
+                         alt="BookMyBrain" width="560"
+                         style="display:block;width:100%;max-width:560px;
+                                height:auto;border:0;margin:0 auto;">
+                    """;
+            }
 
-                    Appointment ID: {appointmentId}
-                    Tutor: {tutorName}
-                    Student: {studentName}
-                    Appointment Date: {appointmentDate:MMMM d, yyyy}
-                    Start Time: {appointmentDate:h:mm tt}
-                    End Time: {endDate:h:mm tt}
+            var formattedDate = appointmentDate.ToString("MMMM d, yyyy");
+            var formattedStart = appointmentDate.ToString("h:mm tt");
+            var formattedEnd = endDate.ToString("h:mm tt");
 
-                    Please investigate and update the appointment status
-                    after confirming whether the session took place.
-                    """
-            };
+            var tName = System.Net.WebUtility.HtmlEncode(tutorName);
+            var sName = System.Net.WebUtility.HtmlEncode(studentName);
+            var aDate = System.Net.WebUtility.HtmlEncode(formattedDate);
+            var aStart = System.Net.WebUtility.HtmlEncode(formattedStart);
+            var aEnd = System.Net.WebUtility.HtmlEncode(formattedEnd);
+            var aId = System.Net.WebUtility.HtmlEncode(appointmentId.ToString());
+
+            html = html.Replace("{{BannerHtml}}", bannerHtml);
+            html = html.Replace("{{AppointmentId}}", aId);
+            html = html.Replace("{{TutorName}}", tName);
+            html = html.Replace("{{StudentName}}", sName);
+            html = html.Replace("{{AppointmentDate}}", aDate);
+            html = html.Replace("{{StartTime}}", aStart);
+            html = html.Replace("{{EndTime}}", aEnd);
+
+            builder.HtmlBody = html;
+
+            // for email clients that cannot display HTML
+            builder.TextBody = $"""
+                Appointment Requires Admin Review
+
+                The following appointment is still marked as scheduled
+                72 hours after its end time.
+
+                Appointment ID: {appointmentId}
+                Tutor: {tutorName}
+                Student: {studentName}
+                Appointment Date: {formattedDate}
+                Start Time: {formattedStart}
+                End Time: {formattedEnd}
+
+                Please investigate and update the appointment status
+                after confirming whether the session took place.
+
+                Thank you for using TAMS.
+
+                The BookMyBrain Team
+                Tutoring Appointment Management System
+                """;
+
+            message.Body = builder.ToMessageBody();
 
             using var smtp = new SmtpClient();
             await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
