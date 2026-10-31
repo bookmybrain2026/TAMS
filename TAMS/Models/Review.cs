@@ -2,7 +2,7 @@
 using MongoDB.Bson.Serialization.Attributes;
 using System.ComponentModel.DataAnnotations;
 
-namespace AMS.Models
+namespace TAMS.Models
 {
     public class Review
     {

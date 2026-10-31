@@ -412,7 +412,10 @@ document.addEventListener("keydown", event => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
-    const modal = document.getElementById("editTutorModal") || document.getElementById("tutorScheduleModal");
+    const modal =
+        document.getElementById("editTutorModal") ||
+        document.getElementById("tutorScheduleModal") ||
+        document.getElementById("tutorReviewsModal");
 
     if (modal) {
         modal.style.display = "flex";

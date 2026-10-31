@@ -963,118 +963,307 @@
     font-size: 0.92rem;
 }
 
+
+.action-reviews {
+    background: #e8f0d8;
+    color: #315d2b;
+    border: 1px solid #d4e3c5;
+    transition: background .2s ease, border-color .2s ease;
+}
+
+.action-reviews:hover {
+    background: #d5e5c2;
+    border-color: #b9d0a5;
+}
+
+#tutorReviewsModal .tutor-reviews-content {
+    position: relative;
+    display: block;
+    width: 90%;
+    max-width: 750px;
+    max-height: 85vh;
+    padding: 30px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 15px 45px rgba(0, 0, 0, .15);
+}
+
+#tutorReviewsModal .section-kicker {
+    margin-bottom: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: #79934d;
+}
+
+#tutorReviewsModal h2 {
+    margin: 0 40px 10px 0;
+    font-size: 24px;
+    font-weight: 800;
+    color: #293c25;
+}
+
+#tutorReviewsModal .modal-subtitle {
+    margin-bottom: 22px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #777f73;
+}
+
+#tutorReviewsModal .tutor-modal-close {
+    position: absolute;
+    top: 20px;
+    right: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 8px;
+    background: #f2f4ef;
+    color: #596854;
+    font-size: 24px;
+    cursor: pointer;
+    transition: background .2s ease;
+}
+
+#tutorReviewsModal .tutor-modal-close:hover {
+    background: #e4ebdc;
+    color: #293c25;
+}
+
+#tutorReviewsModal .tutor-reviews-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    height: auto;
+    max-height: none;
+    overflow: visible;
+    margin: 0 0 20px;
+    padding: 0;
+}
+
+#tutorReviewsModal .tutor-review-item {
+    flex-shrink: 0;
+    height: auto;
+    border: 1px solid #e2e8dc;
+    border-radius: 10px;
+    background: #fffdf8;
+    overflow: hidden;
+    transition: border-color .2s ease;
+}
+
+#tutorReviewsModal .tutor-review-item:hover { border-color: #c6d5b8; }
+
+#tutorReviewsModal .tutor-review-item[open] {
+    border-color: #b9cfa7;
+    background: #fff;
+}
+
+#tutorReviewsModal .tutor-review-item summary {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 17px 50px 17px 20px;
+    list-style: none;
+    cursor: pointer;
+}
+
+#tutorReviewsModal .tutor-review-item summary {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 17px 50px 17px 20px;
+    cursor: pointer;
+    list-style: none;
+    position: relative;
+}
+
+#tutorReviewsModal .tutor-review-item summary::marker {
+    content: "";
+}
+
+#tutorReviewsModal .tutor-review-item summary::after {
+    content: "";
+    position: absolute;
+    right: 22px;
+    top: 50%;
+    width: 9px;
+    height: 9px;
+    border-right: 2px solid #718269;
+    border-bottom: 2px solid #718269;
+    transform: translateY(-65%) rotate(45deg);
+    transition: transform .2s ease;
+}
+
+#tutorReviewsModal .tutor-review-item[open] summary::after {
+    transform: translateY(-25%) rotate(225deg);
+}
+
+#tutorReviewsModal .tutor-review-student {
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 1.4;
+    color: #2e4328;
+}
+
+#tutorReviewsModal .tutor-review-date {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.5;
+    color: #727c6e;
+}
+
+#tutorReviewsModal .tutor-review-hint,
+#tutorReviewsModal .tutor-review-item summary > span {
+    align-self: flex-start;
+    margin-top: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #64834d;
+}
+
+#tutorReviewsModal .tutor-review-item[open] summary > span {
+    color: #456b35;
+}
+
+#tutorReviewsModal .tutor-review-body {
+    padding: 18px 20px;
+    border-top: 1px solid #e7ebdf;
+    background: #f9fbf6;
+    color: #3e4c39;
+    font-size: 13px;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+}
+
+#tutorReviewsModal .tutor-review-body p { margin: 0 0 10px; }
+
+#tutorReviewsModal .tutor-review-body strong {
+    color: #2d4228;
+    font-weight: 700;
+}
+
+#tutorReviewsModal .tutor-review-feedback,
+#tutorReviewsModal .tutor-review-body p:last-child {
+    margin: 0;
+    padding: 12px 14px;
+    border: 1px solid #e3eadc;
+    border-radius: 8px;
+    background: #fff;
+    white-space: normal;
+    text-align: left;
+    text-indent: 0;
+    overflow-wrap: anywhere;
+}
+
+#tutorReviewsModal .empty-state {
+    padding: 35px 20px;
+    border: 1px dashed #d7e0cf;
+    border-radius: 10px;
+    background: #fafbf8;
+    color: #7a8575;
+    font-size: 13px;
+    text-align: center;
+}
+
+#tutorReviewsModal .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    position: static;
+    margin-top: 20px;
+    padding-top: 18px;
+    border-top: 1px solid #edf0e9;
+}
+
+#tutorReviewsModal .admin-secondary-button {
+    min-width: 95px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
 @media (max-width: 900px) {
     .dashboard-summary, .management-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .summary-card:last-child {
-        grid-column: 1 / -1;
-    }
+    .summary-card:last-child { grid-column: 1 / -1; }
 
     .section-heading {
         align-items: start;
         flex-direction: column;
     }
-}
 
-@media (max-width: 600px) {
-    .admin-dashboard {
-        padding: 24px 13px;
-    }
-
-    .dashboard-header {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .dashboard-header .admin-primary-button {
-        width: 100%;
-    }
-
-    .dashboard-summary, .management-grid, .admin-form-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .summary-card:last-child {
-        grid-column: auto;
-    }
-
-    .summary-card {
-        min-height: 145px;
-    }
-
-    .management-card {
-        padding: 19px;
-    }
-
-    .analytics-panel {
-        align-items: stretch;
-        flex-direction: column;
-        padding: 22px;
-    }
-
-    .analytics-panel .admin-primary-button {
-        width: 100%;
-    }
-
-    .status-summary {
-        gap: 9px;
-    }
-
-    .detail-panel {
-        padding: 17px;
-    }
-}
-
-@media (max-width: 900px) {
     .analytics-panel {
         grid-template-columns: minmax(0, 1fr);
         gap: 24px;
         padding: 25px;
     }
 
-    .analytics-copy {
-        max-width: 560px;
-    }
+    .analytics-copy { max-width: 560px; }
 
-        .analytics-copy h2 {
-            font-size: 26px;
-        }
+    .analytics-copy h2 { font-size: 26px; }
 }
 
 @media (max-width: 600px) {
+    .admin-dashboard { padding: 24px 13px; }
+
+    .dashboard-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .dashboard-header .admin-primary-button,
+    .analytics-panel .admin-primary-button {
+        width: 100%;
+    }
+
+    .dashboard-header-actions { flex-wrap: wrap; }
+
+    .dashboard-summary, .management-grid, .admin-form-grid, .report-download-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .summary-card:last-child { grid-column: auto; }
+
+    .summary-card { min-height: 145px; }
+
+    .management-card { padding: 19px; }
+
     .analytics-panel {
+        align-items: stretch;
+        flex-direction: column;
         gap: 22px;
         padding: 20px 16px;
         border-radius: 14px;
     }
 
-    .analytics-copy h2 {
-        font-size: 24px;
-    }
+    .analytics-copy h2 { font-size: 24px; }
 
-    .analytics-copy p:last-child {
-        font-size: 12px;
-    }
+    .analytics-copy p:last-child { font-size: 12px; }
 
-    .report-download-actions {
-        grid-template-columns: minmax(0, 1fr);
-        gap: 14px;
-    }
+    .status-summary { gap: 9px; }
 
-    .report-daily-column,
-    .report-other-column {
-        gap: 12px;
-    }
+    .detail-panel { padding: 17px; }
+
+    .report-download-actions { gap: 14px; }
+
+    .report-daily-column, .report-other-column { gap: 12px; }
 
     .report-download-actions .report-card {
         padding: 17px;
         border-radius: 11px;
     }
 
-    .report-download-actions .report-daily-card,
-    .report-download-actions .report-tutor-card {
+    .report-download-actions .report-daily-card, .report-download-actions .report-tutor-card {
         gap: 14px;
     }
 
@@ -1087,28 +1276,9 @@
         min-height: 46px;
         font-size: 12px;
     }
-}
 
-@media (prefers-reduced-motion: reduce) {
-    .report-download-actions .report-card,
-    .report-download-actions .admin-primary-button,
-    .report-download-actions input[type="date"] {
-        transition: none;
-    }
+    .directory-search { max-width: 100%; }
 
-    .report-download-actions .report-card:hover,
-    .report-download-actions .admin-primary-button:hover {
-        transform: none;
-    }
-}
-
-@media (max-width: 600px) {
-    .directory-search {
-        max-width: 100%;
-    }
-}
-
-@media (max-width: 600px) {
     .tutor-modal {
         align-items: flex-start;
         padding: 12px;
@@ -1125,17 +1295,34 @@
         font-size: 20px;
     }
 
-    .tutor-schedule-table-wrap .admin-table {
-        min-width: 560px;
+    .tutor-schedule-table-wrap .admin-table { min-width: 560px; }
+
+    .admin-follow-up-content { max-height: 90vh; }
+
+    #tutorReviewsModal .tutor-reviews-content {
+        width: 95%;
+        max-height: 90vh;
+        padding: 22px 18px;
     }
+
+    #tutorReviewsModal h2 { font-size: 20px; }
+
+    #tutorReviewsModal .tutor-review-item summary { padding: 15px 40px 15px 15px; }
+
+    #tutorReviewsModal .tutor-review-body { padding: 15px; }
+
+    #tutorReviewsModal .tutor-review-student { font-size: 14px; }
+
+    #tutorReviewsModal .tutor-review-date { font-size: 11px; }
 }
 
-@media (max-width: 600px) {
-    .dashboard-header-actions {
-        flex-wrap: wrap;
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+    .report-download-actions .report-card, .report-download-actions .admin-primary-button, .report-download-actions input[type="date"] {
+        transition: none;
     }
 
-    .admin-follow-up-content {
-        max-height: 90vh;
+    .report-download-actions .report-card:hover, .report-download-actions .admin-primary-button:hover {
+        transform: none;
     }
 }

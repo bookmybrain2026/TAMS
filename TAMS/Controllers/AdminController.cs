@@ -22,7 +22,7 @@ namespace TAMS.Controllers
         }
 
         [HttpGet]
-        public IActionResult Dashboard(int? id, int? editTutorId, int? viewTutorId, bool showAdminFollowUps = false)
+        public IActionResult Dashboard(int? id, int? editTutorId, int? viewTutorId, int? reviewTutorId, bool showAdminFollowUps = false)
         {
             var adminId = HttpContext.Session.GetInt32("AdminId");
             if (adminId == null) { return RedirectToAction("Login", "Login"); }
@@ -63,6 +63,20 @@ namespace TAMS.Controllers
                     ViewBag.ViewTutorSchedules = schedules;
                     ViewBag.ViewTutorName = $"{tutor.FName} {tutor.LName}";
                     ViewBag.CurrentTutorId = viewTutorId.Value;
+                }
+            }
+
+            if (reviewTutorId.HasValue)
+            {
+                var tutor = dBContext.Tutor.Find(t => t.TutorId == reviewTutorId.Value).FirstOrDefault();
+                if (tutor != null)
+                {
+                    var reviews = dBContext.Reviews
+                        .Find(r => r.TutorId == reviewTutorId.Value)
+                        .SortByDescending(r => r.AppointmentDate).ToList();
+
+                    ViewBag.TutorReviews = reviews;
+                    ViewBag.ReviewTutorName = $"{tutor.FName} {tutor.LName}";
                 }
             }
 

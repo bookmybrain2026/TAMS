@@ -1,5 +1,4 @@
-﻿using AMS.Models;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 using System.Numerics;
 using TAMS.Data;

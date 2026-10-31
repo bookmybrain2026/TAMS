@@ -192,6 +192,10 @@
                                             <button type="button" class="small-action action-view" onclick="openTutorModal('@Url.Action("Dashboard", "Admin", new { viewTutorId = tutor.TutorId })', 'tutorScheduleModal')">
                                                 Schedule
                                             </button>
+
+                                            <button type="button" class="small-action action-reviews" onclick="openTutorModal('@Url.Action("Dashboard", "Admin", new { reviewTutorId = tutor.TutorId })', 'tutorReviewsModal')">
+                                                View Reviews
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -328,6 +332,92 @@
 
                     <div class="form-actions">
                         <button type="button" class="admin-secondary-button" onclick="closeTutorModal('tutorScheduleModal')">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @* Tutor Reviews Popup *@
+        @if (ViewBag.TutorReviews != null)
+        {
+            var reviews = ViewBag.TutorReviews as List<TAMS.Models.Review> ?? new List<TAMS.Models.Review>();
+            var tutorName = ViewBag.ReviewTutorName as string ?? "Tutor";
+
+            <div id="tutorReviewsModal" class="tutor-modal" style="display:none;" aria-hidden="true">
+                <div class="tutor-modal-content tutor-reviews-content" role="dialog" aria-modal="true" aria-labelledby="tutorReviewsTitle">
+                    <button type="button" class="tutor-modal-close" aria-label="Close Reviews popup" onclick="closeTutorModal('tutorReviewsModal')">
+                        &times;
+                    </button>
+
+                    <p class="section-kicker">STUDENT FEEDBACK</p>
+
+                    <h2 id="tutorReviewsTitle">Reviews for @tutorName</h2>
+
+                    <p class="modal-subtitle">
+                        View student ratings and feedback from completed tutoring appointments.
+                    </p>
+
+                    <div class="tutor-reviews-list">
+                        @if (reviews.Any())
+                        {
+                            @foreach (var review in reviews.OrderByDescending(r => r.AppointmentDate))
+                            {
+                                <details class="tutor-review-item">
+                                    <summary>
+                                        <div class="tutor-review-student">@review.StudentName </div>
+
+                                        <div class="tutor-review-date">
+                                            Appointment:
+                                            @review.AppointmentDate.ToString("MM/dd/yyyy")
+                                            at
+                                            @review.AppointmentDate.ToString("h:mm tt")
+                                        </div>
+
+                                        <div class="tutor-review-date"> Rating: @review.Rating / 5 </div>
+
+                                        <span class="tutor-review-hint"> Click to view feedback </span>
+                                    </summary>
+
+                                    <div class="tutor-review-body">
+                                        <p>
+                                            <strong>Student:</strong> @review.StudentName
+                                        </p>
+
+                                        <p>
+                                            <strong>Appointment Date:</strong> @review.AppointmentDate.ToString("MMMM d, yyyy")
+                                        </p>
+
+                                        <p>
+                                            <strong>Appointment Time:</strong> @review.AppointmentDate.ToString("h:mm tt")
+                                        </p>
+
+                                        <p>
+                                            <strong>Rating:</strong> @review.Rating / 5
+                                        </p>
+
+                                        <p class="tutor-review-feedback-label">
+                                            <strong>Student Feedback:</strong>
+                                        </p>
+
+                                        <p class="tutor-review-feedback">@(string.IsNullOrWhiteSpace(review.Comment) ? "No written feedback provided." : review.Comment.Trim())</p>
+
+                                    </div>
+                                </details>
+                            }
+                        }
+                        else
+                        {
+                            <p class="empty-state">
+                                No reviews have been submitted for this tutor.
+                            </p>
+                        }
+
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="admin-secondary-button" onclick="closeTutorModal('tutorReviewsModal')">
                             Close
                         </button>
                     </div>
