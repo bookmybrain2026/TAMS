@@ -1,4 +1,4 @@
-﻿.course-dashboard {
+﻿.course-dashboard, .subject-dashboard {
     max-width: 1500px;
     margin: 0 auto;
     padding: 34px clamp(16px, 3vw, 42px) 24px;
@@ -6,7 +6,7 @@
     font-family: "Segoe UI", Arial, sans-serif;
 }
 
-.course-dashboard * { box-sizing: border-box; }
+.course-dashboard *, .subject-dashboard * { box-sizing: border-box; }
 
 .dashboard-header {
     display: flex;
@@ -44,7 +44,7 @@
     gap: 10px;
 }
 
-.course-primary-button, .course-secondary-button {
+.course-primary-button, .course-secondary-button, .subject-primary-button, .subject-secondary-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -58,40 +58,45 @@
     font-weight: 750;
     text-decoration: none;
     cursor: pointer;
-    transition: .18s ease;
 }
 
-.course-primary-button {
+.course-primary-button, .course-secondary-button { transition: .18s ease; }
+
+.subject-primary-button, .subject-secondary-button {
+    transition: transform .18s ease, background-color .18s ease;
+}
+
+.course-primary-button, .subject-primary-button {
     background: var(--bmb-yellow);
     color: var(--bmb-dark);
     box-shadow: 0 5px 12px rgba(244, 165, 28, .16);
 }
 
-.course-primary-button:hover {
+.course-primary-button:hover, .subject-primary-button:hover {
     background: var(--bmb-orange);
     color: var(--bmb-dark);
     transform: translateY(-1px);
 }
 
-.course-secondary-button {
+.course-secondary-button, .subject-secondary-button {
     background: #fff8e9;
     border-color: var(--admin-border);
     color: var(--bmb-brown);
 }
 
-.course-secondary-button:hover {
+.course-secondary-button:hover, .subject-secondary-button:hover {
     background: #ffe8b5;
     color: var(--bmb-dark);
 }
 
-.course-summary {
+.course-summary, .subject-summary {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 18px;
     margin-bottom: 38px;
 }
 
-.course-summary-card {
+.course-summary-card, .subject-summary-card {
     min-height: 168px;
     padding: 23px 24px 20px;
     border-radius: 17px;
@@ -184,7 +189,7 @@
     white-space: nowrap;
 }
 
-.course-alert {
+.course-alert, .subject-alert {
     margin-bottom: 16px;
     padding: 13px 16px;
     border: 1px solid transparent;
@@ -222,7 +227,7 @@
     pointer-events: none;
 }
 
-.course-input {
+.course-input, .subject-input {
     display: block;
     width: 100%;
     min-height: 43px;
@@ -235,22 +240,20 @@
     font-size: 13px;
 }
 
-.course-input:focus {
+.course-input:focus, .subject-input:focus {
     border-color: var(--bmb-orange);
     outline: 0;
     box-shadow: 0 0 0 3px rgba(244, 165, 28, .16);
 }
 
-.directory-search-input {
-    padding-left: 42px;
-}
+.directory-search-input { padding-left: 42px; }
 
 .directory-search-input::placeholder {
     color: #a3927d;
     font-size: 12px;
 }
 
-.course-table-wrap {
+.course-table-wrap, .subject-table-wrap {
     width: 100%;
     overflow-x: auto;
     border: 1px solid var(--admin-border);
@@ -259,15 +262,18 @@
     box-shadow: var(--admin-shadow);
 }
 
-.course-table {
+.course-table, .subject-table {
     width: 100%;
-    min-width: 650px;
     border-collapse: separate;
     border-spacing: 0;
     font-size: 12px;
 }
 
-.course-table thead th {
+.course-table { min-width: 650px; }
+
+.subject-table { min-width: 540px; }
+
+.course-table thead th, .subject-table thead th {
     padding: 15px 16px;
     border-bottom: 1px solid var(--admin-border);
     background: #fffaf0;
@@ -280,15 +286,15 @@
     letter-spacing: .55px;
 }
 
-.course-table tbody td {
+.course-table tbody td, .subject-table tbody td {
     padding: 14px 16px;
     border-bottom: 1px solid #f4ecdf;
     vertical-align: middle;
 }
 
-.course-table tbody tr:last-child td { border-bottom: 0; }
+.course-table tbody tr:last-child td, .subject-table tbody tr:last-child td { border-bottom: 0; }
 
-.course-table tbody tr:hover { background: #fffcf6; }
+.course-table tbody tr:hover, .subject-table tbody tr:hover { background: #fffcf6; }
 
 .table-id {
     color: var(--bmb-brown);
@@ -303,8 +309,9 @@
     color: var(--bmb-brown);
     font-size: 11px;
     font-weight: 700;
-    white-space: nowrap;
 }
+
+.subject-pill { white-space: nowrap; }
 
 .subject-name {
     margin-left: 5px;
@@ -356,7 +363,7 @@
     text-align: center;
 }
 
-.course-modal {
+.course-modal, .subject-modal {
     position: fixed;
     z-index: 1050;
     inset: 0;
@@ -369,7 +376,7 @@
     backdrop-filter: blur(3px);
 }
 
-.course-modal-content {
+.course-modal-content, .subject-modal-content {
     position: relative;
     width: 100%;
     max-width: 520px;
@@ -382,7 +389,7 @@
     box-shadow: 0 20px 60px rgba(48, 32, 20, .2);
 }
 
-.course-modal-content h2 {
+.course-modal-content h2, .subject-modal-content h2 {
     margin: 0;
     font-size: 25px;
     font-weight: 800;
@@ -395,7 +402,7 @@
     font-size: 13px;
 }
 
-.course-modal-close {
+.course-modal-close, .subject-modal-close {
     position: absolute;
     top: 14px;
     right: 16px;
@@ -411,11 +418,11 @@
     cursor: pointer;
 }
 
-.course-modal-close:hover { background: #ffe3a0; }
+.course-modal-close:hover, .subject-modal-close:hover { background: #ffe3a0; }
 
-.course-form-group { margin-bottom: 17px; }
+.course-form-group, .subject-form-group { margin-bottom: 17px; }
 
-.course-form-group label {
+.course-form-group label, .subject-form-group label {
     display: block;
     margin-bottom: 7px;
     color: var(--bmb-dark);
@@ -445,9 +452,7 @@
 }
 
 @media (max-width: 600px) {
-    .course-dashboard {
-        padding: 24px 13px;
-    }
+    .course-dashboard, .subject-dashboard { padding: 24px 13px; }
 
     .dashboard-header {
         align-items: flex-start;
@@ -462,18 +467,18 @@
 
     .header-actions a, .header-actions button { width: 100%; }
 
-    .course-summary { grid-template-columns: 1fr; }
+    .course-summary, .subject-summary { grid-template-columns: 1fr; }
 
-    .course-summary-card { min-height: 145px; }
+    .course-summary-card, .subject-summary-card { min-height: 145px; }
 
     .directory-search { max-width: 100%; }
 
-    .course-modal {
+    .course-modal, .subject-modal {
         align-items: flex-start;
         padding: 12px;
     }
 
-    .course-modal-content {
+    .course-modal-content, .subject-modal-content {
         max-height: calc(100vh - 24px);
         padding: 24px 18px;
     }

@@ -8,7 +8,6 @@
     var appointments = ViewBag.Appointments as List<Appointment> ?? new List<Appointment>();
     var schedules = ViewBag.Schedules as List<Schedule> ?? new List<Schedule>();
     var upcomingAppointments = appointments.Where(a => a.AppointmentDate >= DateTime.Now && a.Status == "Scheduled").OrderBy(a => a.AppointmentDate).ToList();
-    // var sortedSchedules = schedules.OrderBy(s => s.Date).ThenBy(s => s.StartTime).ToList();
 
     var now = DateTime.Now;
 
@@ -21,6 +20,7 @@
         .OrderBy(schedule => schedule.Date)
         .ThenBy(schedule => schedule.StartTime)
         .ToList();
+
     var pastAndCurrentAppointments = appointments.Where(a => a.AppointmentDate < DateTime.Now).OrderBy(a => a.AppointmentDate).ToList();
 
     var completedAppointments = appointments.Count(a => a.Status == "Completed");

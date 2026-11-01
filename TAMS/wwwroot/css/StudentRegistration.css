@@ -1,8 +1,4 @@
-﻿
-/* StudentRegistration.css */
-
-/* Page background */
-.student-registration-wrapper {
+﻿.student-registration-wrapper {
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -12,7 +8,6 @@
     font-family: "Segoe UI", Arial, sans-serif;
 }
 
-/* Registration card */
 .student-registration-container {
     width: 100%;
     max-width: 760px;
@@ -22,12 +17,10 @@
     box-shadow: var(--bmb-shadow);
 }
 
-/* Form panel */
 .student-registration-panel {
     padding: 40px 45px;
 }
 
-/* BookMyBrain branding */
 .student-registration-brand {
     font-size: 27px;
     font-weight: 900;
@@ -36,11 +29,10 @@
     margin-bottom: 22px;
 }
 
-    .student-registration-brand span {
-        color: var(--bmb-orange);
-    }
+.student-registration-brand span {
+    color: var(--bmb-orange);
+}
 
-/* Heading */
 .student-registration-heading {
     color: var(--bmb-dark);
     font-size: 30px;
@@ -57,7 +49,6 @@
     line-height: 1.6;
 }
 
-/* Labels */
 .student-registration-panel .form-label {
     display: block;
     color: var(--bmb-dark);
@@ -66,7 +57,6 @@
     margin-bottom: 8px;
 }
 
-/* Inputs and dropdowns */
 .student-registration-panel .form-control,
 .student-registration-panel .form-select {
     width: 100%;
@@ -81,27 +71,21 @@
     transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
-    /* Placeholder */
-    .student-registration-panel .form-control::placeholder {
-        color: #a39789;
-        opacity: 1;
-    }
-
-    /* Input focus */
-    .student-registration-panel .form-control:focus,
-    .student-registration-panel .form-select:focus {
-        border-color: var(--bmb-orange);
-        background-color: var(--bmb-white);
-        box-shadow: 0 0 0 3px rgba(244, 165, 28, 0.16);
-        outline: none;
-    }
-
-/* Spacing */
-.student-registration-panel .mb-3 {
-    margin-bottom: 20px !important;
+.student-registration-panel .form-control::placeholder {
+    color: #a39789;
+    opacity: 1;
 }
 
-/* Divider */
+.student-registration-panel .form-control:focus,
+.student-registration-panel .form-select:focus {
+    border-color: var(--bmb-orange);
+    background-color: var(--bmb-white);
+    box-shadow: 0 0 0 3px rgba(244, 165, 28, 0.16);
+    outline: none;
+}
+
+.student-registration-panel .mb-3 { margin-bottom: 20px !important; }
+
 .student-registration-divider {
     border: 0;
     height: 1px;
@@ -109,7 +93,6 @@
     margin: 28px 0 24px;
 }
 
-/* Login information heading */
 .student-registration-section-heading {
     color: var(--bmb-dark);
     font-size: 18px;
@@ -117,14 +100,12 @@
     margin-bottom: 20px;
 }
 
-/* Validation messages */
 .student-registration-panel .text-danger {
     display: block;
     font-size: 12px;
     margin-top: 5px;
 }
 
-/* Create account button */
 .student-registration-submit {
     width: 100%;
     min-height: 48px;
@@ -138,20 +119,18 @@
     transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
-    .student-registration-submit:hover {
-        background-color: var(--bmb-orange);
-        color: var(--bmb-dark);
-        transform: translateY(-1px);
-    }
+.student-registration-submit:hover {
+    background-color: var(--bmb-orange);
+    color: var(--bmb-dark);
+    transform: translateY(-1px);
+}
 
-    /* Keyboard accessibility */
-    .student-registration-submit:focus-visible,
-    .student-registration-login-link:focus-visible {
-        outline: 3px solid var(--bmb-brown);
-        outline-offset: 3px;
-    }
+.student-registration-submit:focus-visible,
+.student-registration-login-link:focus-visible {
+    outline: 3px solid var(--bmb-brown);
+    outline-offset: 3px;
+}
 
-/* Existing account link */
 .student-registration-login {
     text-align: center;
     color: #8a7967;
@@ -166,52 +145,38 @@
     margin-left: 3px;
 }
 
-    .student-registration-login-link:hover {
-        color: var(--bmb-orange);
-        text-decoration: underline;
-    }
-
-/* Tablet layout */
-@media (max-width: 800px) {
-    .student-registration-wrapper {
-        padding: 30px 16px;
-    }
-
-    .student-registration-container {
-        max-width: 620px;
-    }
-
-    .student-registration-panel {
-        padding: 35px 30px;
-    }
+.student-registration-login-link:hover {
+    color: var(--bmb-orange);
+    text-decoration: underline;
 }
 
-/* Mobile layout */
+@media (max-width: 800px) {
+    .student-registration-wrapper { padding: 30px 16px; }
+
+    .student-registration-container { max-width: 620px; }
+
+    .student-registration-panel { padding: 35px 30px; }
+}
+
 @media (max-width: 480px) {
     .student-registration-wrapper {
         padding: 18px 10px;
         align-items: flex-start;
     }
 
-    .student-registration-panel {
-        padding: 28px 20px;
-    }
+    .student-registration-panel { padding: 28px 20px; }
 
     .student-registration-brand {
         font-size: 24px;
         margin-bottom: 20px;
     }
 
-    .student-registration-heading {
-        font-size: 26px;
-    }
+    .student-registration-heading { font-size: 26px; }
 
     .student-registration-subtitle {
         font-size: 13px;
         margin-bottom: 24px;
     }
 
-    .student-registration-section-heading {
-        font-size: 17px;
-    }
+    .student-registration-section-heading { font-size: 17px; }
 }

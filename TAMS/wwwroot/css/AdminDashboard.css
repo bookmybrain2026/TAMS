@@ -291,46 +291,20 @@
     box-shadow: var(--admin-shadow);
 }
 
-
-/* Limit directory and appointment tables to about six visible rows,
-   including the header. Scroll when additional rows exist. */
 .directory-table-wrap {
     max-height: 300px;
     overflow: auto;
 }
 
-/* Keep the header visible while scrolling vertically. */
 .directory-table-wrap .admin-table thead {
     position: sticky;
     top: 0;
     z-index: 2;
 }
 
-/* Keep the header background opaque while scrolling. */
 .directory-table-wrap .admin-table thead th {
     background: #fffaf0;
 }
-
-
-/* Allow table contents to scroll */
-/*.directory-table-wrap {
-    max-height: 300px;
-    overflow: auto;
-}*/
-
-    /* Keep table headers fixed while scrolling */
-    /*.directory-table-wrap .admin-table {
-        border-collapse: separate;
-        border-spacing: 0;
-    }
-
-        .directory-table-wrap .admin-table thead th {
-            position: sticky;
-            top: 0;
-            z-index: 5;
-            background-color: #fffaf0;
-        }*/
-
 
 .admin-table {
     width: 100%;

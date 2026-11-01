@@ -5,7 +5,7 @@
 }
 
 @section Styles {
-    <link href="~/css/CreateTutor.css" rel="stylesheet" />
+    <link href="~/css/CreateTutor.css" rel="stylesheet" asp-append-version="true" />
 }
 
 <div class="create-tutor-wrapper">
@@ -23,7 +23,6 @@
             <form asp-controller="Admin" asp-action="CreateTutor" method="post">
                 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-                <!-- Tutor Personal Information -->
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label asp-for="FName" class="form-label">First Name</label>
@@ -39,7 +38,6 @@
                     </div>
                 </div>
 
-                <!-- Subject / Specialty -->
                 <div class="mb-3">
                     <label asp-for="Subject" class="form-label">Subject / Specialty</label>
                     <select asp-for="Subject" class="form-select">
@@ -58,14 +56,12 @@
                     <span asp-validation-for="Subject" class="text-danger"></span>
                 </div>
 
-                <!-- Phone Number -->
                 <div class="mb-3">
                     <label asp-for="PhoneNumber" class="form-label">Phone Number</label>
                     <input asp-for="PhoneNumber" class="form-control" placeholder="Enter phone number" />
                     <span asp-validation-for="PhoneNumber" class="text-danger"></span>
                 </div>
 
-                <!-- Email -->
                 <div class="mb-3">
                     <label asp-for="Email" class="form-label">Email</label>
                     <input asp-for="Email" type="email" class="form-control" placeholder="Enter email address" autocomplete="email" />
@@ -74,33 +70,28 @@
 
                 <hr class="create-tutor-divider" />
 
-                <!-- Tutor Login Information -->
                 <h5 class="create-tutor-section-heading">
                     Tutor Login Information
                 </h5>
 
-                <!-- Username -->
                 <div class="mb-3">
                     <label asp-for="Username" class="form-label">Username</label>
                     <input asp-for="Username" class="form-control" placeholder="Create a username" autocomplete="username" />
                     <span asp-validation-for="Username" class="text-danger"></span>
                 </div>
 
-                <!-- Password -->
                 <div class="mb-3">
                     <label asp-for="Password" class="form-label">Password</label>
                     <input asp-for="Password" type="password" class="form-control" placeholder="Create a password" autocomplete="new-password" />
                     <span asp-validation-for="Password" class="text-danger"></span>
                 </div>
 
-                <!-- Confirm Password -->
                 <div class="mb-3">
                     <label asp-for="ConfirmPassword" class="form-label">Confirm Password</label>
                     <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="Confirm password" autocomplete="new-password" />
                     <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
                 </div>
 
-                <!-- Form Actions -->
                 <div class="create-tutor-actions d-grid gap-2">
                     <button type="submit" class="btn create-tutor-submit">
                         Create Tutor Account
