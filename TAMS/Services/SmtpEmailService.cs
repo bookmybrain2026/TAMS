@@ -661,6 +661,7 @@ namespace TAMS.Services
         }
 
 
+        //Styling Done for SendReviewReminderAsync
         public async Task SendReviewReminderAsync(string studentEmail, string studentName, string tutorName)
         {
             var message = new MimeMessage();
@@ -668,17 +669,49 @@ namespace TAMS.Services
             message.To.Add(new MailboxAddress(studentName, studentEmail));
             message.Subject = "Awaiting Review or Rating";
 
-            message.Body = new TextPart("plain")
+            var builder = new BodyBuilder();
+
+            var templatePath = Path.Combine(_environment.ContentRootPath, "EmailTemplates", "StudentReviewReminder.html");
+
+            var html = await File.ReadAllTextAsync(templatePath);
+
+            var bannerPath = Path.Combine(_environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot"), "images", "banner.png");
+
+            string bannerHtml = "";
+
+            if (File.Exists(bannerPath))
             {
-                Text = $"""
+                var banner = builder.LinkedResources.Add(bannerPath);
+                banner.ContentId = Guid.NewGuid().ToString() + "@tams";
+
+                bannerHtml = $"""
+            <img src="cid:{banner.ContentId}"
+                 alt="BookMyBrain" width="560"
+                 style="display:block;width:100%;max-width:560px;
+                        height:auto;border:0;margin:0 auto;">
+            """;
+            }
+
+            var sName = System.Net.WebUtility.HtmlEncode(studentName);
+            var tName = System.Net.WebUtility.HtmlEncode(tutorName);
+
+            html = html.Replace("{{BannerHtml}}", bannerHtml);
+            html = html.Replace("{{StudentName}}", sName);
+            html = html.Replace("{{TutorName}}", tName);
+
+            builder.HtmlBody = html;
+
+            builder.TextBody = $"""
                 Hello {studentName},
 
                 You have an awaiting review or rating.
 
                 Please log in to your dashboard to review your appointment with Tutor {tutorName}.
+
                 Thank you for using TAMS.
-                """
-            };
+                """;
+
+            message.Body = builder.ToMessageBody();
 
             using var smtp = new SmtpClient();
             await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
@@ -687,58 +720,92 @@ namespace TAMS.Services
             await smtp.DisconnectAsync(true);
         }
 
-
+        //Styling Done for SendTutorAppointmentCompletionReminderAsync
         public async Task SendTutorAppointmentCompletionReminderAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate, DateTime endDate, int hoursAfterEnd)
         {
             var message = new MimeMessage();
-
-            message.From.Add(new MailboxAddress(
-                _configuration["EmailSettings:SenderName"],
-                _configuration["EmailSettings:SenderEmail"]));
-
+            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
             message.To.Add(new MailboxAddress(tutorName, tutorEmail));
 
             message.Subject = "Reminder: Confirm Your Tutoring Appointment";
 
-            var reminderMessage = hoursAfterEnd <= 1 ? "Your tutoring appointment ended at least one hour ago." : "Your tutoring appointment ended at least 24 hours ago.";
+            string reminderMessage = hoursAfterEnd <= 1
+                ? "Your tutoring appointment ended at least one hour ago."
+                : "Your tutoring appointment ended at least 24 hours ago.";
 
-            message.Body = new TextPart("plain")
+            var builder = new BodyBuilder();
+
+            var templatePath = Path.Combine(_environment.ContentRootPath, "EmailTemplates", "TutorAppointmentCompletionReminder.html");
+
+            var html = await File.ReadAllTextAsync(templatePath);
+
+            var bannerPath = Path.Combine(_environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot"), "images", "banner.png");
+
+            string bannerHtml = "";
+
+            if (File.Exists(bannerPath))
             {
-                Text = $"""
+                var banner = builder.LinkedResources.Add(bannerPath);
+                banner.ContentId = Guid.NewGuid().ToString() + "@tams";
+
+                bannerHtml = $"""
+            <img src="cid:{banner.ContentId}"
+                 alt="BookMyBrain" width="560"
+                 style="display:block;width:100%;max-width:560px;
+                        height:auto;border:0;margin:0 auto;">
+            """;
+            }
+
+            var formattedDate = appointmentDate.ToString("MMMM dd, yyyy");
+            var formattedStartTime = appointmentDate.ToString("h:mm tt");
+            var formattedEndTime = endDate.ToString("h:mm tt");
+
+            var tName = System.Net.WebUtility.HtmlEncode(tutorName);
+            var sName = System.Net.WebUtility.HtmlEncode(studentName);
+            var aDate = System.Net.WebUtility.HtmlEncode(formattedDate);
+            var startTime = System.Net.WebUtility.HtmlEncode(formattedStartTime);
+            var endTime = System.Net.WebUtility.HtmlEncode(formattedEndTime);
+            var rMessage = System.Net.WebUtility.HtmlEncode(reminderMessage);
+
+            html = html.Replace("{{BannerHtml}}", bannerHtml);
+            html = html.Replace("{{TutorName}}", tName);
+            html = html.Replace("{{StudentName}}", sName);
+            html = html.Replace("{{AppointmentDate}}", aDate);
+            html = html.Replace("{{StartTime}}", startTime);
+            html = html.Replace("{{EndTime}}", endTime);
+            html = html.Replace("{{ReminderMessage}}", rMessage);
+
+            builder.HtmlBody = html;
+
+            builder.TextBody = $"""
                 Hello {tutorName},
 
                 {reminderMessage}
 
                 Student: {studentName}
-                Appointment Date: {appointmentDate.ToString("MMMM dd, yyyy")}
-                Start Time: {appointmentDate.ToString("h:mm tt")}
-                End Time: {endDate.ToString("h:mm tt")}
+                Appointment Date: {formattedDate}
+                Start Time: {formattedStartTime}
+                End Time: {formattedEndTime}
 
                 If the tutoring session took place, please log in to TAMS
                 and mark the appointment as complete.
 
-                If it did not take place, please contact 
+                If it did not take place, please contact
                 an administrator to cancel this appointment for you.
 
                 Thank you for using TAMS.
-                """
-            };
+                """;
+
+            message.Body = builder.ToMessageBody();
 
             using var smtp = new SmtpClient();
-
-            await smtp.ConnectAsync(
-                _configuration["EmailSettings:SmtpServer"],
-                int.Parse(_configuration["EmailSettings:SmtpPort"]!),
-                SecureSocketOptions.StartTls);
-
-            await smtp.AuthenticateAsync(
-                _configuration["EmailSettings:Username"],
-                _configuration["EmailSettings:Password"]);
-
+            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
+            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
             await smtp.SendAsync(message);
             await smtp.DisconnectAsync(true);
         }
 
+        //Styling Done for SendTutorAppointmentAdminFollowUpAsync
         public async Task SendTutorAppointmentAdminFollowUpAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate, DateTime endDate)
         {
             var message = new MimeMessage();
@@ -746,36 +813,77 @@ namespace TAMS.Services
             message.To.Add(new MailboxAddress(tutorName, tutorEmail));
             message.Subject = "Action Required: Unconfirmed Appointment";
 
-            message.Body = new TextPart("plain")
+            var builder = new BodyBuilder();
+
+            var templatePath = Path.Combine(_environment.ContentRootPath, "EmailTemplates", "TutorAppointmentAdminFollowUp.html");
+
+            var html = await File.ReadAllTextAsync(templatePath);
+
+            var bannerPath = Path.Combine(_environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot"), "images", "banner.png");
+
+            string bannerHtml = "";
+
+            if (File.Exists(bannerPath))
             {
-                Text = $"""
-                    Hello {tutorName},
+                var banner = builder.LinkedResources.Add(bannerPath);
+                banner.ContentId = Guid.NewGuid().ToString() + "@tams";
 
-                    Your tutoring appointment has remained unconfirmed for
-                    more than 48 hours after its scheduled end time.
+                bannerHtml = $"""
+            <img src="cid:{banner.ContentId}"
+                 alt="BookMyBrain" width="560"
+                 style="display:block;width:100%;max-width:560px;
+                        height:auto;border:0;margin:0 auto;">
+            """;
+            }
 
-                    Student: {studentName}
-                    Appointment Date: {appointmentDate.ToString("MMMM dd, yyyy")}
-                    Start Time: {appointmentDate.ToString("h:mm tt")}
-                    End Time: {endDate.ToString("h:mm tt")}
+            var formattedDate = appointmentDate.ToString("MMMM dd, yyyy");
+            var formattedStartTime = appointmentDate.ToString("h:mm tt");
+            var formattedEndTime = endDate.ToString("h:mm tt");
 
-                    Please review the appointment in your TAMS dashboard.
+            var tName = System.Net.WebUtility.HtmlEncode(tutorName);
+            var sName = System.Net.WebUtility.HtmlEncode(studentName);
+            var aDate = System.Net.WebUtility.HtmlEncode(formattedDate);
+            var startTime = System.Net.WebUtility.HtmlEncode(formattedStartTime);
+            var endTime = System.Net.WebUtility.HtmlEncode(formattedEndTime);
 
-                    If the session took place, please mark the appointment 
-                    as complete. 
-                    
-                    If it did not take place, please contact 
-                    an administrator to cancel this appointment for you.
-                                                    
-                    Thank you for using TAMS.
-                    """
-            };
+            html = html.Replace("{{BannerHtml}}", bannerHtml);
+            html = html.Replace("{{TutorName}}", tName);
+            html = html.Replace("{{StudentName}}", sName);
+            html = html.Replace("{{AppointmentDate}}", aDate);
+            html = html.Replace("{{StartTime}}", startTime);
+            html = html.Replace("{{EndTime}}", endTime);
 
-            using var client = new SmtpClient();
-            await client.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
-            await client.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
-            await client.SendAsync(message);
-            await client.DisconnectAsync(true);
+            builder.HtmlBody = html;
+
+            builder.TextBody = $"""
+                Hello {tutorName},
+
+                Your tutoring appointment has remained unconfirmed for
+                more than 48 hours after its scheduled end time.
+
+                Student: {studentName}
+                Appointment Date: {formattedDate}
+                Start Time: {formattedStartTime}
+                End Time: {formattedEndTime}
+
+                Please review the appointment in your TAMS dashboard.
+
+                If the session took place, please mark the appointment
+                as complete.
+
+                If it did not take place, please contact
+                an administrator to cancel this appointment for you.
+
+                Thank you for using TAMS.
+                """;
+
+            message.Body = builder.ToMessageBody();
+
+            using var smtp = new SmtpClient();
+            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
+            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
+            await smtp.SendAsync(message);
+            await smtp.DisconnectAsync(true);
         }
 
         //Styling Done for SendAdminAppointmentFollowUpAsync

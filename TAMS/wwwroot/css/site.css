@@ -16,13 +16,18 @@
     --bmb-card-cream: #fffdf8;
 }
 
-html { font-size: 14px; }
+html {
+    font-size: 14px;
+    position: relative;
+    min-height: 100%;
+}
 
 body {
     min-height: 100%;
     margin: 0;
     padding: 0;
     background-color: var(--bmb-cream);
+    margin-bottom: 60px;
 }
 
 @media (min-width: 768px) {
@@ -32,14 +37,6 @@ body {
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus { 
     box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb; 
 }
-
-html {
-  position: relative;
-  min-height: 100%;
-}
-
-body { margin-bottom: 60px; }
-
 
 .tams-navbar {
     background-color: #fff0cf !important;
