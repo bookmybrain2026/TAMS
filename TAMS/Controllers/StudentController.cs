@@ -223,55 +223,7 @@ namespace TAMS.Controllers
             dBContext.Student.UpdateOne(s => s.StudentId == updatedStudent.StudentId,update);
 
             return RedirectToAction("Dashboard", new { id = updatedStudent.StudentId });
-        }
-
-        [HttpGet]
-        public IActionResult CreateAccount()
-        {
-            return View();
-        }
-
-        [HttpPost]
-        public IActionResult CreateAccount(string username, string password, Student studentModel)
-        {
-            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
-            {
-                ViewBag.Error = "Username and password are required.";
-                return View(studentModel);
-            }
-
-            var existingLogin =
-                dBContext.Login
-                .Find(l => l.Username == username).FirstOrDefault();
-
-            if (existingLogin != null)
-            {
-                ViewBag.Error = "That username already exists.";
-                return View(studentModel);
-            }
-
-            var lastLogin = dBContext.Login.Find(_ => true).SortByDescending(l => l.UserId).FirstOrDefault();
-
-            int newUserId = lastLogin == null ? 1 : lastLogin.UserId + 1;
-
-            var login = new Login
-                {
-                    UserId = newUserId,
-                    Username = username,
-                    Password = password,
-                    Role = UserRole.Student,
-                    CreatedDate = DateTime.Now,
-                    LastLogin = DateTime.Now,
-                    isActive = true
-                };
-
-            dBContext.Login.InsertOne(login);
-
-            studentModel.StudentId = newUserId;
-            dBContext.Student.InsertOne(studentModel);
-
-            return RedirectToAction( "Dashboard", new { id = newUserId });
-        }
+        }     
 
         [HttpGet]
         public IActionResult StudentRegistration()
