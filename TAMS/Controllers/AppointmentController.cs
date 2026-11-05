@@ -605,21 +605,26 @@ namespace TAMS.Controllers
             dBContext.GroupAppointments.UpdateOne(fullFilter, Builders<GroupAppointment>.Update.Set(g => g.Status, "Full"));
 
             var tutor = dBContext.Tutor
-                .Find(t => t.TutorId == group.TutorId)
-                .FirstOrDefault();
+            .Find(t => t.TutorId == group.TutorId)
+            .FirstOrDefault();
 
             if (tutor != null)
             {
-                if (!string.IsNullOrWhiteSpace(student.Email))
+                try
                 {
-                    await _emailService.SendGroupAppointmentConfirmationToStudentAsync(student.Email, student.FName,  tutor.FName,
-                        group.AppointmentDate, group.StartTime, group.EndTime);
-                }
+                    if (!student.DisableEmailNotifications && !string.IsNullOrWhiteSpace(student.Email))
+                    {
+                        await _emailService.SendGroupAppointmentConfirmationToStudentAsync(student.Email, student.FName, tutor.FName, group.AppointmentDate, group.StartTime, group.EndTime);
+                    }
 
-                if (!string.IsNullOrWhiteSpace(tutor.Email))
+                    if (!tutor.DisableEmailNotifications && !string.IsNullOrWhiteSpace(tutor.Email))
+                    {
+                        await _emailService.SendGroupAppointmentConfirmationToTutorAsync(tutor.Email, tutor.FName, student.FName, group.AppointmentDate, group.StartTime, group.EndTime);
+                    }
+                }
+                catch (Exception ex)
                 {
-                    await _emailService.SendGroupAppointmentConfirmationToTutorAsync(tutor.Email, tutor.FName, student.FName,
-                        group.AppointmentDate, group.StartTime, group.EndTime);
+                    Console.WriteLine($"Group confirmation email failed: {ex.Message}");
                 }
             }
 
@@ -698,21 +703,26 @@ namespace TAMS.Controllers
             dBContext.GroupAppointments.UpdateOne(reopenFilter, Builders<GroupAppointment>.Update.Set(g => g.Status, "Open"));
 
             var tutor = dBContext.Tutor
-                .Find(t => t.TutorId == group.TutorId)
-                .FirstOrDefault();
+            .Find(t => t.TutorId == group.TutorId)
+            .FirstOrDefault();
 
             if (tutor != null)
             {
-                if (!string.IsNullOrWhiteSpace(student.Email))
+                try
                 {
-                    await _emailService.SendGroupAppointmentCancellationToStudentAsync(student.Email, student.FName, tutor.FName,
-                        group.AppointmentDate, group.StartTime, group.EndTime);
-                }
+                    if (!student.DisableEmailNotifications && !string.IsNullOrWhiteSpace(student.Email))
+                    {
+                        await _emailService.SendGroupAppointmentCancellationToStudentAsync(student.Email, student.FName, tutor.FName, group.AppointmentDate, group.StartTime, group.EndTime);
+                    }
 
-                if (!string.IsNullOrWhiteSpace(tutor.Email))
+                    if (!tutor.DisableEmailNotifications && !string.IsNullOrWhiteSpace(tutor.Email))
+                    {
+                        await _emailService.SendGroupAppointmentCancellationToTutorAsync(tutor.Email, tutor.FName, student.FName, group.AppointmentDate, group.StartTime, group.EndTime);
+                    }
+                }
+                catch (Exception ex)
                 {
-                    await _emailService.SendGroupAppointmentCancellationToTutorAsync(tutor.Email, tutor.FName, student.FName,
-                        group.AppointmentDate, group.StartTime, group.EndTime);
+                    Console.WriteLine($"Group cancellation email failed: {ex.Message}");
                 }
             }
 
