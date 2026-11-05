@@ -30,6 +30,8 @@
   
     var tutorGroupAppointments = ViewBag.TutorGroupAppointments as List<GroupAppointment> ?? new List<GroupAppointment>();
 
+    var scheduleLinkedGroups = ViewBag.ScheduleLinkedGroups as List<GroupAppointment> ?? new List<GroupAppointment>();
+
 }
 
 @section Styles {
@@ -719,13 +721,35 @@
                                     </td>
 
                                     <td>
-                                        <form asp-controller="Tutor" asp-action="DeleteSchedule" method="post" onsubmit="return confirm('Are you sure you want to delete this slot?');">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="scheduleId" value="@schedule.ScheduleId" />
-                                            <button type="submit" class="tutor-button tutor-button-small tutor-button-danger">
+                                        
+                                        @{
+                                            var linkedGroups = scheduleLinkedGroups
+                                                .Where(g => g.AppointmentDate.Date == schedule.Date.Date &&
+                                                    g.StartTime < schedule.EndTime && g.EndTime > schedule.StartTime)
+                                                .ToList();
+
+                                            bool hasGroup = linkedGroups.Any();
+                                            bool hasEnrolledStudents = linkedGroups.Any(g => (g.StudentIds?.Count ?? 0) > 0);
+                                        }
+
+                                        @if (hasEnrolledStudents)
+                                        {
+                                            <button type="button" class="tutor-button tutor-button-small tutor-button-danger"
+                                                    onclick="alert('This schedule slot is connected to a group appointment with enrolled students. You must contact an administrator to delete the group appointment for you.');">
                                                 Delete
                                             </button>
-                                        </form>
+                                        }
+                                        else
+                                        {
+                                            <form asp-controller="Tutor" asp-action="DeleteSchedule" method="post" onsubmit="return confirmScheduleDeletion(@(hasGroup ? "true" : "false"));">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="scheduleId" value="@schedule.ScheduleId" />
+                                                <button type="submit" class="tutor-button tutor-button-small tutor-button-danger">
+                                                    Delete
+                                                </button>
+                                            </form>
+                                        }
+
                                     </td>
                                 </tr>
                             }
@@ -798,3 +822,21 @@
         <span>© @DateTime.Now.Year Tutor Portal</span>
     </footer>
 </div>
+
+<script>
+    function confirmScheduleDeletion(hasGroup) {
+
+        if (hasGroup) {
+            return confirm(
+                "Are you sure you want to delete this schedule slot?\n\n" +
+                "WARNING: This schedule slot is connected to a group appointment.\n\n" +
+                "Deleting this schedule will also delete the associated group appointment.\n\n" +
+                "Do you want to continue?"
+            );
+        }
+
+        return confirm(
+            "Are you sure you want to delete this schedule slot?"
+        );
+    }
+</script>

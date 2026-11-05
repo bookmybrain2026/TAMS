@@ -93,6 +93,10 @@ namespace TAMS.Controllers
 
             ViewBag.TutorGroupAppointments = tutorGroupAppointments;
 
+            ViewBag.ScheduleLinkedGroups = dBContext.GroupAppointments
+                .Find(g => g.TutorId == tutor.TutorId && g.Status != "Cancelled" && g.Status != "Rejected")
+                .ToList();
+
             var now = DateTime.Now;
 
             var tutorReminderAppointments = tutor.Appointments
@@ -415,6 +419,7 @@ namespace TAMS.Controllers
             return RedirectToAction("Schedule", new { id = tutorId, month = date.Month, year = date.Year });
         }
 
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult DeleteSchedule(int scheduleId)
@@ -422,30 +427,87 @@ namespace TAMS.Controllers
             var tutorId = HttpContext.Session.GetInt32("TutorId");
             if (tutorId == null) { return RedirectToAction("Login", "Login"); }
 
-            var schedule = dBContext.Schedule.Find(s => s.ScheduleId == scheduleId).FirstOrDefault();
+            var schedule = dBContext.Schedule
+                .Find(s => s.ScheduleId == scheduleId && s.TutorId == tutorId.Value)
+                .FirstOrDefault();
 
             if (schedule == null) { return NotFound(); }
-            if (schedule.TutorId != tutorId.Value) { return Unauthorized(); }
 
-            var tutorAppointments = dBContext.Appointments.Find(a => a.TutorId == tutorId.Value).ToList();
-            var hasAppointments = tutorAppointments.Any(a =>
-            {
-                if (a.Status != "Scheduled") { return false; }                 
-                var localAppointmentDate = a.AppointmentDate;
-                return localAppointmentDate.Date == schedule.Date.Date && localAppointmentDate.TimeOfDay >= schedule.StartTime && localAppointmentDate.TimeOfDay < schedule.EndTime;
-            });
+            var tutorAppointments = dBContext.Appointments
+                .Find(a => a.TutorId == tutorId.Value && a.Status == "Scheduled")
+                .ToList();
+
+            bool hasAppointments = tutorAppointments.Any(a => a.ScheduleId == scheduleId ||
+                (a.AppointmentDate.Date == schedule.Date.Date && a.AppointmentDate.TimeOfDay >= schedule.StartTime &&
+                 a.AppointmentDate.TimeOfDay < schedule.EndTime));
 
             if (hasAppointments)
             {
                 TempData["TutorDashboardError"] =
-                    "You cannot delete this schedule slot because it has a scheduled appointment. " +
-                    "Please cancel or remove the associated appointment first.";
+                    "You cannot delete this schedule slot because it has " +
+                    "a scheduled appointment. Please cancel or remove " +
+                    "the associated appointment first.";
+
                 return RedirectToAction("Dashboard", new { id = tutorId.Value });
             }
-            dBContext.Schedule.DeleteOne(s => s.ScheduleId == scheduleId && s.TutorId == tutorId.Value);
 
-            TempData["TutorDashboardSuccess"] = "Schedule deleted successfully.";
-            return RedirectToAction("Dashboard", new { id = tutorId.Value });
+            var groups = dBContext.GroupAppointments
+                .Find(g => g.TutorId == tutorId.Value && g.AppointmentDate >= schedule.Date.Date &&
+                           g.AppointmentDate < schedule.Date.Date.AddDays(1))
+                .ToList()
+                .Where(g => g.StartTime < schedule.EndTime && g.EndTime > schedule.StartTime && g.Status != "Cancelled" && g.Status != "Rejected")
+                .ToList();
+
+            if (groups.Any(g => (g.StudentIds?.Count ?? 0) > 0))
+            {
+                TempData["TutorDashboardError"] =
+                    "This schedule slot is connected to a group " +
+                    "appointment with enrolled students. " +
+                    "You cannot delete this schedule. " +
+                    "Please contact an administrator to delete " +
+                    "the group appointment for you.";
+
+                return RedirectToAction("Dashboard", new { id = tutorId.Value });
+            }
+
+            // Delete associated groups only when no students are enrolled
+            foreach (var group in groups)
+            {
+                var groupFilter = Builders<GroupAppointment>.Filter.And(
+                    Builders<GroupAppointment>.Filter.Eq(g => g.GroupId, group.GroupId),
+                    Builders<GroupAppointment>.Filter.Eq(g => g.TutorId, tutorId.Value),
+                    Builders<GroupAppointment>.Filter.Size(g => g.StudentIds, 0)
+                );
+
+                var result = dBContext.GroupAppointments .DeleteOne(groupFilter);
+
+                if (result.DeletedCount == 0)
+                {
+                    TempData["TutorDashboardError"] =
+                        "The group appointment could not be deleted. " +
+                        "It may now have enrolled students. " +
+                        "Please contact an administrator.";
+
+                    return RedirectToAction("Dashboard", new { id = tutorId.Value });
+                }
+            }
+
+            // Delete the schedule.
+            var deleteResult = dBContext.Schedule.DeleteOne(s => s.ScheduleId == scheduleId && s.TutorId == tutorId.Value);
+
+            if (deleteResult.DeletedCount == 0)
+            {
+                TempData["TutorDashboardError"] = "The schedule slot could not be deleted.";
+
+                return RedirectToAction("Dashboard", new { id = tutorId.Value });
+            }
+
+            TempData["TutorDashboardSuccess"] = groups.Any()
+                ? "Schedule slot and associated group appointment deleted successfully."
+                : "Schedule deleted successfully.";
+
+            return RedirectToAction("Dashboard",
+                new { id = tutorId.Value });
         }
 
         [HttpGet]
