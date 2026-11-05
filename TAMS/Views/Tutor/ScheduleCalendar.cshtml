@@ -1,5 +1,11 @@
 ﻿@{
     var appointments = (List<TAMS.Models.Appointment>)ViewBag.Appointments;
+
+    var groupAppointments =
+        ViewBag.GroupAppointments as List<TAMS.Models.GroupAppointment>
+        ?? new List<TAMS.Models.GroupAppointment>();
+
+
     int month = ViewBag.Month;
     int year = ViewBag.Year;
     int tutorId = ViewBag.TutorId ?? 0;
@@ -71,6 +77,9 @@
 
                 <span class="legend-dot legend-dot-cancelled"></span>
                 <span>Cancelled appointment</span>
+
+                <span class="legend-dot legend-dot-group"></span>
+                <span>Group appointment</span>
             </div>
 
             <div class="calendar-table-wrapper">
@@ -109,31 +118,92 @@
                                             .OrderBy(a => a.AppointmentDate.TimeOfDay)
                                             .ToList();
 
+                                            // Group appointments for this day
+                                            // Only include groups with enrolled students
+                                            var dayGroupAppointments = groupAppointments
+                                            .Where(g =>
+                                            g.AppointmentDate.Date == currentDate.Date &&
+                                            g.StudentIds != null &&
+                                            g.StudentIds.Count > 0 &&
+                                            (g.Status == "Open" ||
+                                            g.Status == "Full" ||
+                                            g.Status == "Completed"))
+                                            .OrderBy(g => g.StartTime)
+                                            .ToList();
+
+
                                             <td class="calendar-day-cell">
                                                 <div class="calendar-day-number"> @day </div>
 
                                                 <div class="calendar-day-name"> @currentDate.ToString("ddd") </div>
 
                                                 <ul class="calendar-appointments">
+                                                    @* Regular Appointments *@
                                                     @foreach (var appt in dayAppointments)
                                                     {
                                                         if (appt.Status == "Cancelled")
                                                         {
                                                             <li class="appointment-item appointment-cancelled">
-                                                                <span class="appointment-time"> @appt.AppointmentDate.ToString("hh:mm tt") </span>
-                                                                <span class="appointment-student"> @appt.Student.FName @appt.Student.LName </span>
-                                                                <span class="appointment-status"> Cancelled </span>
+                                                                <span class="appointment-time">
+                                                                    @appt.AppointmentDate.ToString("hh:mm tt")
+                                                                </span>
+
+                                                                <span class="appointment-student">
+                                                                    @(appt.Student != null ? $"{appt.Student.FName} {appt.Student.LName}" : "Student")
+                                                                </span>
+
+                                                                <span class="appointment-status">
+                                                                    Cancelled
+                                                                </span>
+
                                                             </li>
                                                         }
                                                         else
                                                         {
                                                             <li class="appointment-item appointment-active">
-                                                                <span class="appointment-time"> @appt.AppointmentDate.ToString("hh:mm tt") </span>
-                                                                <span class="appointment-student"> @appt.Student.FName @appt.Student.LName </span>
+                                                                <span class="appointment-time">
+                                                                    @appt.AppointmentDate.ToString("hh:mm tt")
+                                                                </span>
+
+                                                                <span class="appointment-student">
+                                                                    @(appt.Student != null ? $"{appt.Student.FName} {appt.Student.LName}" : "Student")
+                                                                </span>
+
                                                             </li>
                                                         }
                                                     }
+
+                                                    @* Group Appointments *@
+                                                    @foreach (var group in dayGroupAppointments)
+                                                    {
+                                                        var enrolledCount = group.StudentIds?.Count ?? 0;
+
+                                                        <li class="appointment-item appointment-group">
+
+                                                            <span class="appointment-time">
+                                                                @(DateTime.Today.Add(group.StartTime).ToString("h:mm tt"))
+                                                                -
+                                                                @(DateTime.Today.Add(group.EndTime).ToString("h:mm tt"))
+                                                            </span>
+
+                                                            <span class="appointment-student">
+                                                                <i class="fas fa-users" aria-hidden="true"></i>
+                                                                Group #@group.GroupId
+                                                            </span>
+
+                                                            <span class="appointment-group-count">
+                                                                @enrolledCount / @group.Capacity Students
+                                                            </span>
+
+                                                            <span class="appointment-group-status">
+                                                                @group.Status
+                                                            </span>
+
+                                                        </li>
+                                                    }
+
                                                 </ul>
+
                                             </td>
 
                                             day++;

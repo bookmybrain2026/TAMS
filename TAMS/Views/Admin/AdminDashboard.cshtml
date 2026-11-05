@@ -13,6 +13,12 @@
 
     var adminFollowUpAppointments = appointments
     .Where(a => string.Equals(a.Status?.Trim(), "Scheduled", StringComparison.OrdinalIgnoreCase) && a.AdminNotificationSent).OrderBy(a => a.AppointmentDate).ToList();
+
+    var pendingGroupRequests = ViewBag.PendingGroupRequests as List<GroupAppointment> ?? new List<GroupAppointment>();
+    var pendingGroupCount = pendingGroupRequests.Count;
+
+    var adminGroupAppointments = ViewBag.AdminGroupAppointments as List<GroupAppointment> ?? new List<GroupAppointment>();
+
 }
 
 @section Styles {
@@ -47,10 +53,15 @@
                         aria-controls="adminFollowUpModal" onclick="openTutorModal('@Url.Action("Dashboard", "Admin", new { showAdminFollowUps = true })', 'adminFollowUpModal')">
                     <span class="notification-bell" aria-hidden="true">&#128276;</span>
 
-                    @if (adminFollowUpAppointments.Count > 0)
+
+                    @if (adminFollowUpAppointments.Count > 0 || pendingGroupCount > 0)
                     {
-                        <span class="notification-alert" aria-label="Reminders require attention">!</span>
+                        <span class="notification-alert"
+                              aria-label="Reminders require attention">
+                            !
+                        </span>
                     }
+
                 </button>
 
                 <a asp-controller="Admin" asp-action="CreateTutor" class="admin-primary-button">
@@ -425,74 +436,35 @@
             </div>
         }
 
-        @* Admin 72-hour appointment follow-up popup *@
+
+        @* Admin Reminders Modal *@
         @if (ViewBag.ShowAdminFollowUps == true)
         {
             <div id="adminFollowUpModal" class="tutor-modal" style="display:none;" aria-hidden="true">
                 <div class="tutor-modal-content admin-follow-up-content" role="dialog" aria-modal="true" aria-labelledby="adminFollowUpTitle">
-                    <button type="button" class="tutor-modal-close" aria-label="Close appointment reminders" onclick="closeTutorModal('adminFollowUpModal')">
+
+                    <button type="button" class="tutor-modal-close" aria-label="Close reminders" onclick="closeTutorModal('adminFollowUpModal')">
                         &times;
                     </button>
 
-                    <p class="section-kicker">REQUIRES ATTENTION</p>
-                    <h2 id="adminFollowUpTitle">Appointment Completion Reminders</h2>
+                    <h2 id="adminFollowUpTitle">
+                        Admin Reminders
+                    </h2>
 
-                    <p class="modal-subtitle">
-                        These appointments remain scheduled even though the 72-hour completion reminder has been sent. Please investigate and update each appointment's status when appropriate.
-                    </p>
+                    @* Group appointment requests *@
+                    <partial name="_AdminGroupRequestModal" />
 
-                    <div class="admin-follow-up-list">
-                        @if (adminFollowUpAppointments.Count > 0)
-                        {
-                            @foreach (var appt in adminFollowUpAppointments)
-                            {
-                                <article class="admin-follow-up-item">
-                                    <div class="admin-follow-up-item-header">
-                                        <h3>Appointment #@appt.AppointmentId</h3>
-                                        <span class="admin-follow-up-status">
-                                            Still Scheduled
-                                        </span>
-                                    </div>
+                    <hr />
 
-                                    <p>
-                                        <strong>Tutor:</strong>
-                                        @(appt.Tutor != null ? $"{appt.Tutor.FName} {appt.Tutor.LName}" : "Tutor unavailable")
-                                    </p>
-
-                                    <p>
-                                        <strong>Student:</strong>
-                                        @(appt.Student != null ? $"{appt.Student.FName} {appt.Student.LName}" : "Student unavailable")
-                                    </p>
-
-                                    <p>
-                                        <strong>Session date:</strong>
-                                        @appt.AppointmentDate.ToString("MMM d, yyyy")
-                                    </p>
-
-                                    <p>
-                                        <strong>Session time:</strong>
-                                        @appt.AppointmentDate.ToString("h:mm tt") – @appt.EndDate.ToString("h:mm tt")
-                                    </p>
-
-                                    <p class="admin-follow-up-warning">
-                                        The appointment has not been marked as completed. Please review the appointment and follow up as needed.
-                                    </p>
-                                </article>
-                            }
-                        }
-                        else
-                        {
-                            <p class="empty-state">
-                                There are no outstanding appointment completion reminders.
-                            </p>
-                        }
-                    </div>
+                    @* Existing appointment reminders *@
+                    <partial name="_AdminAppointmentReminderModal" />
 
                     <div class="form-actions">
                         <button type="button" class="admin-secondary-button" onclick="closeTutorModal('adminFollowUpModal')">
                             Close
                         </button>
                     </div>
+
                 </div>
             </div>
         }
@@ -560,7 +532,7 @@
                     @*<p class="section-kicker">SCHEDULING</p>*@
                     <h2>All Appointments</h2>
                 </div>
-              
+
                 <div class="status-summary">
                     <span><i class="status-dot dot-scheduled"></i>@scheduledCount Scheduled</span>
                     <span><i class="status-dot dot-completed"></i>@completedCount Completed</span>
@@ -593,10 +565,12 @@
                             {
                                 var status = appt.Status?.Trim() ?? "Scheduled";
                                 var statusClass = status switch
-                                    { "Cancelled" => "status-cancelled", 
-                                    "Completed" => "status-completed", 
-                                    "Scheduled" => "status-scheduled", 
-                                    _ => "status-other" };
+                                {
+                                    "Cancelled" => "status-cancelled",
+                                    "Completed" => "status-completed",
+                                    "Scheduled" => "status-scheduled",
+                                    _ => "status-other"
+                                };
 
 
                                 <tr class="admin-appointment-row" data-search="@($"{appt.AppointmentId} {appt.AppointmentDate.ToString("MM/dd/yyyy")}{appt.AppointmentDate.ToString("hh:mm tt")} {(appt.Tutor != null ? $"{appt.Tutor.FName} {appt.Tutor.LName}" : "Tutor unavailable")} {(appt.Student != null ? $"{appt.Student.FName} {appt.Student.LName}" : "Student unavailable")} {status}")">
@@ -651,7 +625,102 @@
                 </table>
             </div>
         </section>
-    
+
+        @* Approved group appointments *@
+        <section class="dashboard-section admin-groups-section" aria-labelledby="adminGroupsTitle">
+            <div class="section-heading">
+                <div>
+                    <p class="section-kicker">GROUP SESSIONS</p>
+                    <h2 id="adminGroupsTitle">Group Appointments</h2>
+                </div>
+                <span class="count-pill">@adminGroupAppointments.Count groups</span>
+            </div>
+
+            <div class="admin-table-wrap admin-groups-table-wrap">
+                <table class="admin-table admin-groups-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Group ID</th>
+                            <th scope="col">Tutor ID</th>
+                            <th scope="col">Date</th>
+                            <th scope="col">Time</th>
+                            <th scope="col">Capacity</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (adminGroupAppointments.Any())
+                        {
+                            @foreach (var group in adminGroupAppointments.OrderBy(g => g.AppointmentDate).ThenBy(g => g.StartTime))
+                            {
+                                var enrolledCount = group.StudentIds?.Count ?? 0;
+                                var groupStatus = group.Status?.Trim() ?? "Unknown";
+                                var groupStatusClass = groupStatus.ToLowerInvariant() switch
+                                {
+                                    "open" => "group-status-open",
+                                    "approved" => "group-status-approved",
+                                    "full" => "group-status-full",
+                                    "cancelled" or "canceled" => "group-status-cancelled",
+                                    "completed" => "group-status-completed",
+                                    _ => "group-status-other"
+                                };
+                                <tr>
+                                    <td class="table-id">@group.GroupId</td>
+                                    <td>@group.TutorId</td>
+                                    <td>@group.AppointmentDate.ToString("MM/dd/yyyy")</td>
+                                    <td class="group-time">
+                                        @DateTime.Today.Add(group.StartTime).ToString("h:mm tt") -
+                                        @DateTime.Today.Add(group.EndTime).ToString("h:mm tt")
+                                    </td>
+                                    <td>
+                                        <span class="group-capacity @(enrolledCount >= group.Capacity ? "group-capacity-full" : "")">
+                                            @enrolledCount / @group.Capacity
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        <span class="status-pill @groupStatusClass">
+                                            @groupStatus
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        @if (groupStatus == "Open" || groupStatus == "Full")
+                                        {
+                                            <form asp-controller="Admin" asp-action="CancelGroupAppointment" method="post" class="admin-group-cancel-form"
+                                                  onsubmit="return confirm('Are you sure you want to cancel Group #@group.GroupId? All enrolled students and the tutor will be notified.');">
+
+                                                @Html.AntiForgeryToken()
+
+                                                <input type="hidden"
+                                                       name="groupId"
+                                                       value="@group.GroupId" />
+
+                                                <button type="submit"
+                                                        class="small-action action-delete admin-group-cancel-btn">
+                                                    Cancel
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <span class="muted-dash">—</span>
+                                        }
+                                    </td>
+
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr><td colspan="7" class="empty-state">No approved group appointments found.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
         <section class="analytics-panel">
             <div class="analytics-copy">
                 <p class="section-kicker">REPORTING</p>
@@ -726,7 +795,7 @@
                 </div>
             </div>
         </section>
-        
+
         <footer class="dashboard-footer">BMS · Book My Brain</footer>
     </div>
 </body>

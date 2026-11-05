@@ -25,5 +25,10 @@ namespace TAMS.Models
 
         [Required]
         public TimeSpan EndTime { get; set; }
+
+        public bool IsGroup { get; set; } = false;
+
+        public int? GroupId { get; set; }
+
     }
 }

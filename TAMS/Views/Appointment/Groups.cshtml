@@ -1,0 +1,186 @@
+﻿@model IEnumerable<TAMS.Models.GroupAppointment>
+
+@{
+    ViewData["Title"] = "Groups";
+
+    var tutors = ViewBag.Tutors as List<TAMS.Models.Tutor> ?? new List<TAMS.Models.Tutor>();
+
+    int? studentId = ViewBag.StudentId as int?;
+
+    bool isLoggedInStudent = studentId.HasValue;
+
+    string? userRole = Context.Session.GetString("Role");
+
+    bool isTutorOrAdmin = userRole == "Tutor" || userRole == "Admin";
+}
+
+<link href="~/css/Groups.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/site.css" rel="stylesheet" asp-append-version="true" />
+
+<div class="container mt-5 groups-page">
+    <div class="text-center mb-5 groups-heading">
+        <h1>Available Groups</h1>
+
+        <p class="text-muted">
+            Browse available group tutoring sessions and find
+            a session that works for you.
+        </p>
+    </div>
+
+    <div class="mb-4 group-search-container">
+        <input type="text"
+               id="groupSearch"
+               class="form-control"
+               placeholder="Search groups..."
+               onkeyup="searchGroups()" />
+    </div>
+
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success text-center groups-alert">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["AppointmentError"] != null)
+    {
+        <div class="alert alert-danger text-center groups-alert">
+            @TempData["AppointmentError"]
+        </div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info text-center">
+            There are currently no group tutoring sessions available.
+        </div>
+    }
+    else
+    {
+        <div class="row g-4" id="groupsContainer">
+
+            @foreach (var group in Model)
+            {
+                var tutor = tutors.FirstOrDefault(t => t.TutorId == group.TutorId);
+                var tutorName = tutor != null ? $"{tutor.FName} {tutor.LName}" : $"Tutor #{group.TutorId}";
+
+                var enrolledCount = group.StudentIds?.Count ?? 0;
+                var remainingSeats = Math.Max(0, group.Capacity - enrolledCount);
+                var isEnrolled = studentId.HasValue && (group.StudentIds?.Contains(studentId.Value) ?? false);
+
+                var formattedDate = group.AppointmentDate.ToString("MMMM dd, yyyy");
+                var formattedStartTime = DateTime.Today.Add(group.StartTime).ToString("h:mm tt");
+                var formattedEndTime = DateTime.Today.Add(group.EndTime).ToString("h:mm tt");
+
+                var capacityPercentage = group.Capacity > 0 ? Math.Min(100, enrolledCount * 100.0 / group.Capacity) : 0;
+
+                <div class="col-md-6 col-lg-4 group-search-item"
+                     data-search="@($"{tutorName} {formattedDate} {formattedStartTime} {formattedEndTime} Group {group.GroupId}").ToLowerInvariant()">
+
+                    <div class="card h-100 shadow-sm group-card">
+                        <div class="card-body">
+                            <div class="group-card-header">
+                                <span class="group-type-badge">
+                                    Group Tutoring
+                                </span>
+
+                                <span class="group-status-badge">
+                                    Open
+                                </span>
+
+                            </div>
+
+                            <h4 class="card-title">
+                                Group Session #@group.GroupId
+                            </h4>
+
+                            <hr />
+
+                            <p class="mb-2">
+                                <strong>Tutor:</strong> @tutorName
+                            </p>
+
+                            <p class="mb-2">
+                                <strong>Date:</strong> @formattedDate
+                            </p>
+
+                            <p class="mb-2">
+                                <strong>Time:</strong> @formattedStartTime - @formattedEndTime
+                            </p>
+
+                            <p class="mb-2">
+                                <strong>Capacity:</strong> @enrolledCount / @group.Capacity Students
+                            </p>
+
+                            <div class="group-capacity-box">
+
+                                <div class="group-capacity-heading">
+                                    <strong>Available Seats</strong>
+
+                                    <span> @remainingSeats Remaining </span>
+                                </div>
+
+                                <div class="group-progress">
+                                    <div class="group-progress-bar"
+                                         style="width:@(capacityPercentage.ToString(System.Globalization.CultureInfo.InvariantCulture))%">
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="group-card-actions">
+
+                                @if (isEnrolled)
+                                {
+                                    <button type="button" class="btn group-enrolled-btn w-100" disabled>
+                                        Already Enrolled
+                                    </button>
+                                }
+                                else if (remainingSeats <= 0)
+                                {
+                                    <button type="button" class="btn group-full-btn w-100" disabled>
+                                        Group Full
+                                    </button>
+                                }
+                                else if (isTutorOrAdmin)
+                                {
+                                    <button type="button" class="btn group-disabled-btn w-100" disabled>
+                                        Student Account Required
+                                    </button>
+                                }
+                                else if (!isLoggedInStudent)
+                                {
+                                    <a asp-controller="Login" asp-action="Login" class="btn btn-primary w-100">
+                                        Log In to Join
+                                    </a>
+                                }
+                                else
+                                {
+                                    <form asp-controller="Appointment" asp-action="JoinGroupAppointment" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="groupId" value="@group.GroupId" />
+                                        <button type="submit" class="btn btn-primary w-100">
+                                            Join Group
+                                        </button>
+
+                                    </form>
+                                }
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            }
+
+        </div>
+
+        <div id="noGroupResults" class="alert alert-info text-center mt-4" style="display:none;">
+            No group tutoring sessions match your search.
+        </div>
+    }
+
+</div>

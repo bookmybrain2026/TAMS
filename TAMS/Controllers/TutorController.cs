@@ -3,6 +3,7 @@ using MongoDB.Driver;
 using System.Numerics;
 using TAMS.Data;
 using TAMS.Models;
+using TAMS.Models.ViewModels;
 using TAMS.Services;
 
 namespace TAMS.Controllers
@@ -82,6 +83,15 @@ namespace TAMS.Controllers
 
             tutor.Appointments = dBContext.Appointments.Find(a => a.TutorId == tutor.TutorId).ToList();
 
+
+            var tutorGroupAppointments = dBContext.GroupAppointments
+                .Find(g =>
+                    g.TutorId == tutor.TutorId &&
+                    (g.Status == "Open" || g.Status == "Full" || g.Status == "Completed"))
+                .ToList().OrderBy(g => g.AppointmentDate)
+                .ThenBy(g => g.StartTime).ToList();
+
+            ViewBag.TutorGroupAppointments = tutorGroupAppointments;
 
             var now = DateTime.Now;
 
@@ -462,21 +472,35 @@ namespace TAMS.Controllers
             var endOfMonth = startOfMonth.AddMonths(1);
 
             var appointments = dBContext.Appointments
-                .Find(a =>
+                .Find(a => 
                     a.TutorId == id &&
-                    (a.Status == "Scheduled" || a.Status == "Cancelled") &&
-                    a.AppointmentDate >= startOfMonth && a.AppointmentDate < startOfMonth.AddMonths(1))
+                    (a.Status == "Scheduled" || a.Status == "Cancelled") && 
+                    a.AppointmentDate >= startOfMonth && a.AppointmentDate < endOfMonth)
                 .ToList();
 
             foreach (var appointment in appointments)
             {
-                appointment.Student = dBContext.Student.Find(s => s.StudentId == appointment.StudentId).FirstOrDefault();
+                appointment.Student = dBContext.Student
+                    .Find(s => s.StudentId == appointment.StudentId)
+                    .FirstOrDefault();
             }
 
-            ViewBag.TutorId = tutorId.Value;
+            var groupAppointments = dBContext.GroupAppointments
+                .Find(g => g.TutorId == id && g.AppointmentDate >= startOfMonth && g.AppointmentDate < endOfMonth &&
+                    (g.Status == "Open" || g.Status == "Full" || g.Status == "Completed"))
+                .ToList();
+
+            var enrolledGroupAppointments = groupAppointments
+                .Where(g => g.StudentIds != null && g.StudentIds.Count > 0)
+                .OrderBy(g => g.AppointmentDate)
+                .ThenBy(g => g.StartTime)
+                .ToList();
+
+            ViewBag.TutorId = id;
             ViewBag.Month = targetMonth;
             ViewBag.Year = targetYear;
             ViewBag.Appointments = appointments;
+            ViewBag.GroupAppointments = enrolledGroupAppointments;
 
             return View("ScheduleCalendar");
         }
@@ -652,6 +676,339 @@ namespace TAMS.Controllers
 
             return RedirectToAction(nameof(Dashboard), new { id = tutorId.Value });
         }
+
+        [HttpGet]
+        public IActionResult CreateGroupAppointment()
+        {
+            var tutorId = HttpContext.Session.GetInt32("TutorId");
+            if (tutorId == null) { return RedirectToAction("Login", "Login"); }
+
+            var tutor = dBContext.Tutor
+                .Find(t => t.TutorId == tutorId.Value)
+                .FirstOrDefault();
+
+            if (tutor == null) { return NotFound(); }
+
+            var model = new GroupAppointment
+            {
+                TutorId = tutorId.Value,
+                AppointmentDate = DateTime.Today.AddDays(1),
+                Status = "Pending"
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult CreateGroupAppointment(GroupAppointment model)
+        {
+            var tutorId = HttpContext.Session.GetInt32("TutorId");
+            if (tutorId == null) { return RedirectToAction("Login", "Login"); }
+
+            var tutor = dBContext.Tutor
+                .Find(t => t.TutorId == tutorId.Value)
+                .FirstOrDefault();
+
+            if (tutor == null) { return NotFound(); }
+
+            model.TutorId = tutorId.Value;
+            model.AppointmentId = null;
+            model.Status = "Pending";
+            model.StudentIds = new List<int>();
+
+            ModelState.Remove(nameof(model.GroupId));
+            ModelState.Remove(nameof(model.TutorId));
+            ModelState.Remove(nameof(model.AppointmentId));
+            ModelState.Remove(nameof(model.Status));
+            ModelState.Remove(nameof(model.StudentIds));
+
+            DateTime groupStart = model.AppointmentDate.Date.Add(model.StartTime);
+            DateTime groupEnd = model.AppointmentDate.Date.Add(model.EndTime);
+
+            if (groupStart <= DateTime.Now)
+            {
+                ModelState.AddModelError(nameof(model.AppointmentDate), "Please select a future appointment date and start time." );
+            }
+
+            if (model.EndTime <= model.StartTime)
+            {
+                ModelState.AddModelError(nameof(model.EndTime), "End time must be after start time.");
+            }
+
+            if (model.Capacity < 2 || model.Capacity > 100)
+            {
+                ModelState.AddModelError(nameof(model.Capacity), "Capacity must be between 2 and 100.");
+            }
+
+            if (!ModelState.IsValid) { return View(model); }
+
+            var existingSchedules = dBContext.Schedule.Find(s => s.TutorId == tutorId.Value).ToList();
+            foreach (var schedule in existingSchedules)
+            {
+                if (schedule.IsGroup)
+                {
+                    continue;
+                }
+
+                DateTime scheduleStart = schedule.Date.Date.Add(schedule.StartTime);
+                DateTime scheduleEnd = schedule.Date.Date.Add(schedule.EndTime);
+
+                bool overlaps = groupStart < scheduleEnd && groupEnd > scheduleStart;
+
+                if (overlaps)
+                {
+                    ModelState.AddModelError(string.Empty, "Scheduling Conflict: You already have an available " +
+                        "schedule slot on " +
+                        scheduleStart.ToString("MMM d, yyyy") +
+                        " from " +
+                        scheduleStart.ToString("h:mm tt") +
+                        " to " +
+                        scheduleEnd.ToString("h:mm tt") +
+                        ". Please remove the existing time slot or choose a different time."
+                    );
+
+                    return View(model);
+                }
+            }
+
+            var existingAppointments = dBContext.Appointments
+                .Find(a => a.TutorId == tutorId.Value && a.Status == "Scheduled")
+                .ToList();
+
+            foreach (var appointment in existingAppointments)
+            {
+                DateTime existingStart = appointment.AppointmentDate;
+                DateTime existingEnd = appointment.EndDate;
+
+                if (existingEnd <= existingStart)
+                {
+                    var appointmentSchedule = dBContext.Schedule
+                        .Find(s => s.ScheduleId == appointment.ScheduleId)
+                        .FirstOrDefault();
+
+                    if (appointmentSchedule == null)
+                    {
+                        ModelState.AddModelError(string.Empty, "Unable to verify an existing appointment's time. " + "Please contact the administrator.");
+                        return View(model);
+                    }
+
+                    existingStart = appointmentSchedule.Date.Date.Add(appointmentSchedule.StartTime);
+                    existingEnd = appointmentSchedule.Date.Date.Add(appointmentSchedule.EndTime);
+                }
+
+                bool overlaps = groupStart < existingEnd && groupEnd > existingStart;
+                if (overlaps)
+                {
+                    ModelState.AddModelError(string.Empty, "Scheduling Conflict: You already have an individual " + "appointment on " +
+                        existingStart.ToString("MMM d, yyyy") +
+                        " from " +
+                        existingStart.ToString("h:mm tt") +
+                        " to " +
+                        existingEnd.ToString("h:mm tt") +
+                        ". Please select a different time."
+                    );
+
+                    return View(model);
+                }
+            }
+
+            var existingGroups = dBContext.GroupAppointments
+                .Find(g => g.TutorId == tutorId.Value &&
+                    (g.Status == "Pending" || g.Status == "Open" || g.Status == "Full"))
+                .ToList();
+
+            foreach (var existingGroup in existingGroups)
+            {
+                DateTime existingStart = existingGroup.AppointmentDate.Date.Add(existingGroup.StartTime);
+                DateTime existingEnd = existingGroup.AppointmentDate.Date.Add(existingGroup.EndTime);
+
+                bool overlaps = groupStart < existingEnd && groupEnd > existingStart;
+                if (overlaps)
+                {
+                    ModelState.AddModelError(string.Empty, "Scheduling Conflict: You already have a " +
+                        existingGroup.Status.ToLower() +
+                        " group appointment on " +
+                        existingStart.ToString("MMM d, yyyy") +
+                        " from " +
+                        existingStart.ToString("h:mm tt") +
+                        " to " +
+                        existingEnd.ToString("h:mm tt") +
+                        ". Please choose another time."
+                    );
+
+                    return View(model);
+                }
+            }
+
+            var lastGroup = dBContext.GroupAppointments
+                .Find(_ => true)
+                .SortByDescending(g => g.GroupId)
+                .FirstOrDefault();
+
+            model.GroupId = lastGroup == null ? 1 : lastGroup.GroupId + 1;
+
+            dBContext.GroupAppointments.InsertOne(model);
+
+            TempData["SuccessMessage"] = "Your group appointment request has been submitted for admin approval.";
+
+            return RedirectToAction("Dashboard", new { id = tutorId.Value });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GroupDetails(int groupId)
+        {
+            var tutorId = HttpContext.Session.GetInt32("TutorId");
+            if (tutorId == null) { return RedirectToAction("Login", "Login"); }
+
+            var group = await dBContext.GroupAppointments
+                .Find(g => g.GroupId == groupId && g.TutorId == tutorId.Value)
+                .FirstOrDefaultAsync();
+
+            if (group == null) { return NotFound(); }
+
+            var studentIds = group.StudentIds ?? new List<int>();
+
+            var students = await dBContext.Student
+                .Find(s => studentIds.Contains(s.StudentId))
+                .ToListAsync();
+
+            var completedIds = group.CompletedStudentIds ?? new List<int>();
+            var absentIds = group.AbsentStudentIds ?? new List<int>();
+
+            var model = new TutorGroupDetailsViewModel
+            {
+                Group = group,
+                Students = students.OrderBy(s => s.LName).ThenBy(s => s.FName).ToList(),
+                CompletedCount = studentIds.Count(id => completedIds.Contains(id)),
+                AbsentCount = studentIds.Count(id => absentIds.Contains(id)),
+                PendingCount = studentIds.Count(id => !completedIds.Contains(id) && !absentIds.Contains(id))
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateGroupStudentAttendance(int groupId, int studentId, string attendanceStatus)
+        {
+            var tutorId = HttpContext.Session.GetInt32("TutorId");
+            if (tutorId == null) { return RedirectToAction("Login", "Login"); }
+
+            if (attendanceStatus != "Completed" && attendanceStatus != "Absent")
+            {
+                return BadRequest("Invalid attendance status.");
+            }
+
+            var group = await dBContext.GroupAppointments
+                .Find(g => g.GroupId == groupId && g.TutorId == tutorId.Value)
+                .FirstOrDefaultAsync();
+
+            if (group == null) { return NotFound(); }
+
+            if (group.Status != "Open" && group.Status != "Full")
+            {
+                TempData["GroupDetailsError"] = "Attendance cannot be updated for this group.";
+                return RedirectToAction("GroupDetails", new { groupId });
+            }
+
+            var sessionEnd = group.AppointmentDate.Date.Add(group.EndTime);
+
+            if (DateTime.Now < sessionEnd)
+            {
+                TempData["GroupDetailsError"] = "You cannot finalize attendance before the session ends.";
+                return RedirectToAction("GroupDetails", new { groupId });
+            }
+
+            if (group.StudentIds == null || !group.StudentIds.Contains(studentId))
+            {
+                TempData["GroupDetailsError"] = "This student is not enrolled in the group.";
+
+                return RedirectToAction("GroupDetails", new { groupId });
+            }
+
+            // It only succeeds if the student has not already been marked Completed or Absent.
+            var filter = Builders<GroupAppointment>.Filter.And(
+                Builders<GroupAppointment>.Filter.Eq(g => g.GroupId, groupId),
+                Builders<GroupAppointment>.Filter.Eq(g => g.TutorId, tutorId.Value),
+                Builders<GroupAppointment>.Filter.In(g => g.Status, new[] { "Open", "Full" }),
+                Builders<GroupAppointment>.Filter.AnyEq(g => g.StudentIds, studentId),
+                Builders<GroupAppointment>.Filter.Ne("CompletedStudentIds", studentId),
+                Builders<GroupAppointment>.Filter.Ne("AbsentStudentIds", studentId)
+            );
+
+            var update = attendanceStatus == "Completed"
+                ? Builders<GroupAppointment>.Update.AddToSet(g => g.CompletedStudentIds, studentId)
+                : Builders<GroupAppointment>.Update.AddToSet(g => g.AbsentStudentIds, studentId);
+
+            var result = await dBContext.GroupAppointments.UpdateOneAsync(filter, update);
+
+            if (result.ModifiedCount == 0)
+            {
+                TempData["GroupDetailsError"] = "The student's attendance was already finalized " + "or the group is no longer active.";
+                return RedirectToAction("GroupDetails", new { groupId });
+            }
+
+            // Check whether every enrolled student has been processed.
+            var updatedGroup = await dBContext.GroupAppointments
+                .Find(g => g.GroupId == groupId)
+                .FirstOrDefaultAsync();
+
+            if (updatedGroup != null)
+            {
+                var enrolled = updatedGroup.StudentIds ?? new List<int>();
+                var completed = updatedGroup.CompletedStudentIds ?? new List<int>();
+                var absent = updatedGroup.AbsentStudentIds ?? new List<int>();
+
+                bool everyoneProcessed = enrolled.Count > 0 && enrolled.All(id => completed.Contains(id) || absent.Contains(id));
+
+                if (everyoneProcessed)
+                {
+                    var completeFilter =
+                        Builders<GroupAppointment>.Filter.And(
+                            Builders<GroupAppointment>.Filter.Eq(g => g.GroupId, groupId),
+                            Builders<GroupAppointment>.Filter.In(g => g.Status, new[] { "Open", "Full" })
+                        );
+
+                    await dBContext.GroupAppointments.UpdateOneAsync(completeFilter, Builders<GroupAppointment>.Update.Set(g => g.Status, "Completed"));
+                }
+            }
+
+            if (attendanceStatus == "Completed")
+            {
+                try
+                {
+                    var student = await dBContext.Student
+                        .Find(s => s.StudentId == studentId)
+                        .FirstOrDefaultAsync();
+
+                    var tutor = await dBContext.Tutor
+                        .Find(t => t.TutorId == tutorId.Value)
+                        .FirstOrDefaultAsync();
+
+                    if (student != null && tutor != null)
+                    {
+                        var studentName = $"{student.FName} {student.LName}";
+
+                        var tutorName = $"{tutor.FName} {tutor.LName}";
+
+                        if (!student.DisableEmailNotifications && !string.IsNullOrWhiteSpace(student.Email))
+                        {
+                            await _emailService.SendReviewReminderAsync(student.Email, studentName, tutorName);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Group review reminder email failed: {ex.Message}");
+                }
+            }
+
+            TempData["GroupDetailsSuccess"] = attendanceStatus == "Completed" ? "Student marked as completed." : "Student marked as absent.";
+            return RedirectToAction("GroupDetails", new { groupId });
+
+        }
+
 
     }
 }

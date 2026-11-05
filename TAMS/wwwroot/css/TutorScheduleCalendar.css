@@ -308,6 +308,66 @@
 
 .calendar-footer strong { color: var(--bmb-brown); }
 
+.legend-dot-group { background: #527b4b; }
+
+.calendar-appointments .appointment-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 8px;
+    background: #eaf3e5;
+    border-left: 3px solid #527b4b;
+    border-radius: 5px;
+    overflow-wrap: anywhere;
+}
+
+.appointment-group .appointment-time {
+    color: #3f6b37;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.appointment-group .appointment-student {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #35291f;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.appointment-group .appointment-student i {
+    color: #527b4b;
+    font-size: 10px;
+}
+
+.appointment-group-count {
+    color: #527b4b;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.appointment-group-status {
+    display: inline-flex;
+    align-self: flex-start;
+    padding: 3px 7px;
+    background: #d4e8cd;
+    color: #3f6b37;
+    border-radius: 20px;
+    font-size: 9px;
+    font-weight: 800;
+}
+
+.calendar-appointments {
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.calendar-appointments .appointment-group {
+    flex-shrink: 0;
+}
+
+
 @media (max-width: 700px) {
     .schedule-calendar {
         width: calc(100% - 24px);

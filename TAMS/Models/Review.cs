@@ -10,14 +10,13 @@ namespace TAMS.Models
         [BsonRepresentation(BsonType.ObjectId)]
         public string Id { get; set; } = string.Empty;
 
-        public int AppointmentId { get; set; }
+        public int? AppointmentId { get; set; }
 
         public int StudentId { get; set; }
 
         public int TutorId { get; set; }
 
         public string StudentName { get; set; } = string.Empty;
-
         public string TutorName { get; set; } = string.Empty;
 
         [Range(1, 5)]
@@ -27,5 +26,10 @@ namespace TAMS.Models
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime AppointmentDate { get; set; }
+
+        public int? GroupId { get; set; }
+
+        public bool IsGroupReview { get; set; } = false;
+
     }
 }

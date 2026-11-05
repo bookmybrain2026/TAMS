@@ -78,6 +78,8 @@ namespace TAMS.Services
                     _logger.LogError(ex, "Failed to process upcoming reminders for appointment {AppointmentId}.", appointment.AppointmentId);
                 }
             }
+            // Process upcoming group appointment reminders too.
+            await ProcessGroupRemindersAsync(cancellationToken);
         }
 
         private async Task SendReminderAsync(Appointment appointment, string? studentEmail, string? tutorEmail, string studentName, string tutorName, int hoursBefore, CancellationToken cancellationToken)
@@ -141,6 +143,176 @@ namespace TAMS.Services
                 _logger.LogInformation("{Hours}-hour reminder processed for appointment {AppointmentId}.", hoursBefore, current.AppointmentId);
             }
         }
-    
+
+        private async Task ProcessGroupRemindersAsync(CancellationToken cancellationToken)
+        {
+            var now = DateTime.Now;
+
+            var groups = await _db.GroupAppointments
+                .Find(g => g.Status == "Open" || g.Status == "Full")
+                .ToListAsync(cancellationToken);
+
+            foreach (var group in groups)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                try
+                {
+                    // Group appointments store date and time separately.
+                    var start = group.AppointmentDate.Date.Add(group.StartTime);
+
+                    if (now >= start)
+                    {
+                        continue;
+                    }
+
+                    if (group.StudentIds == null || group.StudentIds.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    // 24-hour reminder window.
+                    if (!group.Reminder24HoursBeforeSent && now >= start.AddHours(-24) && now < start.AddHours(-1))
+                    {
+                        await SendGroupReminderAsync(group.GroupId, 24, cancellationToken);
+                    }
+
+                    // 1-hour reminder window.
+                    if (!group.Reminder1HourBeforeSent && now >= start.AddHours(-1) && now < start)
+                    {
+                        await SendGroupReminderAsync(group.GroupId, 1, cancellationToken);
+                    }
+                }
+                catch (OperationCanceledException)
+                    when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to process group reminder for group {GroupId}.", group.GroupId);
+                }
+            }
+        }
+
+        private async Task SendGroupReminderAsync(int groupId, int hoursBefore, CancellationToken cancellationToken)
+        {
+            var group = await _db.GroupAppointments
+                .Find(g => g.GroupId == groupId && (g.Status == "Open" || g.Status == "Full"))
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (group == null || group.StudentIds == null || group.StudentIds.Count == 0)
+            {
+                return;
+            }
+
+            bool alreadySent = hoursBefore == 24 ? group.Reminder24HoursBeforeSent : group.Reminder1HourBeforeSent;
+
+            if (alreadySent)
+            {
+                return;
+            }
+
+            var now = DateTime.Now;
+            var start = group.AppointmentDate.Date.Add(group.StartTime);
+
+            bool withinWindow = hoursBefore == 24 ? now >= start.AddHours(-24) && now < start.AddHours(-1)
+                : now >= start.AddHours(-1) && now < start;
+
+            if (!withinWindow)
+            {
+                return;
+            }
+
+            var tutor = await _db.Tutor
+                .Find(t => t.TutorId == group.TutorId)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (tutor == null)
+            {
+                _logger.LogWarning("Tutor not found for group {GroupId}.", groupId);
+                return;
+            }
+
+            string tutorName = $"{tutor.FName} {tutor.LName}";
+
+            var students = await _db.Student
+                .Find(s => group.StudentIds.Contains(s.StudentId))
+                .ToListAsync(cancellationToken);
+
+            var filter =
+                Builders<GroupAppointment>.Filter.Eq(g => g.GroupId, groupId) &
+                Builders<GroupAppointment>.Filter.In(g => g.Status, new[] { "Open", "Full" }) &
+                Builders<GroupAppointment>.Filter.Eq(g => g.AppointmentDate, group.AppointmentDate) &
+                Builders<GroupAppointment>.Filter.Eq(g => g.StartTime, group.StartTime);
+
+            var flagFilter = hoursBefore == 24
+                ? Builders<GroupAppointment>.Filter.Ne(g => g.Reminder24HoursBeforeSent, true)
+                : Builders<GroupAppointment>.Filter.Ne(g => g.Reminder1HourBeforeSent, true);
+
+            filter &= flagFilter;
+
+            var update = hoursBefore == 24
+                ? Builders<GroupAppointment>.Update.Set(g => g.Reminder24HoursBeforeSent, true)
+                : Builders<GroupAppointment>.Update.Set(g => g.Reminder1HourBeforeSent, true);
+
+            var result = await _db.GroupAppointments.UpdateOneAsync(filter, update, cancellationToken: cancellationToken);
+
+            if (result.ModifiedCount == 0)
+            {
+                return;
+            }
+
+            // Send a separate reminder to each enrolled student.
+            foreach (var student in students)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (student.DisableEmailNotifications || string.IsNullOrWhiteSpace(student.Email))
+                {
+                    continue;
+                }
+
+                string studentName = $"{student.FName} {student.LName}";
+
+                try
+                {
+                    await _emailService.SendStudentUpcomingGroupReminderAsync(
+                        student.Email, studentName, tutorName, group.AppointmentDate, group.StartTime, group.EndTime, hoursBefore);
+                }
+                catch (OperationCanceledException)
+                    when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to queue {Hours}-hour reminder for student {StudentId}, group {GroupId}.",
+                        hoursBefore, student.StudentId,  groupId);
+                }
+            }
+
+            // Send only one reminder to the tutor.
+            if (!tutor.DisableEmailNotifications && !string.IsNullOrWhiteSpace(tutor.Email))
+            {
+                try
+                {
+                    await _emailService.SendTutorUpcomingGroupReminderAsync(
+                        tutor.Email, tutorName,  group.AppointmentDate, group.StartTime, group.EndTime, hoursBefore, group.StudentIds.Count);
+                }
+                catch (OperationCanceledException)
+                    when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to queue tutor reminder for group {GroupId}.", groupId);
+                }
+            }
+
+            _logger.LogInformation("{Hours}-hour group reminder processed for group {GroupId}.", hoursBefore, groupId);
+        }
+
     }
 }

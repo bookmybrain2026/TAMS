@@ -62,14 +62,31 @@ namespace TAMS.Controllers
                 appointment.Tutor = dBContext.Tutor.Find(t => t.TutorId == appointment.TutorId).FirstOrDefault();
             }
 
+
+            var studentGroupAppointments = dBContext.GroupAppointments
+                .Find(g => g.StudentIds.Contains(student.StudentId) &&
+                    (g.Status == "Open" || g.Status == "Full" || g.Status == "Completed"))
+                .ToList()
+                .OrderBy(g => g.AppointmentDate)
+                .ThenBy(g => g.StartTime)
+                .ToList();
+
+            ViewBag.StudentGroupAppointments = studentGroupAppointments;
+
+
             var reviewedAppointmentIds = dBContext.Reviews.Find(r => r.StudentId == student.StudentId).ToList().Select(r => r.AppointmentId).ToHashSet();
 
             student.AwaitingReviews = student.Appointments
-                .Where(a => a.Status == "Completed" && !reviewedAppointmentIds.Contains(a.AppointmentId)).OrderByDescending(a => a.AppointmentDate)
+                .Where(a => a.Status == "Completed" && a.StudentId == student.StudentId && !reviewedAppointmentIds.Contains(a.AppointmentId))
+                .OrderByDescending(a => a.AppointmentDate)
                 .Select(a => new Review
                 {
-                    AppointmentId = a.AppointmentId, AppointmentDate = a.AppointmentDate, StudentId = a.StudentId, TutorId = a.TutorId,
-                    StudentName = $"{student.FName} {student.LName}", TutorName = a.Tutor != null ? $"{a.Tutor.FName} {a.Tutor.LName}" : "Unknown Tutor"
+                    AppointmentId = a.AppointmentId,
+                    AppointmentDate = a.AppointmentDate,
+                    StudentId = student.StudentId,
+                    TutorId = a.TutorId,
+                    StudentName = $"{student.FName} {student.LName}",
+                    TutorName = a.Tutor != null ? $"{a.Tutor.FName} {a.Tutor.LName}" : "Unknown Tutor"
                 })
                 .ToList();
 
@@ -84,6 +101,33 @@ namespace TAMS.Controllers
             ViewBag.StudentReminderAppointments = studentReminderAppointments;
 
             if (showStudentReminders) { return PartialView("_StudentReminderModal", studentReminderAppointments); }
+
+            var completedGroups = dBContext.GroupAppointments
+                .Find(g => g.CompletedStudentIds.Contains(student.StudentId))
+                .ToList();
+
+            var reviewedGroupIds = dBContext.Reviews
+                .Find(r => r.StudentId == student.StudentId && r.IsGroupReview && r.GroupId != null)
+                .ToList()
+                .Where(r => r.GroupId.HasValue)
+                .Select(r => r.GroupId.Value)
+                .ToHashSet();
+
+            var awaitingGroupReviews = completedGroups
+                .Where(g => !reviewedGroupIds.Contains(g.GroupId))
+                .ToList();
+
+            var tutorIds = awaitingGroupReviews
+                .Select(g => g.TutorId)
+                .Distinct()
+                .ToList();
+
+            var groupTutors = dBContext.Tutor
+                .Find(t => tutorIds.Contains(t.TutorId))
+                .ToList();
+
+            ViewBag.AwaitingGroupReviews = awaitingGroupReviews;
+            ViewBag.GroupReviewTutorNames = groupTutors.ToDictionary( t => t.TutorId, t => $"{t.FName} {t.LName}");
 
             return View("StudentDashboard", student);
         }
@@ -370,7 +414,81 @@ namespace TAMS.Controllers
             TempData["Success"] = "Your review has been submitted successfully.";
 
             return RedirectToAction("Dashboard", new { id = student.StudentId });
-        } 
-        
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult SubmitGroupReview(int groupId, int rating, string comment)
+        {
+            var studentId = HttpContext.Session.GetInt32("StudentId");
+            if (studentId == null) { return RedirectToAction("Login", "Login"); }
+
+            var group = dBContext.GroupAppointments
+                .Find(g => g.GroupId == groupId)
+                .FirstOrDefault();
+
+            if (group == null) { return NotFound(); }
+
+            // Only students marked Completed can leave feedback.
+            bool canReview = group.CompletedStudentIds != null &&
+                group.CompletedStudentIds.Contains(studentId.Value);
+
+            if (!canReview)
+            {
+                TempData["Error"] = "You can only review group sessions you completed.";
+                return RedirectToAction("Dashboard", new { id = studentId.Value });
+            }
+
+            var existingReview = dBContext.Reviews
+                .Find(r => r.GroupId == groupId && r.StudentId == studentId.Value && r.IsGroupReview)
+                .FirstOrDefault();
+
+            if (existingReview != null)
+            {
+                TempData["Error"] = "You have already reviewed this group appointment.";
+                return RedirectToAction("Dashboard", new { id = studentId.Value });
+            }
+
+            if (rating < 1 || rating > 5)
+            {
+                TempData["Error"] = "Please select a rating from 1 to 5.";
+
+                return RedirectToAction("Dashboard", new { id = studentId.Value });
+            }
+
+            var student = dBContext.Student
+                .Find(s => s.StudentId == studentId.Value)
+                .FirstOrDefault();
+
+            var tutor = dBContext.Tutor
+                .Find(t => t.TutorId == group.TutorId)
+                .FirstOrDefault();
+
+            if (student == null || tutor == null) { return NotFound(); }
+
+            var review = new Review
+            {
+                GroupId = group.GroupId,
+                IsGroupReview = true,
+                AppointmentId = null,
+                AppointmentDate = group.AppointmentDate,
+                StudentId = student.StudentId,
+                TutorId = tutor.TutorId,
+                StudentName = $"{student.FName} {student.LName}",
+                TutorName = $"{tutor.FName} {tutor.LName}",
+                Rating = rating,
+                Comment = comment ?? string.Empty,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            // Save the review.
+            dBContext.Reviews.InsertOne(review);
+
+            TempData["Success"] = "Your group appointment review has been submitted successfully.";
+
+            return RedirectToAction("Dashboard", new { id = studentId.Value });
+        }
+
+
     }
 }

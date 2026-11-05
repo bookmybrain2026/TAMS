@@ -27,6 +27,9 @@
     var cancelledAppointments = appointments.Count(a => a.Status == "Cancelled");
 
     var tutorReminderAppointments = ViewBag.TutorReminderAppointments as List<TAMS.Models.Appointment> ?? new List<TAMS.Models.Appointment>();
+  
+    var tutorGroupAppointments = ViewBag.TutorGroupAppointments as List<GroupAppointment> ?? new List<GroupAppointment>();
+
 }
 
 @section Styles {
@@ -69,7 +72,7 @@
                 </p>
             </div>
 
-            <div class="tutor-header-actions">
+            <div class="tutor-header-actions">       
                 <button type="button" class="tutor-notification-button" aria-label="Appointment completion reminders" aria-haspopup="dialog" aria-controls="tutorReminderModal"
                         onclick="openTutorModal('@Url.Action("Dashboard", "Tutor", new { showTutorReminders = true })', 'tutorReminderModal')">
 
@@ -367,7 +370,7 @@
                 </div>
             }
         </article>
-
+     
         <aside class="tutor-panel tutor-focus-panel">
             <div class="tutor-panel-heading">
                 <h2>YOUR SCHEDULE</h2>
@@ -424,6 +427,141 @@
                 </a>
             </div>
         </aside>
+    </section>
+
+    <section class="tutor-panel tutor-groups-panel">
+        <div class="tutor-section-header">
+            <div>
+                <p class="tutor-eyebrow">
+                    GROUP LEARNING
+                </p>
+
+                <h2>My Group Appointments</h2>
+            </div>
+
+            <span class="tutor-count-pill ">
+                @tutorGroupAppointments.Count groups
+            </span>
+        </div>
+
+        @if (tutorGroupAppointments.Any())
+        {
+            <div class="tutor-table-scroll tutor-groups-scroll">
+
+                <table class="table tutor-table tutor-groups-table">
+
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Capacity</th>
+                            <th>Enrolled Students</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @foreach (var group in tutorGroupAppointments.OrderBy(g => g.AppointmentDate).ThenBy(g => g.StartTime))
+                        {
+                            var enrolledCount = group.StudentIds?.Count ?? 0;
+                            var capacityPercentage = group.Capacity > 0 ? Math.Min(100, enrolledCount * 100.0 / group.Capacity) : 0;
+
+                            var groupStatus = group.Status ?? "";
+
+                            var statusClass = groupStatus.ToLowerInvariant() switch
+                            {
+                                "open" => "tutor-group-status-open",
+                                "approved" => "tutor-group-status-approved",
+                                "pending" => "tutor-group-status-pending",
+                                "full" => "tutor-group-status-full",
+                                "completed" => "tutor-group-status-completed",
+                                "cancelled" => "tutor-group-status-cancelled",
+                                "rejected" => "tutor-group-status-rejected",
+                                _ => "tutor-group-status-other"
+                            };
+
+                            <tr>
+                                <td class="tutor-date-cell">
+                                    @group.AppointmentDate.ToString("MMM d, yyyy")
+                                </td>
+                                
+                                <td class="tutor-group-time">
+                                    @(DateTime.Today.Add(group.StartTime).ToString("h:mm tt"))
+                                    -
+                                    @(DateTime.Today.Add(group.EndTime).ToString("h:mm tt"))
+                                </td>
+
+                                <td>
+                                    <div class="tutor-group-capacity">
+                                        <span class="tutor-group-capacity-text">
+                                            @enrolledCount / @group.Capacity
+                                        </span>
+
+                                        <div class="tutor-group-capacity-track">
+                                            <div class="tutor-group-capacity-fill"
+                                                 style="width: @(capacityPercentage.ToString(System.Globalization.CultureInfo.InvariantCulture))%;">
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </td>
+
+                                <td>
+
+                                    <span class="tutor-group-enrolled">
+                                        <i class="fas fa-users" aria-hidden="true"></i>
+                                        @enrolledCount
+                                    </span>
+
+                                </td>
+
+                                <td>
+                                    <span class="tutor-group-status @statusClass">
+                                        @group.Status
+                                    </span>
+                                </td>
+                            
+                                <td>
+                                    <a asp-controller="Tutor" asp-action="GroupDetails" asp-route-groupId="@group.GroupId" class="tutor-group-details-btn">
+                                        View Details
+                                    </a>
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+        }
+        else
+        {
+            <div class="tutor-empty-state tutor-empty-compact tutor-groups-empty">
+
+                <div class="tutor-groups-empty-icon">
+                    <i class="fas fa-users" aria-hidden="true"></i>
+                </div>
+
+                <h3>No Group Appointments</h3>
+
+                <p>
+                    You currently have no group appointments to display.
+                    Create a group appointment request from your schedule.
+                </p>
+
+                <a asp-controller="Tutor" asp-action="Schedule" asp-route-id="@Model.TutorId" class="tutor-button tutor-button-primary">
+                    Manage Schedule
+                </a>
+
+            </div>
+        }
+
     </section>
 
     <section class="tutor-panel tutor-history-panel">

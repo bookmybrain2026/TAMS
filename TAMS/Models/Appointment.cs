@@ -20,9 +20,9 @@ namespace TAMS.Models
 
         public int ScheduleId { get; set; } // Exact schedule being booked
 
-        [Required]
+        //[Required]
         [ForeignKey("Student")]
-        public int StudentId { get; set; }
+        public int? StudentId { get; set; }
         public virtual Student Student { get; set; }
 
         [Required]
@@ -45,7 +45,6 @@ namespace TAMS.Models
 
         [BsonElement("AdminNotificationSent")]
         public bool AdminNotificationSent { get; set; } = false;
-
 
         [BsonElement("TutorReminder1Acknowledged")]
         public bool TutorReminder1Acknowledged { get; set; } = false;
@@ -83,6 +82,8 @@ namespace TAMS.Models
         [BsonElement("TutorNotes")]
         [StringLength(2000)]
         public string TutorNotes { get; set; } = string.Empty;
+
+        public bool IsGroup { get; set; } = false;
 
     }
 }

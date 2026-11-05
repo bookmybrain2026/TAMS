@@ -1,0 +1,134 @@
+﻿@model TAMS.Models.GroupAppointment
+
+@{
+    ViewData["Title"] = "Create Group Appointment";
+}
+
+@section Styles {
+    <link href="~/css/CreateGroupAppointment.css" rel="stylesheet" asp-append-version="true" />
+}
+
+<div class="create-group-wrapper">
+    <div class="create-group-container">
+        <div class="create-group-panel">
+            <div class="create-group-brand">
+                BookMy<span>Brain</span>
+            </div>
+
+            <h1 class="create-group-heading">
+                Create Group Appointment
+            </h1>
+
+            <p class="create-group-subtitle">
+                Schedule a group tutoring session for multiple
+                students. Your request will be submitted for
+                administrator approval.
+            </p>
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="create-group-error" role="alert">
+                    <div class="create-group-error-header">
+                        <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                        <span>Unable to Submit Group Appointment</span>
+                    </div>
+
+                    <div asp-validation-summary="ModelOnly" class="create-group-error-message">
+                    </div>
+                </div>
+            }
+
+            <form asp-controller="Tutor"  asp-action="CreateGroupAppointment" method="post">
+                @Html.AntiForgeryToken()
+                <div class="mb-3">
+                    <label asp-for="AppointmentDate" class="form-label">
+                        Appointment Date
+                    </label>
+                    <input asp-for="AppointmentDate" type="date" class="form-control"
+                           min="@DateTime.Today.ToString("yyyy-MM-dd")"
+                           value="@Model.AppointmentDate.ToString("yyyy-MM-dd")" required />
+                    <span asp-validation-for="AppointmentDate" class="text-danger"></span>
+                </div>
+
+                <div class="create-group-time-grid">
+                    <div class="mb-3">
+                        <label asp-for="StartTime" class="form-label">
+                            Start Time
+                        </label>
+                        <input asp-for="StartTime" type="time" class="form-control" required />
+
+                        <span asp-validation-for="StartTime" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="EndTime" class="form-label">
+                            End Time
+                        </label>
+                        <input asp-for="EndTime" type="time" class="form-control" required />
+                        <span asp-validation-for="EndTime" class="text-danger"></span>
+                    </div>
+
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Capacity" class="form-label">
+                        Maximum Number of Students
+                    </label>
+
+                    <input asp-for="Capacity" type="number" min="2" max="100"
+                           class="form-control" placeholder="Enter maximum students" required />
+
+                    <span asp-validation-for="Capacity" class="text-danger"></span>
+
+                    <small class="create-group-help-text">
+                        A group appointment must allow at least
+                        2 students and no more than 100.
+                    </small>
+
+                </div>
+
+                <div class="create-group-info">
+                    <div class="create-group-info-icon">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+
+                    <p>
+                        Your group appointment will be reviewed
+                        by an administrator before students
+                        can join the session.
+                    </p>
+
+                </div>
+
+                <div class="create-group-actions">
+                    <button type="submit" class="btn create-group-primary">
+                        Submit Group Request
+                    </button>
+
+                </div>
+
+                <div class="create-group-back">
+                    <a asp-controller="Tutor" asp-action="Schedule" asp-route-id="@Model.TutorId" class="create-group-secondary">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to Schedule
+                    </a>
+
+                </div>
+
+            </form>
+
+            <div class="create-group-footer">
+
+                <span> BookMyBrain Tutor Portal </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

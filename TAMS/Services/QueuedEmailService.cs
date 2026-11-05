@@ -112,5 +112,54 @@ namespace TAMS.Services
                 sender.SendTutorUpcomingAppointmentReminderAsync(tutorEmail, tutorName, studentName, appointmentDate, hoursBefore)).AsTask();
         }
 
+        public Task SendGroupAppointmentConfirmationToStudentAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime)
+        {
+            return _queue.EnqueueAsync(sender =>
+                sender.SendGroupAppointmentConfirmationToStudentAsync(studentEmail, studentName, tutorName, appointmentDate, startTime, endTime)).AsTask();
+        }
+
+        public Task SendGroupAppointmentConfirmationToTutorAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime)
+        {
+            return _queue.EnqueueAsync(sender =>
+                sender.SendGroupAppointmentConfirmationToTutorAsync(tutorEmail, tutorName, studentName, appointmentDate, startTime, endTime)).AsTask();
+        }
+
+        public Task SendGroupAppointmentCancellationToStudentAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime)
+        {
+            return _queue.EnqueueAsync(sender =>
+                sender.SendGroupAppointmentCancellationToStudentAsync(studentEmail, studentName, tutorName, appointmentDate, startTime, endTime)).AsTask();
+        }
+
+        public Task SendGroupAppointmentCancellationToTutorAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime)
+        {
+            return _queue.EnqueueAsync(sender =>
+                sender.SendGroupAppointmentCancellationToTutorAsync(tutorEmail, tutorName, studentName, appointmentDate, startTime, endTime)).AsTask();
+        }
+
+        public Task SendStudentUpcomingGroupReminderAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime, int hoursBefore)
+        {
+            return _queue.EnqueueAsync(sender =>
+                sender.SendStudentUpcomingGroupReminderAsync(studentEmail, studentName, tutorName, appointmentDate, startTime, endTime, hoursBefore)).AsTask();
+        }
+
+        public Task SendTutorUpcomingGroupReminderAsync(string tutorEmail, string tutorName, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime, int hoursBefore, int enrolledCount)
+        {
+            return _queue.EnqueueAsync(sender =>
+                sender.SendTutorUpcomingGroupReminderAsync(tutorEmail, tutorName, appointmentDate, startTime, endTime, hoursBefore, enrolledCount)).AsTask();
+        }
+
+        public Task SendAdminCancelledGroupToStudentAsync(string studentEmail, string studentName, string tutorName, string adminName, int groupId, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime)
+        {
+            return _queue.EnqueueAsync(sender =>
+                sender.SendAdminCancelledGroupToStudentAsync(studentEmail, studentName, tutorName, adminName, groupId, appointmentDate, startTime, endTime)).AsTask();
+        }
+
+        public Task SendAdminCancelledGroupToTutorAsync(string tutorEmail, string tutorName, string adminName, int groupId, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime, int enrolledCount)
+        {
+            return _queue.EnqueueAsync(sender =>
+                sender.SendAdminCancelledGroupToTutorAsync(tutorEmail, tutorName,  adminName, groupId, appointmentDate, startTime, endTime, enrolledCount)).AsTask();
+        }
+
+
     }
 }

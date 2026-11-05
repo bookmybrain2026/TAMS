@@ -1,0 +1,81 @@
+﻿@using TAMS.Models
+@using MongoDB.Driver
+@inject TAMS.Data.MongoDBContext dBContext
+
+@{
+    var pendingGroups = ViewBag.PendingGroupRequests
+        as List<GroupAppointment> ?? new List<GroupAppointment>();
+}
+
+<section class="admin-reminder-section admin-group-request-section">
+    <h3>Pending Group Appointment Requests</h3>
+
+    @if (pendingGroups.Any())
+    {
+        @foreach (var group in pendingGroups)
+        {
+            var tutor = dBContext.Tutor
+            .Find(t => t.TutorId == group.TutorId)
+            .FirstOrDefault();
+
+            <article class="admin-follow-up-item admin-group-request-item">
+
+                <h4>Group Request #@group.GroupId</h4>
+
+                <p>
+                    <strong>Tutor:</strong>
+                    @(tutor != null ? $"{tutor.FName} {tutor.LName}" : "Tutor unavailable")
+                </p>
+
+                <p>
+                    <strong>Date:</strong>
+                    @group.AppointmentDate.ToString("MMM dd, yyyy")
+                </p>
+
+                <p>
+                    <strong>Start Time:</strong>
+                    @DateTime.Today.Add(group.StartTime).ToString("h:mm tt")
+                </p>
+
+                <p>
+                    <strong>End Time:</strong>
+                    @DateTime.Today.Add(group.EndTime).ToString("h:mm tt")
+                </p>
+
+                <p>
+                    <strong>Capacity:</strong>
+                    @group.Capacity students
+                </p>
+
+                <p>
+                    <strong>Status:</strong>
+                    @group.Status
+                </p>
+
+                <div class="form-actions">
+                    <form asp-controller="Admin" asp-action="ApproveGroupAppointment" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="groupId" value="@group.GroupId" />
+                        <button type="submit" class="admin-request-approve">
+                            Approve
+                        </button>
+                    </form>
+
+                    <form asp-controller="Admin" asp-action="RejectGroupAppointment" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="groupId" value="@group.GroupId" />
+                        <button type="submit" class="admin-request-reject">
+                            Reject
+                        </button>
+                    </form>
+
+                </div>
+
+            </article>
+        }
+    }
+    else
+    {
+        <p>There are no pending group appointment requests.</p>
+    }
+</section>

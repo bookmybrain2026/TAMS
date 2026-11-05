@@ -32,6 +32,13 @@ namespace TAMS.Controllers
             ViewBag.Students = dBContext.Student.Find(_ => true).ToList();
             ViewBag.ShowAdminFollowUps = showAdminFollowUps;
 
+            var pendingGroupRequests = dBContext.GroupAppointments
+                .Find(g => g.Status == "Pending")
+                .SortBy(g => g.AppointmentDate)
+                .ToList();
+
+            ViewBag.PendingGroupRequests = pendingGroupRequests;
+
             var appointments = dBContext.Appointments.Find(_ => true).SortBy(a => a.AppointmentDate).ToList();
 
             foreach (var appointment in appointments)
@@ -40,6 +47,18 @@ namespace TAMS.Controllers
                 appointment.Student = dBContext.Student.Find(s => s.StudentId == appointment.StudentId).FirstOrDefault();
             }
             ViewBag.Appointments = appointments;
+
+            var adminGroupAppointments = dBContext.GroupAppointments
+                .Find(g =>
+                    g.Status == "Open" ||
+                    g.Status == "Full" ||
+                    g.Status == "Completed")
+                .ToList()
+                .OrderBy(g => g.AppointmentDate)
+                .ThenBy(g => g.StartTime)
+                .ToList();
+
+            ViewBag.AdminGroupAppointments = adminGroupAppointments;
 
             if (editTutorId.HasValue)
             {
@@ -81,6 +100,156 @@ namespace TAMS.Controllers
             }
 
             return View("AdminDashboard");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ApproveGroupAppointment(int groupId)
+        {
+            var adminId = HttpContext.Session.GetInt32("AdminId");
+            if (adminId == null) { return RedirectToAction("Login", "Login"); }
+
+            var group = dBContext.GroupAppointments
+                .Find(g => g.GroupId == groupId)
+                .FirstOrDefault();
+
+            if (group == null || group.Status != "Pending")
+            {
+                TempData["AdminDashboardError"] = "Group request not found or already reviewed.";
+                return RedirectToAction("Dashboard", new { showAdminFollowUps = true });
+            }
+
+            var tutor = dBContext.Tutor
+                .Find(t => t.TutorId == group.TutorId)
+                .FirstOrDefault();
+
+            if (tutor == null)
+            {
+                TempData["AdminDashboardError"] = "The tutor for this request was not found.";
+                return RedirectToAction("Dashboard", new { showAdminFollowUps = true });
+            }
+
+            DateTime startDate = group.AppointmentDate.Date.Add(group.StartTime);
+            DateTime endDate = group.AppointmentDate.Date.Add(group.EndTime);
+
+            if (startDate <= DateTime.Now || endDate <= startDate || group.Capacity < 2)
+            {
+                TempData["AdminDashboardError"] = "The requested date, time, or capacity is invalid.";
+                return RedirectToAction("Dashboard", new { showAdminFollowUps = true });
+            }
+
+            var conflict = dBContext.Appointments
+                .Find(a => a.TutorId == group.TutorId &&
+                    a.Status == "Scheduled" &&
+                    a.AppointmentDate < endDate &&
+                    a.EndDate > startDate)
+                .Any();
+
+            if (conflict)
+            {
+                TempData["AdminDashboardError"] = "The tutor already has an appointment during this time.";
+                return RedirectToAction("Dashboard", new { showAdminFollowUps = true });
+            }
+
+            var claim = dBContext.GroupAppointments.UpdateOne(g => g.GroupId == groupId && g.Status == "Pending",
+                Builders<GroupAppointment>.Update.Set(g => g.Status, "Approving"));
+
+            if (claim.ModifiedCount == 0)
+            {
+                TempData["AdminDashboardError"] = "This request is already being reviewed.";
+                return RedirectToAction("Dashboard", new { showAdminFollowUps = true });
+            }
+
+            //int newAppointmentId = 0;
+
+            try
+            {
+                var existingSchedules = dBContext.Schedule
+                    .Find(s => s.TutorId == group.TutorId)
+                    .ToList();
+
+                bool scheduleConflict = existingSchedules.Any(s =>
+                    s.Date.Date == group.AppointmentDate.Date &&
+                    group.StartTime < s.EndTime &&
+                    group.EndTime > s.StartTime);
+
+                if (scheduleConflict)
+                {
+                    throw new InvalidOperationException("The tutor already has availability during this time.");
+                }
+
+                bool appointmentConflict = dBContext.Appointments
+                    .Find(a => a.TutorId == group.TutorId &&
+                        a.Status == "Scheduled" &&
+                        a.AppointmentDate < endDate &&
+                        a.EndDate > startDate)
+                    .Any();
+
+                if (appointmentConflict)
+                {
+                    throw new InvalidOperationException("The tutor already has an appointment during this time.");
+                }
+
+                var lastSchedule = dBContext.Schedule
+                    .Find(_ => true)
+                    .SortByDescending(s => s.ScheduleId)
+                    .FirstOrDefault();
+
+                int newScheduleId = lastSchedule == null ? 1 : lastSchedule.ScheduleId + 1;
+
+                var schedule = new Schedule
+                {
+                    ScheduleId = newScheduleId,
+                    TutorId = group.TutorId,
+                    Date = group.AppointmentDate.Date,
+                    StartTime = group.StartTime,
+                    EndTime = group.EndTime,
+                    IsGroup = true,
+                    GroupId = group.GroupId
+                };
+
+                dBContext.Schedule.InsertOne(schedule);
+
+                // Open the group for student enrollment.
+                var result = dBContext.GroupAppointments.UpdateOne(g => g.GroupId == groupId && g.Status == "Approving",
+                    Builders<GroupAppointment>.Update.Set(g => g.Status, "Open")
+                        .Set(g => g.AppointmentId, (int?)null));
+
+                if (result.ModifiedCount == 0)
+                {
+                    throw new InvalidOperationException("Could not finalize group approval.");
+                }
+
+                TempData["AdminDashboardSuccess"] = "Group appointment approved and added to the tutor schedule.";
+            }
+            catch (Exception ex)
+            {
+                TempData["AdminDashboardError"] = "Approval requires review: " + ex.Message;
+            }
+
+            return RedirectToAction("Dashboard", new { showAdminFollowUps = true });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult RejectGroupAppointment(int groupId)
+        {
+            var adminId = HttpContext.Session.GetInt32("AdminId");
+            if (adminId == null) { return RedirectToAction("Login", "Login"); }
+
+            var result = dBContext.GroupAppointments.UpdateOne(g => g.GroupId == groupId && g.Status == "Pending",
+                Builders<GroupAppointment>.Update.Set(g => g.Status, "Rejected"));
+
+            if (result.ModifiedCount == 0)
+            {
+                TempData["AdminDashboardError"] = "Group request not found or already reviewed.";
+            }
+            else
+            {
+                TempData["AdminDashboardSuccess"] = "Group appointment request rejected.";
+            }
+
+            return RedirectToAction("Dashboard", new { showAdminFollowUps = true });
         }
 
         private void LoadSubjects()
@@ -577,6 +746,133 @@ namespace TAMS.Controllers
             }
 
             TempData["AdminDashboardSuccess"] = $"Appointment #{appointmentId} has been marked as completed.";
+
+            return RedirectToAction("Dashboard");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CancelGroupAppointment(int groupId)
+        {
+            var adminId = HttpContext.Session.GetInt32("AdminId");
+            if (adminId == null) { return RedirectToAction("Login", "Login"); }
+
+            var group = await dBContext.GroupAppointments
+                .Find(g => g.GroupId == groupId)
+                .FirstOrDefaultAsync();
+
+            if (group == null)
+            {
+                TempData["AdminDashboardError"] = "The selected group appointment could not be found.";
+                return RedirectToAction("Dashboard");
+            }
+
+            if (group.Status != "Open" && group.Status != "Full")
+            {
+                TempData["AdminDashboardError"] = "Only open or full group appointments can be cancelled.";
+                return RedirectToAction("Dashboard");
+            }
+
+            var admin = await dBContext.Admin
+                .Find(a => a.AdminId == adminId.Value)
+                .FirstOrDefaultAsync();
+
+            if (admin == null)
+            {
+                TempData["AdminDashboardError"] = "The administrator account could not be found.";
+                return RedirectToAction("Dashboard");
+            }
+
+            string adminName = $"{admin.FName} {admin.LName}".Trim();
+
+            if (string.IsNullOrWhiteSpace(adminName))
+            {
+                adminName = $"Admin #{adminId.Value}";
+            }
+
+            // Only one administrator can successfully cancel the group.
+            var filter = Builders<GroupAppointment>.Filter.Eq(g => g.GroupId, groupId)
+                &
+                Builders<GroupAppointment>.Filter.In(g => g.Status, new[] { "Open", "Full" });
+
+            var update = Builders<GroupAppointment>.Update.Set(g => g.Status, "Cancelled");
+
+            var result = await dBContext.GroupAppointments.UpdateOneAsync(filter, update);
+
+            if (result.ModifiedCount == 0)
+            {
+                TempData["AdminDashboardError"] = "This group appointment has already been updated.";
+                return RedirectToAction("Dashboard");
+            }
+
+            // Remove only this group's schedule
+            try
+            {
+                await dBContext.Schedule.DeleteManyAsync(s => s.GroupId == groupId && s.IsGroup);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Group schedule removal failed: {ex.Message}");
+                TempData["AdminDashboardError"] = "The group was cancelled, but its schedule could not be removed. Please review the tutor schedule.";
+                return RedirectToAction("Dashboard");
+            }
+
+            var tutor = await dBContext.Tutor
+                .Find(t => t.TutorId == group.TutorId)
+                .FirstOrDefaultAsync();
+
+            string tutorName = tutor != null ? $"{tutor.FName} {tutor.LName}".Trim() : "Tutor";
+
+            var studentIds = group.StudentIds?.Distinct().ToList() ?? new List<int>();
+
+            var students = await dBContext.Student
+                .Find(s => studentIds.Contains(s.StudentId))
+                .ToListAsync();
+
+            bool emailFailed = false;
+
+            // Notify the tutor.
+            if (tutor != null && !tutor.DisableEmailNotifications && !string.IsNullOrWhiteSpace(tutor.Email))
+            {
+                try
+                {
+                    await _emailService.SendAdminCancelledGroupToTutorAsync(tutor.Email, tutorName, adminName,
+                        group.GroupId, group.AppointmentDate, group.StartTime, group.EndTime, studentIds.Count);
+                }
+                catch (Exception ex)
+                {
+                    emailFailed = true;
+                    Console.WriteLine($"Tutor group cancellation email failed: {ex.Message}");
+                }
+            }
+
+            // Notify every enrolled student.
+            foreach (var student in students)
+            {
+                if (student.DisableEmailNotifications || string.IsNullOrWhiteSpace(student.Email))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    string studentName = $"{student.FName} {student.LName}".Trim();
+                    await _emailService.SendAdminCancelledGroupToStudentAsync(student.Email, studentName, tutorName,
+                        adminName, group.GroupId, group.AppointmentDate, group.StartTime, group.EndTime);
+                }
+                catch (Exception ex)
+                {
+                    emailFailed = true;
+                    Console.WriteLine($"Student group cancellation email failed: {ex.Message}");
+                }
+            }
+
+            TempData["AdminDashboardSuccess"] = $"Group appointment #{groupId} has been cancelled.";
+
+            if (emailFailed)
+            {
+                TempData["AdminDashboardError"] = "The group was cancelled, but one or more " + "notification emails could not be queued.";
+            }
 
             return RedirectToAction("Dashboard");
         }

@@ -1111,7 +1111,6 @@ namespace TAMS.Services
             await smtp.DisconnectAsync(true);
         }
 
-
         //Styling Done for SendStudentUpcomingAppointmentReminderAsync
         public async Task SendStudentUpcomingAppointmentReminderAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate, int hoursBefore, string? tutorNotes)
         {
@@ -1284,6 +1283,698 @@ namespace TAMS.Services
             await smtp.SendAsync(message);
             await smtp.DisconnectAsync(true);
         }
+
+        //Styling Done for SendGroupAppointmentConfirmationToStudentAsync
+        public async Task SendGroupAppointmentConfirmationToStudentAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime)
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.To.Add(new MailboxAddress(studentName, studentEmail));
+            message.Subject = "Group Appointment Confirmation";
+
+            var builder = new BodyBuilder();
+
+            var templatePath = Path.Combine(_environment.ContentRootPath, "EmailTemplates", "GroupAppointmentConfirmationToStudent.html");
+
+            string html = File.Exists(templatePath) ? await File.ReadAllTextAsync(templatePath) : "";
+
+            var bannerPath = Path.Combine(_environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot"), "images", "banner.png");
+
+            string bannerHtml = "";
+
+            if (File.Exists(bannerPath))
+            {
+                var banner = builder.LinkedResources.Add(bannerPath);
+                banner.ContentId = Guid.NewGuid().ToString() + "@tams";
+
+                bannerHtml = $"""
+                    <img src="cid:{banner.ContentId}"
+                         alt="BookMyBrain" width="560"
+                         style="display:block;width:100%;max-width:560px;
+                                height:auto;border:0;margin:0 auto;">
+                    """;
+            }
+
+            var formattedDate = appointmentDate.ToString("MMMM dd, yyyy");
+            var formattedStartTime = DateTime.Today.Add(startTime).ToString("h:mm tt");
+            var formattedEndTime = DateTime.Today.Add(endTime).ToString("h:mm tt");
+
+            var sName = System.Net.WebUtility.HtmlEncode(studentName);
+            var tName = System.Net.WebUtility.HtmlEncode(tutorName);
+            var aDate = System.Net.WebUtility.HtmlEncode(formattedDate);
+            var sTime = System.Net.WebUtility.HtmlEncode(formattedStartTime);
+            var eTime = System.Net.WebUtility.HtmlEncode(formattedEndTime);
+
+            html = html.Replace("{{BannerHtml}}", bannerHtml);
+            html = html.Replace("{{StudentName}}", sName);
+            html = html.Replace("{{TutorName}}", tName);
+            html = html.Replace("{{AppointmentDate}}", aDate);
+            html = html.Replace("{{StartTime}}", sTime);
+            html = html.Replace("{{EndTime}}", eTime);
+
+            if (!string.IsNullOrWhiteSpace(html))
+            {
+                builder.HtmlBody = html;
+            }
+
+            builder.TextBody = $"""
+                TAMS Group Appointment Confirmation
+
+                Hello {studentName},
+
+                This email confirms that you have successfully joined a group
+                tutoring appointment through TAMS.
+
+                Group Appointment Information
+
+                Tutor: {tutorName}
+                Date: {formattedDate}
+                Start Time: {formattedStartTime}
+                End Time: {formattedEndTime}
+                Status: Scheduled
+
+                Please arrive on time for your group tutoring session.
+
+                Thank you for using TAMS.
+
+                The BookMyBrain Team
+                Tutoring Appointment Management System
+                """;
+
+            message.Body = builder.ToMessageBody();
+
+            using var smtp = new SmtpClient();
+            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
+            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
+            await smtp.SendAsync(message);
+            await smtp.DisconnectAsync(true);
+        }
+
+        //Styling Done for SendGroupAppointmentConfirmationToTutorAsync
+        public async Task SendGroupAppointmentConfirmationToTutorAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime)
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.To.Add(new MailboxAddress(tutorName, tutorEmail));
+            message.Subject = "Student Joined Group Appointment";
+
+            var builder = new BodyBuilder();
+
+            var templatePath = Path.Combine(_environment.ContentRootPath, "EmailTemplates", "GroupAppointmentConfirmationToTutor.html");
+
+            string html = File.Exists(templatePath) ? await File.ReadAllTextAsync(templatePath) : "";
+
+            var bannerPath = Path.Combine(_environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot"), "images", "banner.png");
+
+            string bannerHtml = "";
+
+            if (File.Exists(bannerPath))
+            {
+                var banner = builder.LinkedResources.Add(bannerPath);
+                banner.ContentId = Guid.NewGuid().ToString() + "@tams";
+
+                bannerHtml = $"""
+                    <img src="cid:{banner.ContentId}"
+                         alt="BookMyBrain" width="560"
+                         style="display:block;width:100%;max-width:560px;
+                                height:auto;border:0;margin:0 auto;">
+                    """;
+            }
+
+            var formattedDate = appointmentDate.ToString("MMMM dd, yyyy");
+            var formattedStartTime = DateTime.Today.Add(startTime).ToString("h:mm tt");
+            var formattedEndTime = DateTime.Today.Add(endTime).ToString("h:mm tt");
+
+            var tName = System.Net.WebUtility.HtmlEncode(tutorName);
+            var sName = System.Net.WebUtility.HtmlEncode(studentName);
+            var aDate = System.Net.WebUtility.HtmlEncode(formattedDate);
+            var sTime = System.Net.WebUtility.HtmlEncode(formattedStartTime);
+            var eTime = System.Net.WebUtility.HtmlEncode(formattedEndTime);
+
+            html = html.Replace("{{BannerHtml}}", bannerHtml);
+            html = html.Replace("{{TutorName}}", tName);
+            html = html.Replace("{{StudentName}}", sName);
+            html = html.Replace("{{AppointmentDate}}", aDate);
+            html = html.Replace("{{StartTime}}", sTime);
+            html = html.Replace("{{EndTime}}", eTime);
+
+            if (!string.IsNullOrWhiteSpace(html))
+            {
+                builder.HtmlBody = html;
+            }
+
+            builder.TextBody = $"""
+                TAMS Group Appointment Confirmation
+
+                Hello {tutorName},
+
+                A student has successfully joined your group tutoring appointment.
+
+                Group Appointment Information
+
+                Student: {studentName}
+                Date: {formattedDate}
+                Start Time: {formattedStartTime}
+                End Time: {formattedEndTime}
+                Status: Scheduled
+
+                Please review your group appointment in your TAMS dashboard
+                to view your enrolled students.
+
+                Thank you for using TAMS.
+
+                The BookMyBrain Team
+                Tutoring Appointment Management System
+                """;
+
+            message.Body = builder.ToMessageBody();
+
+            using var smtp = new SmtpClient();
+            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
+            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
+            await smtp.SendAsync(message);
+            await smtp.DisconnectAsync(true);
+        }
+
+        //Styling Done for SendGroupAppointmentConfirmationToStudentAsync
+        public async Task SendGroupAppointmentCancellationToStudentAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime)
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.To.Add(new MailboxAddress(studentName, studentEmail));
+            message.Subject = "Group Appointment Cancellation Confirmation";
+
+            var builder = new BodyBuilder();
+
+            var templatePath = Path.Combine(_environment.ContentRootPath, "EmailTemplates", "GroupAppointmentCancellationToStudent.html");
+
+            string html = File.Exists(templatePath) ? await File.ReadAllTextAsync(templatePath) : "";
+
+            var bannerPath = Path.Combine(_environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot"), "images", "banner.png");
+
+            string bannerHtml = "";
+
+            if (File.Exists(bannerPath))
+            {
+                var banner = builder.LinkedResources.Add(bannerPath);
+                banner.ContentId = Guid.NewGuid().ToString() + "@tams";
+
+                bannerHtml = $"""
+                    <img src="cid:{banner.ContentId}"
+                         alt="BookMyBrain" width="560"
+                         style="display:block;width:100%;max-width:560px;
+                                height:auto;border:0;margin:0 auto;">
+                    """;
+            }
+
+            var formattedDate = appointmentDate.ToString("MMMM dd, yyyy");
+            var formattedStartTime = DateTime.Today.Add(startTime).ToString("h:mm tt");
+            var formattedEndTime = DateTime.Today.Add(endTime).ToString("h:mm tt");
+
+            var sName = System.Net.WebUtility.HtmlEncode(studentName);
+            var tName = System.Net.WebUtility.HtmlEncode(tutorName);
+            var aDate = System.Net.WebUtility.HtmlEncode(formattedDate);
+            var sTime = System.Net.WebUtility.HtmlEncode(formattedStartTime);
+            var eTime = System.Net.WebUtility.HtmlEncode(formattedEndTime);
+
+            html = html.Replace("{{BannerHtml}}", bannerHtml);
+            html = html.Replace("{{StudentName}}", sName);
+            html = html.Replace("{{TutorName}}", tName);
+            html = html.Replace("{{AppointmentDate}}", aDate);
+            html = html.Replace("{{StartTime}}", sTime);
+            html = html.Replace("{{EndTime}}", eTime);
+
+            if (!string.IsNullOrWhiteSpace(html))
+            {
+                builder.HtmlBody = html;
+            }
+
+            builder.TextBody = $"""
+                TAMS Group Appointment Cancellation
+
+                Hello {studentName},
+
+                This email confirms that you have successfully cancelled
+                your enrollment in a group tutoring appointment.
+
+                Cancelled Group Appointment Information
+
+                Tutor: {tutorName}
+                Date: {formattedDate}
+                Start Time: {formattedStartTime}
+                End Time: {formattedEndTime}
+                Status: Cancelled
+                Cancelled By: You
+
+                Your seat is now available for another student.
+
+                If you did not request this cancellation, please contact
+                the TAMS administrator.
+
+                Thank you for using TAMS.
+
+                The BookMyBrain Team
+                Tutoring Appointment Management System
+                """;
+
+            message.Body = builder.ToMessageBody();
+
+            using var smtp = new SmtpClient();
+            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
+            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
+            await smtp.SendAsync(message);
+            await smtp.DisconnectAsync(true);
+        }
+
+        //Styling Done for SendGroupAppointmentCancellationToTutorAsync
+        public async Task SendGroupAppointmentCancellationToTutorAsync(string tutorEmail, string tutorName, string studentName,  DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime)
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.To.Add(new MailboxAddress(tutorName, tutorEmail));
+            message.Subject = "Student Cancelled Group Appointment";
+
+            var builder = new BodyBuilder();
+
+            var templatePath = Path.Combine(_environment.ContentRootPath, "EmailTemplates", "GroupAppointmentCancellationToTutor.html");
+
+            string html = File.Exists(templatePath) ? await File.ReadAllTextAsync(templatePath) : "";
+
+            var bannerPath = Path.Combine(_environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot"), "images", "banner.png");
+
+            string bannerHtml = "";
+
+            if (File.Exists(bannerPath))
+            {
+                var banner = builder.LinkedResources.Add(bannerPath);
+                banner.ContentId = Guid.NewGuid().ToString() + "@tams";
+
+                bannerHtml = $"""
+                    <img src="cid:{banner.ContentId}"
+                         alt="BookMyBrain" width="560"
+                         style="display:block;width:100%;max-width:560px;
+                                height:auto;border:0;margin:0 auto;">
+                    """;
+            }
+
+            var formattedDate = appointmentDate.ToString("MMMM dd, yyyy");
+            var formattedStartTime = DateTime.Today.Add(startTime).ToString("h:mm tt");
+            var formattedEndTime = DateTime.Today.Add(endTime).ToString("h:mm tt");
+
+            var tName = System.Net.WebUtility.HtmlEncode(tutorName);
+            var sName = System.Net.WebUtility.HtmlEncode(studentName);
+            var aDate = System.Net.WebUtility.HtmlEncode(formattedDate);
+            var sTime = System.Net.WebUtility.HtmlEncode(formattedStartTime);
+            var eTime = System.Net.WebUtility.HtmlEncode(formattedEndTime);
+
+            html = html.Replace("{{BannerHtml}}", bannerHtml);
+            html = html.Replace("{{TutorName}}", tName);
+            html = html.Replace("{{StudentName}}", sName);
+            html = html.Replace("{{AppointmentDate}}", aDate);
+            html = html.Replace("{{StartTime}}", sTime);
+            html = html.Replace("{{EndTime}}", eTime);
+
+            if (!string.IsNullOrWhiteSpace(html))
+            {
+                builder.HtmlBody = html;
+            }
+
+            builder.TextBody = $"""
+                TAMS Group Appointment Cancellation
+
+                Hello {tutorName},
+
+                A student has cancelled their enrollment in your
+                group tutoring appointment.
+
+                Cancelled Enrollment Information
+
+                Student: {studentName}
+                Date: {formattedDate}
+                Start Time: {formattedStartTime}
+                End Time: {formattedEndTime}
+                Student Enrollment Status: Cancelled
+
+                The group appointment remains scheduled for all
+                other enrolled students.
+
+                The cancelled seat is now available for another student.
+
+                Please review your group appointment in TAMS
+                for the updated enrollment information.
+
+                Thank you for using TAMS.
+
+                The BookMyBrain Team
+                Tutoring Appointment Management System
+                """;
+
+            message.Body = builder.ToMessageBody();
+
+            using var smtp = new SmtpClient();
+            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
+            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
+            await smtp.SendAsync(message);
+            await smtp.DisconnectAsync(true);
+        }
+
+        //Styling Done for SendStudentUpcomingGroupReminderAsync
+        public async Task SendStudentUpcomingGroupReminderAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime, int hoursBefore)
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.To.Add(new MailboxAddress(studentName, studentEmail));
+            message.Subject = hoursBefore == 24
+                ? "Reminder: Your Group Tutoring Session Is Tomorrow"
+                : "Reminder: Your Group Tutoring Session Is in One Hour";
+
+            string reminderText = hoursBefore == 24
+                ? "Your group tutoring session is scheduled for tomorrow."
+                : "Your group tutoring session starts in approximately one hour.";
+
+            var builder = new BodyBuilder();
+
+            var templatePath = Path.Combine(_environment.ContentRootPath, "EmailTemplates", "StudentUpcomingGroupReminder.html");
+
+            var html = await File.ReadAllTextAsync(templatePath);
+
+            var bannerPath = Path.Combine(_environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot"), "images", "banner.png");
+
+            string bannerHtml = "";
+
+            if (File.Exists(bannerPath))
+            {
+                var banner = builder.LinkedResources.Add(bannerPath);
+                banner.ContentId = Guid.NewGuid().ToString() + "@tams";
+
+                bannerHtml = $"""
+                    <img src="cid:{banner.ContentId}"
+                         alt="BookMyBrain"
+                         width="560"
+                         style="display:block;width:100%;max-width:560px;
+                                height:auto;border:0;margin:0 auto;">
+                    """;
+            }
+
+            var formattedDate = appointmentDate.ToString("MMMM dd, yyyy");
+            var formattedStartTime = DateTime.Today.Add(startTime).ToString("h:mm tt");
+            var formattedEndTime = DateTime.Today.Add(endTime).ToString("h:mm tt");
+
+            html = html.Replace("{{BannerHtml}}", bannerHtml);
+            html = html.Replace("{{StudentName}}", System.Net.WebUtility.HtmlEncode(studentName));
+            html = html.Replace("{{TutorName}}", System.Net.WebUtility.HtmlEncode(tutorName));
+            html = html.Replace("{{AppointmentDate}}", System.Net.WebUtility.HtmlEncode(formattedDate));
+            html = html.Replace("{{StartTime}}", System.Net.WebUtility.HtmlEncode(formattedStartTime));
+            html = html.Replace("{{EndTime}}", System.Net.WebUtility.HtmlEncode(formattedEndTime));
+            html = html.Replace("{{ReminderMessage}}", System.Net.WebUtility.HtmlEncode(reminderText));
+            html = html.Replace("{{HoursBefore}}", hoursBefore.ToString());
+
+            builder.HtmlBody = html;
+
+            builder.TextBody = $"""
+                TAMS Group Appointment Reminder
+
+                Hello {studentName},
+
+                {reminderText}
+
+                Group Appointment Information
+
+                Tutor: {tutorName}
+                Date: {formattedDate}
+                Start Time: {formattedStartTime}
+                End Time: {formattedEndTime}
+                Status: Scheduled
+
+                Please arrive on time and be prepared for your
+                group tutoring session.
+
+                You can review your group appointments in your
+                TAMS student dashboard.
+
+                Thank you for using TAMS.
+
+                The BookMyBrain Team
+                Tutoring Appointment Management System
+                """;
+
+            message.Body = builder.ToMessageBody();
+
+            using var smtp = new SmtpClient();
+            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
+            await smtp.AuthenticateAsync( _configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
+            await smtp.SendAsync(message);
+            await smtp.DisconnectAsync(true);
+        }
+
+
+        //Styling Done for SendTutorUpcomingGroupReminderAsync
+        public async Task SendTutorUpcomingGroupReminderAsync(string tutorEmail, string tutorName, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime, int hoursBefore, int enrolledCount)
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.To.Add(new MailboxAddress(tutorName, tutorEmail));
+            message.Subject = hoursBefore == 24
+                ? "Reminder: Your Group Tutoring Session Is Tomorrow"
+                : "Reminder: Your Group Tutoring Session Is in One Hour";
+
+            string reminderText = hoursBefore == 24
+                ? "Your upcoming group tutoring session is scheduled for tomorrow."
+                : "Your upcoming group tutoring session starts in approximately one hour.";
+
+            var builder = new BodyBuilder();
+
+            var templatePath = Path.Combine(_environment.ContentRootPath, "EmailTemplates", "TutorUpcomingGroupReminder.html");
+
+            var html = await File.ReadAllTextAsync(templatePath);
+
+            var bannerPath = Path.Combine(_environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot"), "images", "banner.png");
+
+            string bannerHtml = "";
+
+            if (File.Exists(bannerPath))
+            {
+                var banner = builder.LinkedResources.Add(bannerPath);
+                banner.ContentId = Guid.NewGuid().ToString() + "@tams";
+
+                bannerHtml = $"""
+                    <img src="cid:{banner.ContentId}"
+                         alt="BookMyBrain"
+                         width="560"
+                         style="display:block;width:100%;max-width:560px;
+                                height:auto;border:0;margin:0 auto;">
+                    """;
+            }
+
+            var formattedDate = appointmentDate.ToString("MMMM dd, yyyy");
+            var formattedStartTime = DateTime.Today.Add(startTime).ToString("h:mm tt");
+            var formattedEndTime = DateTime.Today.Add(endTime).ToString("h:mm tt");
+
+            html = html.Replace("{{BannerHtml}}", bannerHtml);
+            html = html.Replace("{{TutorName}}", System.Net.WebUtility.HtmlEncode(tutorName));
+            html = html.Replace("{{AppointmentDate}}", System.Net.WebUtility.HtmlEncode(formattedDate));
+            html = html.Replace("{{StartTime}}", System.Net.WebUtility.HtmlEncode(formattedStartTime));
+            html = html.Replace("{{EndTime}}", System.Net.WebUtility.HtmlEncode(formattedEndTime));
+            html = html.Replace("{{ReminderMessage}}", System.Net.WebUtility.HtmlEncode(reminderText));
+            html = html.Replace("{{HoursBefore}}", hoursBefore.ToString());
+            html = html.Replace("{{EnrolledCount}}", enrolledCount.ToString());
+
+            builder.HtmlBody = html;
+
+            builder.TextBody = $"""
+                TAMS Group Appointment Reminder
+
+                Hello {tutorName},
+
+                {reminderText}
+
+                Group Appointment Information
+
+                Date: {formattedDate}
+                Start Time: {formattedStartTime}
+                End Time: {formattedEndTime}
+                Enrolled Students: {enrolledCount}
+                Status: Scheduled
+
+                Please review your group appointment in your
+                TAMS tutor dashboard and prepare for the session.
+
+                Thank you for using TAMS.
+
+                The BookMyBrain Team
+                Tutoring Appointment Management System
+                """;
+
+            message.Body = builder.ToMessageBody();
+
+            using var smtp = new SmtpClient();
+            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
+            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
+            await smtp.SendAsync(message);
+            await smtp.DisconnectAsync(true);
+        }
+
+        //Styling Done for SendAdminCancelledGroupToStudentAsync
+        public async Task SendAdminCancelledGroupToStudentAsync(string studentEmail, string studentName, string tutorName, string adminName, int groupId, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime)
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.To.Add(new MailboxAddress(studentName, studentEmail));
+            message.Subject = $"Group Appointment #{groupId} Cancelled by Administrator";
+
+            var builder = new BodyBuilder();
+
+            var templatePath = Path.Combine(_environment.ContentRootPath, "EmailTemplates",  "AdminCancelledGroupToStudent.html");
+
+            var html = await File.ReadAllTextAsync(templatePath);
+
+            var bannerPath = Path.Combine(_environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot"), "images", "banner.png");
+
+            string bannerHtml = "";
+
+            if (File.Exists(bannerPath))
+            {
+                var banner = builder.LinkedResources.Add(bannerPath);
+                banner.ContentId = Guid.NewGuid().ToString() + "@tams";
+
+                bannerHtml = $"""
+                    <img src="cid:{banner.ContentId}"
+                         alt="BookMyBrain"
+                         width="560"
+                         style="display:block;width:100%;max-width:560px;
+                                height:auto;border:0;margin:0 auto;">
+                    """;
+            }
+
+            string date = appointmentDate.ToString("MMMM dd, yyyy");
+            string start = DateTime.Today.Add(startTime).ToString("h:mm tt");
+            string end = DateTime.Today.Add(endTime).ToString("h:mm tt");
+
+            html = html.Replace("{{BannerHtml}}", bannerHtml)
+                .Replace("{{StudentName}}", System.Net.WebUtility.HtmlEncode(studentName))
+                .Replace("{{TutorName}}", System.Net.WebUtility.HtmlEncode(tutorName))
+                .Replace("{{AdminName}}", System.Net.WebUtility.HtmlEncode(adminName))
+                .Replace("{{GroupId}}", groupId.ToString())
+                .Replace("{{AppointmentDate}}", date)
+                .Replace("{{StartTime}}", start)
+                .Replace("{{EndTime}}", end);
+
+            builder.HtmlBody = html;
+
+            builder.TextBody = $"""
+                Group Appointment Cancelled by Administrator
+
+                Hello {studentName},
+
+                Your group tutoring appointment has been cancelled
+                by administrator {adminName}.
+
+                Group ID: {groupId}
+                Tutor: {tutorName}
+                Date: {date}
+                Time: {start} - {end}
+                Status: Cancelled
+
+                You are no longer scheduled to attend this session.
+
+                You can visit the Groups page in TAMS to find
+                another available group tutoring session.
+
+                Thank you for your understanding.
+
+                The BookMyBrain Team
+                """;
+
+            message.Body = builder.ToMessageBody();
+
+            using var smtp = new SmtpClient();
+            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"],int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
+            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
+            await smtp.SendAsync(message);
+            await smtp.DisconnectAsync(true);
+        }
+
+        //Styling Done for SendAdminCancelledGroupToTutorAsync
+        public async Task SendAdminCancelledGroupToTutorAsync(string tutorEmail, string tutorName, string adminName, int groupId, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime, int enrolledCount)
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.To.Add(new MailboxAddress(tutorName, tutorEmail));
+            message.Subject = $"Group Appointment #{groupId} Cancelled by Administrator";
+
+            var builder = new BodyBuilder();
+
+            var templatePath = Path.Combine(_environment.ContentRootPath, "EmailTemplates", "AdminCancelledGroupToTutor.html");
+
+            var html = await File.ReadAllTextAsync(templatePath);
+
+            var bannerPath = Path.Combine(_environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot"), "images", "banner.png");
+
+            string bannerHtml = "";
+
+            if (File.Exists(bannerPath))
+            {
+                var banner = builder.LinkedResources.Add(bannerPath);
+                banner.ContentId = Guid.NewGuid().ToString() + "@tams";
+
+                bannerHtml = $"""
+                    <img src="cid:{banner.ContentId}"
+                         alt="BookMyBrain"
+                         width="560"
+                         style="display:block;width:100%;max-width:560px;
+                                height:auto;border:0;margin:0 auto;">
+                    """;
+            }
+
+            string date = appointmentDate.ToString("MMMM dd, yyyy");
+            string start = DateTime.Today.Add(startTime).ToString("h:mm tt");
+            string end = DateTime.Today.Add(endTime).ToString("h:mm tt");
+
+            html = html.Replace("{{BannerHtml}}", bannerHtml)
+                .Replace("{{TutorName}}", System.Net.WebUtility.HtmlEncode(tutorName))
+                .Replace("{{AdminName}}", System.Net.WebUtility.HtmlEncode(adminName))
+                .Replace("{{GroupId}}", groupId.ToString())
+                .Replace("{{AppointmentDate}}", date)
+                .Replace("{{StartTime}}", start)
+                .Replace("{{EndTime}}", end)
+                .Replace("{{EnrolledCount}}", enrolledCount.ToString());
+
+            builder.HtmlBody = html;
+
+            builder.TextBody = $"""
+                Group Appointment Cancelled by Administrator
+
+                Hello {tutorName},
+
+                Administrator {adminName} has cancelled
+                your scheduled group tutoring appointment.
+
+                Group ID: {groupId}
+                Date: {date}
+                Time: {start} - {end}
+                Enrolled Students: {enrolledCount}
+                Status: Cancelled
+
+                The session has been cancelled for all students.
+                You are no longer expected to conduct this session.
+
+                The associated group schedule has been removed
+                from TAMS.
+
+                Thank you for your understanding.
+
+                The BookMyBrain Team
+                """;
+
+            message.Body = builder.ToMessageBody();
+
+            using var smtp = new SmtpClient();
+            await smtp.ConnectAsync( _configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
+            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
+            await smtp.SendAsync(message);
+            await smtp.DisconnectAsync(true);
+        }
+
 
     }
 }

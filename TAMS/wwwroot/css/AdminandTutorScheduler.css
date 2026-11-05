@@ -570,6 +570,76 @@
     transition: background-color 0.2s ease
 }
 
+.schedule-header-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.schedule-page .schedule-button-group {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 20px;
+    background: #7c3aed;
+    color: #ffffff;
+    border: 1px solid #6d28d9;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.18);
+    transition: all 0.2s ease;
+}
+
+.schedule-page .schedule-button-group:hover {
+    background: #6d28d9;
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(124, 58, 237, 0.25);
+}
+
+.schedule-page .schedule-button-group:active {
+    transform: translateY(0);
+}
+
+.schedule-page .schedule-button-group:focus-visible {
+    outline: 3px solid #c4b5fd;
+    outline-offset: 3px;
+}
+
+.schedule-button-group i { font-size: 14px; }
+
+.schedule-page .schedule-slot-group {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px;
+    background-color: #e9d5ff;
+    border-left: 3px solid #7c3aed;
+    border-radius: 5px;
+    color: #581c87;
+    font-size: 9.5px;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.schedule-page .schedule-slot-group .schedule-slot-dot {
+    background-color: #7c3aed;
+}
+
+.schedule-page .schedule-slot-group span { color: #581c87; }
+
+.schedule-page .schedule-slot-group strong {
+    color: #6d28d9;
+    font-weight: 800;
+}
+
+.schedule-legend .schedule-legend-group { background-color: #7c3aed; }
+
 @media (max-width: 700px) {
     .admin-scheduler, .schedule-page {
         width: calc(100% - 24px);
@@ -630,5 +700,29 @@
         width: 125px;
         padding: 9px 6px;
         font-size: 11px
+    }
+}
+
+@media (max-width: 768px) {
+    .schedule-header-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    .schedule-header-actions .schedule-button {
+        flex: 1 1 220px;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+
+    .schedule-header-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .schedule-header-actions .schedule-button {
+        width: 100%;
+        flex: none;
     }
 }

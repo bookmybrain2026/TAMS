@@ -211,6 +211,31 @@
     border-radius: 50%;
 }
 
+.tutor-booking-page .scheduler-slot-group {
+    background-color: #e9d5ff;
+    color: #581c87;
+    border: 1px solid #d8b4fe;
+}
+
+.tutor-booking-page button.scheduler-slot-group {
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.tutor-booking-page button.scheduler-slot-group:hover {
+    background-color: #d8b4fe;
+    border-color: #c084fc;
+    color: #581c87;
+    transform: translateY(-1px);
+}
+
+.tutor-booking-page button.scheduler-slot-group:focus-visible {
+    outline: 3px solid #9333ea;
+    outline-offset: 2px;
+}
+
+.tutor-booking-page .group-dot { background-color: #9333ea; }
+
 .tutor-booking-page .available-dot { background: var(--scheduler-green); }
 
 .tutor-booking-page .booked-dot { background: #8d929a; }

@@ -40,5 +40,8 @@ namespace TAMS.Data
         public IMongoCollection<Review> Reviews => _database.GetCollection<Review>("Reviews");
         public IMongoCollection<Report> Reports => _database.GetCollection<Report>("Reports");
 
+        public IMongoCollection<GroupAppointment> GroupAppointments => _database.GetCollection<GroupAppointment>("GroupAppointments");
+
+
     }
 }

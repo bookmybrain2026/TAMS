@@ -39,12 +39,20 @@
         <div class="schedule-heading">
             <span class="schedule-eyebrow">BMB • TUTOR PORTAL</span>
             <h1>Manage Schedule</h1>
-            <p>Manage your availability and add appointment time slots.</p>
+            <p>Manage your availability and create group appointments.</p>
         </div>
 
-        <a class="schedule-button schedule-button-primary" href="@Url.Action("Dashboard", "Tutor", new { id = tutorId })">
-            &larr; Back to Dashboard
-        </a>
+        <div class="schedule-header-actions">
+
+            <a asp-controller="Tutor" asp-action="CreateGroupAppointment" class="schedule-button schedule-button-group">
+                <i class="fas fa-users"></i>
+                Create Group Appointment
+            </a>
+
+            <a class="schedule-button schedule-button-primary" href="@Url.Action("Dashboard", "Tutor", new { id = tutorId })">
+                &larr; Back to Dashboard
+            </a>
+        </div>
     </header>
 
     <section class="schedule-card">
@@ -66,6 +74,9 @@
         <div class="schedule-legend">
             <span class="schedule-legend-dot"></span>
             <span>Available time slots</span>
+
+            <span class="schedule-legend-dot schedule-legend-group"></span>
+            <span>Group Appointments</span>
         </div>
 
         <div class="schedule-table-wrapper">
@@ -111,16 +122,21 @@
                                             <div class="schedule-slots">
                                                 @if (daySchedules.Any())
                                                 {
+
                                                     @foreach (var s in daySchedules.OrderBy(s => s.StartTime))
                                                     {
-                                                        <div class="schedule-slot">
+
+                                                        <div class="schedule-slot @(s.IsGroup ? "schedule-slot-group" : "")">
                                                             <span class="schedule-slot-dot"></span>
                                                             <span>
-                                                                @DateTime.Today.Add(s.StartTime).ToString("h:mm tt") -
+                                                                @DateTime.Today.Add(s.StartTime).ToString("h:mm tt")
+                                                                -
                                                                 @DateTime.Today.Add(s.EndTime).ToString("h:mm tt")
                                                             </span>
                                                         </div>
+
                                                     }
+
                                                 }
                                                 else
                                                 {

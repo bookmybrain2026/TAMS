@@ -1,0 +1,308 @@
+﻿@model TAMS.Models.ViewModels.TutorGroupDetailsViewModel
+
+@{
+    ViewData["Title"] = "Group Details";
+
+    var group = Model.Group;
+    var completedIds = group.CompletedStudentIds ?? new List<int>();
+    var absentIds = group.AbsentStudentIds ?? new List<int>();
+
+    var sessionEnd = group.AppointmentDate.Date.Add(group.EndTime);
+
+    bool canFinalize =
+        DateTime.Now >= sessionEnd &&
+        (group.Status == "Open" || group.Status == "Full");
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/GroupDetails.css" asp-append-version="true" />
+}
+
+<div class="group-details-page">
+
+    <div class="group-details-container">
+
+        @* <a asp-controller="Tutor"
+           asp-action="Dashboard" asp-route-id="@Context.Session.GetInt32("TutorId")"
+           asp-route-id="@group.TutorId" //maybe use this instead of session id
+           class="group-back-link">
+            ← Back to Tutor Dashboard
+        </a> *@
+
+        <a asp-controller="Tutor" asp-action="Dashboard" asp-action="Dashboard" asp-route-id="@Context.Session.GetInt32("TutorId")" class="group-back-link">
+            <i class="fas fa-arrow-left" aria-hidden="true"></i>
+            <span>Back to Tutor Dashboard</span>
+        </a>
+
+        <header class="group-details-header">
+            <div>
+                <p class="group-eyebrow">TUTOR PORTAL</p>
+
+                <h1>Group Appointment #@group.GroupId</h1>
+
+                <p>
+                    View enrolled students and manage
+                    individual session completion.
+                </p>
+            </div>
+
+            <span class="group-main-status">
+                @group.Status
+            </span>
+        </header>
+
+        @if (TempData["GroupDetailsSuccess"] != null)
+        {
+            <div class="group-alert group-alert-success">
+                @TempData["GroupDetailsSuccess"]
+            </div>
+        }
+
+        @if (TempData["GroupDetailsError"] != null)
+        {
+            <div class="group-alert group-alert-error">
+                @TempData["GroupDetailsError"]
+            </div>
+        }
+
+        <section class="group-info-card">
+
+            <h2>Appointment Information</h2>
+
+            <div class="group-info-grid">
+
+                <div class="group-info-item">
+                    <span>Date</span>
+                    <strong>
+                        @group.AppointmentDate.ToString("MMMM dd, yyyy")
+                    </strong>
+                </div>
+
+                <div class="group-info-item">
+                    <span>Start Time</span>
+                    <strong>
+                        @DateTime.Today.Add(group.StartTime).ToString("h:mm tt")
+                    </strong>
+                </div>
+
+                <div class="group-info-item">
+                    <span>End Time</span>
+                    <strong>
+                        @DateTime.Today.Add(group.EndTime).ToString("h:mm tt")
+                    </strong>
+                </div>
+
+                <div class="group-info-item">
+                    <span>Enrollment</span>
+                    <strong>
+                        @(group.StudentIds?.Count ?? 0) / @group.Capacity
+                    </strong>
+                </div>
+
+            </div>
+
+        </section>
+
+        <section class="group-attendance-summary">
+
+            <div class="attendance-summary-card">
+                <span>Completed</span>
+                <strong>@Model.CompletedCount</strong>
+            </div>
+
+            <div class="attendance-summary-card">
+                <span>Absent</span>
+                <strong>@Model.AbsentCount</strong>
+            </div>
+
+            <div class="attendance-summary-card">
+                <span>Not Finalized</span>
+                <strong>@Model.PendingCount</strong>
+            </div>
+
+        </section>
+
+        <section class="group-students-card">
+
+            <div class="group-students-heading">
+                <div>
+                    <h2>Enrolled Students</h2>
+
+                    <p>
+                        Mark each student as completed or absent
+                        after the group session ends.
+                    </p>
+                </div>
+
+                <span class="group-student-count">
+                    @Model.Students.Count Students
+                </span>
+            </div>
+
+            @if (Model.Students.Any())
+            {
+                <div class="group-table-scroll">
+
+                    <table class="group-students-table">
+
+                        <thead>
+                            <tr>
+                                <th>Student ID</th>
+                                <th>Student Name</th>
+                                <th>Email</th>
+                                <th>Attendance</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            @foreach (var student in Model.Students)
+                            {
+                                bool isCompleted =
+                                completedIds.Contains(student.StudentId);
+
+                                bool isAbsent =
+                                absentIds.Contains(student.StudentId);
+
+                                bool isPending =
+                                !isCompleted && !isAbsent;
+
+                                <tr>
+                                    <td>
+                                        #@student.StudentId
+                                    </td>
+
+                                    <td class="student-name">
+                                        @student.FName @student.LName
+                                    </td>
+
+                                    <td>
+                                        @student.Email
+                                    </td>
+
+                                    <td>
+                                        @if (isCompleted)
+                                        {
+                                            <span class="attendance-badge attendance-completed">
+                                                Completed
+                                            </span>
+                                        }
+                                        else if (isAbsent)
+                                        {
+                                            <span class="attendance-badge attendance-absent">
+                                                Absent
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="attendance-badge attendance-pending">
+                                                Pending
+                                            </span>
+                                        }
+                                    </td>
+
+                                    <td>
+                                        @if (isPending && canFinalize)
+                                        {
+                                            <div class="attendance-actions">
+
+                                                <form asp-controller="Tutor"
+                                                      asp-action="UpdateGroupStudentAttendance"
+                                                      method="post">
+
+                                                    @Html.AntiForgeryToken()
+
+                                                    <input type="hidden"
+                                                           name="groupId"
+                                                           value="@group.GroupId" />
+
+                                                    <input type="hidden"
+                                                           name="studentId"
+                                                           value="@student.StudentId" />
+
+                                                    <input type="hidden"
+                                                           name="attendanceStatus"
+                                                           value="Completed" />
+
+                                                    <button type="submit"
+                                                            class="attendance-complete-btn"
+                                                            onclick="return confirm('Mark this student as completed?');">
+                                                        Complete
+                                                    </button>
+                                                </form>
+
+                                                <form asp-controller="Tutor"
+                                                      asp-action="UpdateGroupStudentAttendance"
+                                                      method="post">
+
+                                                    @Html.AntiForgeryToken()
+
+                                                    <input type="hidden"
+                                                           name="groupId"
+                                                           value="@group.GroupId" />
+
+                                                    <input type="hidden"
+                                                           name="studentId"
+                                                           value="@student.StudentId" />
+
+                                                    <input type="hidden"
+                                                           name="attendanceStatus"
+                                                           value="Absent" />
+
+                                                    <button type="submit"
+                                                            class="attendance-absent-btn"
+                                                            onclick="return confirm('Mark this student as absent?');">
+                                                        Absent
+                                                    </button>
+                                                </form>
+
+                                            </div>
+                                        }
+                                        else if (isPending)
+                                        {
+                                            <span class="attendance-unavailable">
+                                                Not available
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="attendance-finalized">
+                                                Finalized
+                                            </span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p class="group-empty-state">
+                    No students are enrolled in this group.
+                </p>
+            }
+
+            @if (group.Status == "Completed")
+            {
+                <div class="group-completed-message">
+                    All enrolled students have been processed.
+                    This group appointment is completed.
+                </div>
+            }
+            else if (!canFinalize)
+            {
+                <p class="group-attendance-note">
+                    Attendance actions become available after
+                    the session ends, provided the group is active.
+                </p>
+            }
+
+        </section>
+
+    </div>
+
+</div>

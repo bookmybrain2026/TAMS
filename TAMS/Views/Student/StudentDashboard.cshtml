@@ -13,6 +13,12 @@
 @{
     var tutors = ViewBag.Tutors as List<Tutor>?? new List<Tutor>();
     var searchTerm = ViewBag.SearchTerm as string ?? "";
+
+    var studentGroupAppointments = ViewBag.StudentGroupAppointments as List<GroupAppointment> ?? new List<GroupAppointment>();
+    var awaitingGroupReviews = ViewBag.AwaitingGroupReviews as List<GroupAppointment> ?? new List<GroupAppointment>();
+    var groupReviewTutorNames = ViewBag.GroupReviewTutorNames as Dictionary<int, string> ?? new Dictionary<int, string>();
+    var totalAwaitingReviews = (Model.AwaitingReviews?.Count() ?? 0) + awaitingGroupReviews.Count;
+
 }
 <body>
     <div class="student-dashboard">
@@ -230,6 +236,141 @@
                 </form>
             </section>
 
+
+            @* My Group Appointments *@
+            <section class="dashboard-card student-groups-card">
+                <div class="student-groups-header">
+                    <div>
+                        <h2 class="dashboard-section-title">
+                            My Group Appointments
+                        </h2>
+
+                        <p class="student-groups-description">
+                            View your enrolled group tutoring sessions.
+                        </p>
+                    </div>
+
+                    <span class="student-groups-count">
+                        @studentGroupAppointments.Count
+                        @(studentGroupAppointments.Count == 1 ? "Group" : "Groups")
+                    </span>
+                </div>
+
+                @if (studentGroupAppointments.Any())
+                {
+                    <div class="table-responsive student-groups-scroll">
+                        <table class="table student-groups-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Capacity</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @foreach (var group in studentGroupAppointments
+                                                            .OrderBy(g => g.AppointmentDate)
+                                                            .ThenBy(g => g.StartTime))
+                                {
+                                    var enrolledCount = group.StudentIds?.Count ?? 0;
+
+                                    var statusClass = group.Status == "Open"
+                                    ? "group-status-open"
+                                    : group.Status == "Completed"
+                                    ? "group-status-completed"
+                                    : group.Status == "Cancelled"
+                                    ? "group-status-cancelled"
+                                    : "group-status-default";
+
+                                    <tr>
+                                        <td>
+                                            <span class="group-date">
+                                                @group.AppointmentDate.ToString("MM/dd/yyyy")
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            <span class="group-time">
+                                                @DateTime.Today.Add(group.StartTime).ToString("h:mm tt")
+                                                -
+                                                @DateTime.Today.Add(group.EndTime).ToString("h:mm tt")
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            <div class="group-capacity">
+                                                <span class="group-capacity-text">
+                                                    @enrolledCount / @group.Capacity Students
+                                                </span>
+
+                                                <div class="group-capacity-bar">
+                                                    <div class="group-capacity-fill"
+                                                         style="width: @(group.Capacity > 0 ? Math.Min(100, enrolledCount * 100.0 / group.Capacity) : 0)%">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+
+                                        <td>
+                                            <span class="group-status @statusClass">
+                                                @group.Status
+                                            </span>
+                                        </td>
+
+
+                                        <td>
+                                            @{
+                                                var groupStart = group.AppointmentDate.Date.Add(group.StartTime);
+                                                var canCancel = groupStart > DateTime.Now && (group.Status == "Open" || group.Status == "Full");
+                                            }
+
+                                            @if (canCancel)
+                                            {
+                                                <form asp-controller="Appointment" asp-action="CancelGroupAppointment" method="post" class="group-cancel-form"
+                                                      onsubmit="return confirm('Are you sure you want to leave this group appointment?');">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="groupId" value="@group.GroupId" />
+                                                    <button type="submit" class="group-cancel-btn">
+                                                        Cancel
+                                                    </button>
+                                                </form>
+                                            }
+                                            else
+                                            {
+                                                <span class="group-action-unavailable">
+                                                    Unavailable
+                                                </span>
+                                            }
+                                        </td>
+
+
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="student-groups-empty">
+                        <div class="student-groups-empty-icon">
+                            &#128101;
+                        </div>
+
+                        <h3>No Group Appointments Yet</h3>
+
+                        <p>
+                            You have not joined any group appointments.
+                            Browse available group sessions to get started.
+                        </p>
+                    </div>
+                }
+
+            </section>
+
             <section class="dashboard-card reviews-card">
                 <div class="reviews-header">
                     <div>
@@ -239,20 +380,20 @@
                         </p>
                     </div>
 
-                    @if (Model.AwaitingReviews != null && Model.AwaitingReviews.Any())
+                    @if (totalAwaitingReviews > 0)
                     {
                         <span class="reviews-count">
-                            @Model.AwaitingReviews.Count()
-                            @(Model.AwaitingReviews.Count() == 1 ? "Review" : "Reviews")
+                            @totalAwaitingReviews
+                            @(totalAwaitingReviews == 1 ? "Review" : "Reviews")
                         </span>
                     }
                 </div>
 
-                @if (Model.AwaitingReviews != null && Model.AwaitingReviews.Any())
+                @if (totalAwaitingReviews > 0)
                 {
                     <div class="reviews-vertical-scroll">
                         <div class="reviews-vertical-track">
-                            @foreach (var review in Model.AwaitingReviews)
+                            @foreach (var review in Model.AwaitingReviews ?? Enumerable.Empty<Review>())
                             {
 
                                 <div class="review-item">
@@ -287,6 +428,57 @@
                                     </form>
                                 </div>
                             }
+
+                            @* Group Appointment Reviews *@
+                            @foreach (var group in awaitingGroupReviews)
+                            {
+                                var tutorName = groupReviewTutorNames.TryGetValue(group.TutorId, out var name) ? name : "Tutor";
+                                <div class="review-item">
+                                    <h5>@tutorName</h5>
+
+                                    <p class="review-appointment-date">
+                                        <strong>Group Appointment Date:</strong>
+                                        @group.AppointmentDate.ToString("MMM dd, yyyy")
+                                        @DateTime.Today.Add(group.StartTime).ToString("h:mm tt")
+                                    </p>
+
+                                    <form asp-controller="Student" asp-action="SubmitGroupReview" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="groupId" value="@group.GroupId" />
+                                        <div class="mb-3">
+                                            <label for="group-rating-@group.GroupId" class="form-label">
+                                                Rating
+                                            </label>
+                                            <select id="group-rating-@group.GroupId" name="rating" class="form-select" required>
+                                                <option value="">Select a rating</option>
+                                                <option value="1">1 - Poor</option>
+                                                <option value="2">2 - Fair</option>
+                                                <option value="3">3 - Good</option>
+                                                <option value="4">4 - Very Good</option>
+                                                <option value="5">5 - Excellent</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="group-comment-@group.GroupId" class="form-label">
+                                                Your Review
+                                            </label>
+
+                                            <textarea id="group-comment-@group.GroupId"
+                                              name="comment"
+                                              class="form-control"
+                                              rows="4"
+                                              placeholder="Write your review..."
+                                              required></textarea>
+                                        </div>
+
+                                        <button type="submit" class="btn btn-primary">
+                                            Submit Review
+                                        </button>
+                                    </form>
+                                </div>
+                            }
+
                         </div>
                     </div>
                 }

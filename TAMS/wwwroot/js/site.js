@@ -424,4 +424,34 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
+function searchGroups() {
+    const input = document.getElementById("groupSearch");
 
+    if (!input) return;
+
+    const filter = input.value.toLowerCase().trim();
+    const groups = document.querySelectorAll("#groupsContainer .group-search-item");
+
+    const noResults = document.getElementById("noGroupResults");
+
+    let visibleGroups = 0;
+
+    groups.forEach(function (group) {
+        const groupText = (group.getAttribute("data-search") || "").toLowerCase();
+        const matches = groupText.includes(filter);
+
+        group.style.display = matches ? "" : "none";
+
+        if (matches) {
+            visibleGroups++;
+        }
+
+    });
+
+    if (noResults) {
+        noResults.style.display =
+            groups.length > 0 && visibleGroups === 0
+                ? "block"
+                : "none";
+    }
+}

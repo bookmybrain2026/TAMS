@@ -1,0 +1,75 @@
+﻿@using TAMS.Models
+
+@{
+    var appointments = ViewBag.Appointments as List<Appointment> ?? new List<Appointment>();
+
+    var adminFollowUpAppointments = appointments
+        .Where(a => string.Equals(a.Status?.Trim(), "Scheduled", StringComparison.OrdinalIgnoreCase)
+            && a.AdminNotificationSent)
+        .OrderBy(a => a.AppointmentDate)
+        .ToList();
+}
+
+<section class="admin-reminder-section admin-completion-section">
+    <h3>Appointment Completion Reminders</h3>
+
+    <p>
+        These appointments remain scheduled even though
+        the 72-hour completion reminder has been sent.
+    </p>
+
+    <div class="admin-follow-up-list">
+
+        @if (adminFollowUpAppointments.Any())
+        {
+            @foreach (var appt in adminFollowUpAppointments)
+            {
+                <article class="admin-follow-up-item admin-completion-item">
+
+                    <h4>Appointment #@appt.AppointmentId</h4>
+
+                    <p>
+                        <strong>Status:</strong>
+                        Still Scheduled
+                    </p>
+
+                    <p>
+                        <strong>Tutor:</strong>
+                        @(appt.Tutor != null ? $"{appt.Tutor.FName} {appt.Tutor.LName}" : "Tutor unavailable")
+                    </p>
+
+                    <p>
+                        <strong>Student:</strong>
+                        @(appt.Student != null ? $"{appt.Student.FName} {appt.Student.LName}" : "Student unavailable")
+            </p>
+
+                    <p>
+                        <strong>Session Date:</strong>
+                        @appt.AppointmentDate.ToString("MMM d, yyyy")
+                    </p>
+
+                    <p>
+                        <strong>Session Time:</strong>
+                        @appt.AppointmentDate.ToString("h:mm tt")
+                        -
+                        @appt.EndDate.ToString("h:mm tt")
+                    </p>
+
+                    <p>
+                        Please review this appointment and
+                        update its status when appropriate.
+                    </p>
+
+                </article>
+                }
+        }
+        else
+        {
+            <p>
+                There are no outstanding appointment
+                completion reminders.
+            </p>
+        }
+
+    </div>
+</section>

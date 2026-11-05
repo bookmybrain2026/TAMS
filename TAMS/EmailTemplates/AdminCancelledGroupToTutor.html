@@ -1,0 +1,118 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Group Session Cancelled by Administrator</title>
+</head>
+<body style="margin:0;padding:0;background:#F7F0E4;
+             font-family:'Segoe UI',Arial,sans-serif;color:#35291F;">
+    <table role="presentation" width="100%" cellpadding="0"
+           cellspacing="0" style="background:#F7F0E4;">
+        <tr>
+            <td align="center" style="padding:30px 12px;">
+                <table role="presentation" width="560" cellpadding="0"
+                       cellspacing="0"
+                       style="width:100%;max-width:560px;
+                              background:#FFFFFF;border-radius:14px;
+                              overflow:hidden;">
+                    <tr>
+                        <td style="background:#F4A51C;">
+                            {{BannerHtml}}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:35px 30px;">
+                            <h1 style="font-size:26px;color:#35291F;
+                                       margin:0 0 18px;">
+                                Group Session Cancelled
+                            </h1>
+
+                            <p style="font-size:15px;line-height:1.7;">
+                                Hello {{TutorName}},
+                            </p>
+
+                            <p style="font-size:14px;line-height:1.8;
+                                      color:#76634F;">
+                                Your upcoming group tutoring session
+                                has been
+                                <strong style="color:#B43D32;">
+                                    cancelled by an administrator.
+                                </strong>
+                            </p>
+
+                            <table role="presentation" width="100%"
+                                   cellpadding="0" cellspacing="0"
+                                   style="background:#FFF8E8;
+                                          border:1px solid #E9DECC;
+                                          border-radius:10px;
+                                          margin:24px 0;">
+                                <tr>
+                                    <td style="padding:22px;">
+                                        <p style="font-size:12px;
+                                                  font-weight:bold;
+                                                  letter-spacing:1.5px;
+                                                  text-align:center;
+                                                  color:#79512F;">
+                                            CANCELLED GROUP DETAILS
+                                        </p>
+
+                                        <p style="font-size:14px;
+                                                  line-height:2;
+                                                  color:#35291F;">
+                                            <strong>Group ID:</strong> #{{GroupId}}<br>
+                                            <strong>Date:</strong> {{AppointmentDate}}<br>
+                                            <strong>Start Time:</strong> {{StartTime}}<br>
+                                            <strong>End Time:</strong> {{EndTime}}<br>
+                                            <strong>Enrolled Students:</strong> {{EnrolledCount}}<br>
+                                            <strong>Cancelled By:</strong> {{AdminName}}<br>
+                                            <strong>Status:</strong>
+                                            <span style="color:#B43D32;font-weight:bold;">
+                                                Cancelled
+                                            </span>
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p style="font-size:14px;line-height:1.8;
+                                      color:#76634F;">
+                                This cancellation applies to the
+                                entire group appointment, including
+                                all enrolled students.
+                            </p>
+
+                            <p style="font-size:14px;line-height:1.8;
+                                      color:#76634F;">
+                                The associated group schedule has
+                                been removed from TAMS. You are no
+                                longer expected to conduct this session.
+                            </p>
+
+                            <p style="font-size:14px;line-height:1.8;
+                                      color:#76634F;">
+                                The enrolled students will also be
+                                sent cancellation notifications,
+                                according to their email preferences.
+                            </p>
+
+                            <hr style="border:0;border-top:1px solid #E9DECC;
+                                       margin:28px 0;">
+
+                            <p style="font-size:14px;text-align:center;
+                                      font-weight:bold;color:#79512F;">
+                                The BookMyBrain Team
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+
+                <p style="font-size:11px;color:#8A7967;
+                          text-align:center;margin-top:20px;">
+                    Tutoring Appointment Management System
+                </p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
