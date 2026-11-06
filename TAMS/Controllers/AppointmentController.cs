@@ -630,7 +630,8 @@ namespace TAMS.Controllers
 
             TempData["SuccessMessage"] = "You have successfully joined the group appointment.";
 
-            return ReturnToScheduler();
+            return RedirectToAction("Dashboard", "Student", new { id = studentId });
+            //return ReturnToScheduler();
         }
 
         [HttpPost]
