@@ -28,10 +28,24 @@ namespace TAMS.Controllers
             if (student == null) { return NotFound(); }
 
             var appointments = dBContext.Appointments.Find(a => a.StudentId == studentId).SortBy(a => a.AppointmentDate).ToList();
+            var groupAppointments = dBContext.GroupAppointments.Find(g => g.StudentIds.Contains(studentId)).SortBy(g => g.AppointmentDate).ToList();
+
             foreach (var appointment in appointments)
             {
                 appointment.Tutor = dBContext.Tutor.Find(t => t.TutorId == appointment.TutorId).FirstOrDefault();
             }
+
+            var allAppointments = appointments
+                .Select(a => new
+                {
+                    Date = a.AppointmentDate, Type = "Individual", TutorId = a.TutorId, Status = a.Status
+                })
+                .Concat(groupAppointments.Select(g => new
+                {
+                    Date = g.AppointmentDate.AddHours(6), Type = "Group", TutorId = g.TutorId, Status = g.Status
+                }))
+                .OrderBy(a => a.Date)
+                .ToList();
 
             var lines = new List<string>
             {
@@ -40,16 +54,18 @@ namespace TAMS.Controllers
                 "---------------------------------------------------"
             };
 
-            if (appointments.Count == 0)
+            if (allAppointments.Count == 0)
             {
                 lines.Add("No appointments were found for this student.");
             }
 
-            foreach (var appointment in appointments)
+            foreach (var appointment in allAppointments)
             {
-                var tutorName = appointment.Tutor == null ? "Tutor information unavailable" : $"{appointment.Tutor.FName} {appointment.Tutor.LName}";
+                var tutor = dBContext.Tutor.Find(t => t.TutorId == appointment.TutorId).FirstOrDefault();
+                var tutorName = tutor == null ? "Tutor information unavailable" : $"{tutor.FName} {tutor.LName}";
 
-                lines.Add($"Date: {appointment.AppointmentDate:MM/dd/yyyy hh:mm tt}");
+                lines.Add($"Date: {appointment.Date:MM/dd/yyyy hh:mm tt}");
+                lines.Add($"Type: {appointment.Type}");
                 lines.Add($"Tutor: {tutorName}");
                 lines.Add($"Status: {appointment.Status}");
                 lines.Add("---------------------------------------------------");
@@ -70,7 +86,7 @@ namespace TAMS.Controllers
                 DateGenerated = DateTime.Now,
                 GeneratedByRole = "Student",
                 Summary =
-                    $"Generated appointment history containing {appointments.Count} appointment(s)."
+                    $"Generated appointment history containing {appointments.Count} individual appointment(s) and {groupAppointments.Count} group appointment(s)."
             };
             dBContext.Reports.InsertOne(reportRecord);
 
@@ -85,6 +101,7 @@ namespace TAMS.Controllers
 
             var schedules = dBContext.Schedule.Find(s => s.TutorId == tutorId).SortBy(s => s.Date).ThenBy(s => s.StartTime).ToList();
             var appointments = dBContext.Appointments.Find(a => a.TutorId == tutorId).SortBy(a => a.AppointmentDate).ToList();
+            var groupAppointments = dBContext.GroupAppointments.Find(g => g.TutorId == tutorId).SortBy(g => g.AppointmentDate).ToList();
 
             foreach (var appointment in appointments)
             {
@@ -104,16 +121,15 @@ namespace TAMS.Controllers
                     "-----------------------------------------------------"
                 };
 
-            if (schedules.Count == 0)
-            {
-                lines.Add("No schedule slots were found.");
-            }
+            int displayedScheduleCount = 0;
 
             foreach (var schedule in schedules)
             {
                 var slotAppointments = appointments.Where(a => a.ScheduleId == schedule.ScheduleId).ToList();
-                var bookedAppointment = slotAppointments.FirstOrDefault(a => a.Status?.Trim().Equals("Scheduled", StringComparison.OrdinalIgnoreCase) == true);
-                var completedAppointment = slotAppointments.FirstOrDefault(a => a.Status?.Trim().Equals("Completed", StringComparison.OrdinalIgnoreCase) == true);
+                var bookedAppointment = slotAppointments.FirstOrDefault(a =>
+                    a.Status?.Trim().Equals("Scheduled", StringComparison.OrdinalIgnoreCase) == true);
+                var completedAppointment = slotAppointments.FirstOrDefault(a =>
+                    a.Status?.Trim().Equals("Completed", StringComparison.OrdinalIgnoreCase) == true);
 
                 string status;
                 string studentName = "N/A";
@@ -121,17 +137,26 @@ namespace TAMS.Controllers
                 if (bookedAppointment != null)
                 {
                     status = "Booked";
-                    studentName = bookedAppointment.Student == null ? "Student information unavailable" : $"{bookedAppointment.Student.FName} {bookedAppointment.Student.LName}";
+                    studentName = bookedAppointment.Student == null ? "Student information unavailable"
+                        : $"{bookedAppointment.Student.FName} {bookedAppointment.Student.LName}";
                 }
                 else if (completedAppointment != null)
                 {
                     status = "Completed";
-                    studentName = completedAppointment.Student == null ? "Student information unavailable" : $"{completedAppointment.Student.FName} {completedAppointment.Student.LName}";
+                    studentName = completedAppointment.Student == null ? "Student information unavailable"
+                        : $"{completedAppointment.Student.FName} {completedAppointment.Student.LName}";
                 }
                 else
                 {
                     DateTime slotDateTime = schedule.Date.Date.Add(schedule.StartTime);
-                    status = slotDateTime < now ? "Expired" : "Available";
+
+                    // Skip expired slots
+                    if (slotDateTime < now)
+                    {
+                        continue;
+                    }
+
+                    status = "Available";
                 }
 
                 string startTime = DateTime.Today.Add(schedule.StartTime).ToString("hh:mm tt");
@@ -143,25 +168,64 @@ namespace TAMS.Controllers
                     $"{status}  |  " +
                     $"{studentName}"
                 );
+
+                displayedScheduleCount++;
+            }
+
+            if (displayedScheduleCount == 0)
+            {
+                lines.Add("No schedule slots were found.");
             }
 
             lines.Add("");
             lines.Add("=== APPOINTMENTS ===");
 
-            if (appointments.Count == 0)
+            var allAppointments = new List<(DateTime Date, string Status, string Student)>();
+
+            // Add regular appointments
+            foreach (var appointment in appointments)
+            {
+                // Skip cancelled appointments.
+                if (string.Equals(appointment.Status?.Trim(), "Cancelled", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+                string studentName = appointment.Student == null ? "Student information unavailable"
+                    : $"{appointment.Student.FName} {appointment.Student.LName}";
+
+                allAppointments.Add((
+                    appointment.AppointmentDate, appointment.Status ?? "Unknown", studentName
+                ));
+            }
+
+            // Add group appointments.
+            foreach (var group in groupAppointments)
+            {
+                // Skip cancelled group appointments.
+                if (string.Equals(group.Status?.Trim(), "Cancelled", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                allAppointments.Add((
+                    group.AppointmentDate.AddHours(6), group.Status ?? "Unknown", "Group"
+                ));
+            }
+
+            // Sort both appointment types together by date and time
+            allAppointments = allAppointments.OrderBy(a => a.Date).ToList();
+
+            if (allAppointments.Count == 0)
             {
                 lines.Add("No appointments were found.");
             }
 
-            foreach (var appointment in appointments)
+            foreach (var appointment in allAppointments)
             {
-                var studentName = appointment.Student == null ? "Student information unavailable" : $"{appointment.Student.FName} {appointment.Student.LName}";
-                DateTime localAppointmentDate = appointment.AppointmentDate;
-
                 lines.Add(
-                    $"{localAppointmentDate:MM/dd/yyyy hh:mm tt}  |  " +
+                    $"{appointment.Date:MM/dd/yyyy hh:mm tt}  |  " +
                     $"{appointment.Status}  |  " +
-                    $"Student: {studentName}"
+                    $"Student: {appointment.Student}"
                 );
             }
 
@@ -182,8 +246,8 @@ namespace TAMS.Controllers
                 GeneratedByRole = "Tutor",
                 Summary =
                     $"Generated schedule and appointments report " +
-                    $"({schedules.Count} schedule slots, " +
-                    $"{appointments.Count} appointments)."
+                    $"({displayedScheduleCount} schedule slots, " +
+                    $"{allAppointments.Count} appointments)."
             };
             dBContext.Reports.InsertOne(reportRecord);
 

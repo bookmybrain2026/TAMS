@@ -1067,41 +1067,77 @@ namespace TAMS.Controllers
             DateTime reportDate = (date ?? DateTime.Today).Date;
             DateTime nextDate = reportDate.AddDays(1);
 
-            var appointments = dBContext.Appointments.Find(a => a.AppointmentDate >= reportDate && a.AppointmentDate < nextDate).ToList().OrderBy(a => a.AppointmentDate).ToList();
+            var appointments = dBContext.Appointments.Find(a => a.AppointmentDate >= reportDate && a.AppointmentDate < nextDate).ToList()
+                .Where(a => !string.Equals(a.Status?.Trim(), "Cancelled", StringComparison.OrdinalIgnoreCase))
+                .OrderBy(a => a.AppointmentDate).ToList();
+
+            var groupAppointments = dBContext.GroupAppointments.Find(g => g.AppointmentDate >= reportDate && g.AppointmentDate < nextDate).ToList()
+                .Where(g => !string.Equals(g.Status?.Trim(), "Cancelled", StringComparison.OrdinalIgnoreCase)
+                    && !string.Equals(g.Status?.Trim(), "Pending", StringComparison.OrdinalIgnoreCase)
+                    && !string.Equals(g.Status?.Trim(), "Rejected", StringComparison.OrdinalIgnoreCase))
+                .OrderBy(g => g.AppointmentDate.Date.Add(g.StartTime)).ToList();
+
+            var allAppointments = appointments
+                .Select(a => new
+                {
+                    AppointmentId = a.AppointmentId.ToString(),
+                    AppointmentDate = a.AppointmentDate,
+                    EndDate = a.EndDate,
+                    TutorId = a.TutorId,
+                    StudentId = (int?)a.StudentId,
+                    Status = a.Status ?? "Scheduled",
+                    Type = "Individual"
+                })
+                .Concat(groupAppointments.Select(g => new
+                {
+                    AppointmentId = g.GroupId.ToString(),
+                    AppointmentDate = g.AppointmentDate.Date.Add(g.StartTime),
+                    EndDate = g.AppointmentDate.Date.Add(g.EndTime),
+                    TutorId = g.TutorId,
+                    StudentId = (int?)null,
+                    Status = g.Status,
+                    Type = "Group"
+                }))
+                .OrderBy(a => a.AppointmentDate).ToList();
 
             var lines = new List<string>
-                {
-                    "TAMS Daily Appointments Report",
-                    $"Report Date: {reportDate:MM/dd/yyyy}",
-                    $"Generated: {DateTime.Now:MM/dd/yyyy hh:mm tt}",
-                    new string('-', 100),
-                    "",
-                    $"Total Appointments: {appointments.Count}",
-                    "",
-                    "APPOINTMENT DETAILS",
-                    new string('-', 100)
-                };
+            {
+                "TAMS Daily Appointments Report",
+                $"Report Date: {reportDate:MM/dd/yyyy}",
+                $"Generated: {DateTime.Now:MM/dd/yyyy hh:mm tt}",
+                new string('-', 100),
+                "",
+                $"Total Appointments: {allAppointments.Count}",
+                "",
+                "APPOINTMENT DETAILS",
+                new string('-', 100)
+            };
 
-            if (appointments.Count == 0)
+            if (allAppointments.Count == 0)
             {
                 lines.Add("No appointments found for this date.");
             }
             else
             {
-                foreach (var appt in appointments)
+                foreach (var appt in allAppointments)
                 {
                     var tutor = dBContext.Tutor.Find(t => t.TutorId == appt.TutorId).FirstOrDefault();
-                    var student = dBContext.Student.Find(s => s.StudentId == appt.StudentId).FirstOrDefault();
-                    string tutorName = tutor != null ? $"{tutor.FName} {tutor.LName}" : "Tutor unavailable";
-                    string studentName = student != null ? $"{student.FName} {student.LName}" : "Student unavailable";
+                    var student = appt.StudentId.HasValue
+                        ? dBContext.Student.Find(s => s.StudentId == appt.StudentId.Value).FirstOrDefault()
+                        : null;
 
-                    lines.Add($"Appointment ID : {appt.AppointmentId}");
+                    string tutorName = tutor != null ? $"{tutor.FName} {tutor.LName}" : "Tutor unavailable";
+                    string studentName = appt.Type == "Group" ? "Group" :
+                        student != null ? $"{student.FName} {student.LName}" : "Student unavailable";
+
+                    lines.Add($"{(appt.Type == "Group" ? "Group ID" : "Appointment ID")} : {appt.AppointmentId}");
+                    lines.Add($"Type           : {appt.Type}");
                     lines.Add($"Date           : {appt.AppointmentDate:MM/dd/yyyy}");
                     lines.Add($"Start Time     : {appt.AppointmentDate:h:mm tt}");
                     lines.Add($"End Time       : {appt.EndDate:h:mm tt}");
                     lines.Add($"Tutor          : {tutorName}");
                     lines.Add($"Student        : {studentName}");
-                    lines.Add($"Status         : {appt.Status ?? "Scheduled"}");
+                    lines.Add($"Status         : {appt.Status}");
                     lines.Add(new string('-', 100));
                 }
             }
@@ -1118,15 +1154,23 @@ namespace TAMS.Controllers
             var adminId = HttpContext.Session.GetInt32("AdminId");
             if (adminId == null) { return RedirectToAction("Login", "Login"); }
 
+            DateTime now = DateTime.Now;
+
             var schedules = dBContext.Schedule.Find(_ => true).ToList();
             var tutors = dBContext.Tutor.Find(_ => true).ToList();
             var tutorSchedules = schedules
+                .Where(s => s.Date.Date.Add(s.EndTime) > now)
                 .Select(s =>
                 {
                     var tutor = tutors.FirstOrDefault(t => t.TutorId == s.TutorId);
                     return new
                     {
-                        s.ScheduleId, s.TutorId, TutorName = tutor == null ? "Unknown Tutor" : $"{tutor.FName} {tutor.LName}", s.Date, s.StartTime, s.EndTime
+                        s.ScheduleId,
+                        s.TutorId,
+                        TutorName = tutor == null ? "Unknown Tutor" : $"{tutor.FName} {tutor.LName}",
+                        s.Date,
+                        s.StartTime,
+                        s.EndTime
                     };
                 })
                 .OrderBy(s => s.TutorId).ThenBy(s => s.Date).ThenBy(s => s.StartTime).ToList();
@@ -1139,28 +1183,28 @@ namespace TAMS.Controllers
             string separator = new string('-', idWidth + tutorWidth + dateWidth + timeWidth * 2 + 16);
 
             var lines = new List<string>
-                {
-                    "TAMS Tutor Schedules Report",
-                    $"Generated: {DateTime.Now:MM/dd/yyyy hh:mm tt}",
-                    separator,
-                    "",
-                    string.Format(
-                        "{0,-" + idWidth +
-                        "} | {1,-" + tutorWidth +
-                        "} | {2,-" + dateWidth +
-                        "} | {3,-" + timeWidth +
-                        "} | {4,-" + timeWidth + "}",
-                        "Schedule ID",
-                        "Tutor Name",
-                        "Date",
-                        "Start Time",
-                        "End Time"),
-                    separator
-                };
+            {
+                "TAMS Tutor Schedules Report",
+                $"Generated: {DateTime.Now:MM/dd/yyyy hh:mm tt}",
+                separator,
+                "",
+                string.Format(
+                    "{0,-" + idWidth +
+                    "} | {1,-" + tutorWidth +
+                    "} | {2,-" + dateWidth +
+                    "} | {3,-" + timeWidth +
+                    "} | {4,-" + timeWidth + "}",
+                    "Schedule ID",
+                    "Tutor Name",
+                    "Date",
+                    "Start Time",
+                    "End Time"),
+                separator
+            };
 
             if (!tutorSchedules.Any())
             {
-                lines.Add("No tutor schedules were found.");
+                lines.Add("No active or upcoming tutor schedules were found.");
             }
             else
             {
@@ -1196,47 +1240,85 @@ namespace TAMS.Controllers
             var adminId = HttpContext.Session.GetInt32("AdminId");
             if (adminId == null) { return RedirectToAction("Login", "Login"); }
 
-            var appointments = dBContext.Appointments.Find(_ => true).ToList().OrderBy(a => a.AppointmentDate).ToList();
+            var appointments = dBContext.Appointments.Find(_ => true).ToList()
+                .Where(a => !string.Equals(a.Status?.Trim(), "Cancelled", StringComparison.OrdinalIgnoreCase))
+                .OrderBy(a => a.AppointmentDate).ToList();
 
-            int scheduledCount = appointments.Count(a => string.Equals(a.Status?.Trim() ?? "Scheduled", "Scheduled", StringComparison.OrdinalIgnoreCase));
-            int completedCount = appointments.Count(a => string.Equals(a.Status?.Trim(), "Completed", StringComparison.OrdinalIgnoreCase));
-            int cancelledCount = appointments.Count(a => string.Equals(a.Status?.Trim(), "Cancelled", StringComparison.OrdinalIgnoreCase));
+            var groupAppointments = dBContext.GroupAppointments.Find(_ => true).ToList()
+                .Where(g => !string.Equals(g.Status?.Trim(), "Cancelled", StringComparison.OrdinalIgnoreCase)
+                    && !string.Equals(g.Status?.Trim(), "Rejected", StringComparison.OrdinalIgnoreCase)
+                    && !string.Equals(g.Status?.Trim(), "Pending", StringComparison.OrdinalIgnoreCase))
+                .OrderBy(g => g.AppointmentDate).ToList();
+
+            var tutors = dBContext.Tutor.Find(_ => true).ToList();
+
+            var allAppointments = appointments
+                .Select(a => new
+                {
+                    AppointmentId = a.AppointmentId.ToString(),
+                    AppointmentDate = a.AppointmentDate,
+                    EndDate = a.EndDate,
+                    TutorName = a.Tutor != null ? $"{a.Tutor.FName} {a.Tutor.LName}" : "Tutor unavailable",
+                    StudentName = a.Student != null ? $"{a.Student.FName} {a.Student.LName}" : "Student unavailable",
+                    Status = a.Status ?? "Scheduled",
+                    Type = "Individual"
+                })
+                .Concat(groupAppointments.Select(g => new
+                {
+                    AppointmentId = g.GroupId.ToString(),
+                    AppointmentDate = g.AppointmentDate.Date.Add(g.StartTime),
+                    EndDate = g.AppointmentDate.Date.Add(g.EndTime),
+                    TutorName = tutors.FirstOrDefault(t => t.TutorId == g.TutorId) is var tutor && tutor != null
+                        ? $"{tutor.FName} {tutor.LName}" : "Tutor unavailable",
+                    StudentName = "Group",
+                    Status = g.Status,
+                    Type = "Group"
+                }))
+                .OrderBy(a => a.AppointmentDate).ToList();
+
+            int scheduledCount = allAppointments.Count(a =>
+                string.Equals(a.Status?.Trim(), "Scheduled", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(a.Status?.Trim(), "Open", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(a.Status?.Trim(), "Full", StringComparison.OrdinalIgnoreCase));
+
+            int completedCount = allAppointments.Count(a =>
+                string.Equals(a.Status?.Trim(), "Completed", StringComparison.OrdinalIgnoreCase));
+
+            int cancelledCount = 0;
 
             var lines = new List<string>
-                {
-                    "TAMS All Appointments Report",
-                    $"Generated: {DateTime.Now:MM/dd/yyyy hh:mm tt}",
-                    new string('=', 90),
-                    "",
-                    "APPOINTMENT SUMMARY",
-                    new string('-', 40),
-                    $"Total Appointments : {appointments.Count}",
-                    $"Scheduled          : {scheduledCount}",
-                    $"Completed          : {completedCount}",
-                    $"Cancelled          : {cancelledCount}",
-                    "",
-                    "ALL APPOINTMENTS",
-                    new string('=', 90)
-                };
+            {
+                "TAMS All Appointments Report",
+                $"Generated: {DateTime.Now:MM/dd/yyyy hh:mm tt}",
+                new string('=', 90),
+                "",
+                "APPOINTMENT SUMMARY",
+                new string('-', 40),
+                $"Total Appointments : {allAppointments.Count}",
+                $"Scheduled          : {scheduledCount}",
+                $"Completed          : {completedCount}",
+                $"Cancelled          : {cancelledCount}",
+                "",
+                "ALL APPOINTMENTS",
+                new string('=', 90)
+            };
 
-            if (appointments.Count == 0)
+            if (allAppointments.Count == 0)
             {
                 lines.Add("No appointments found.");
             }
             else
             {
-                foreach (var appt in appointments)
+                foreach (var appt in allAppointments)
                 {
-                    string tutorName = appt.Tutor != null ? $"{appt.Tutor.FName} {appt.Tutor.LName}" : "Tutor unavailable";
-                    string studentName = appt.Student != null ? $"{appt.Student.FName} {appt.Student.LName}" : "Student unavailable";
-
-                    lines.Add($"Appointment ID : {appt.AppointmentId}");
+                    lines.Add($"{(appt.Type == "Group" ? "Group ID" : "Appointment ID")} : {appt.AppointmentId}");
+                    lines.Add($"Type           : {appt.Type}");
                     lines.Add($"Date           : {appt.AppointmentDate:MM/dd/yyyy}");
                     lines.Add($"Start Time     : {appt.AppointmentDate:h:mm tt}");
                     lines.Add($"End Time       : {appt.EndDate:h:mm tt}");
-                    lines.Add($"Tutor          : {tutorName}");
-                    lines.Add($"Student        : {studentName}");
-                    lines.Add($"Status         : {appt.Status ?? "Scheduled"}");
+                    lines.Add($"Tutor          : {appt.TutorName}");
+                    lines.Add($"Student        : {appt.StudentName}");
+                    lines.Add($"Status         : {appt.Status}");
                     lines.Add(new string('-', 90));
                 }
             }
