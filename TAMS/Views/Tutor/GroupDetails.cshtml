@@ -16,6 +16,7 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/GroupDetails.css" asp-append-version="true" />
+    <link href="~/css/tutordashboard.css" rel="stylesheet" />
 }
 
 <div class="group-details-page">
@@ -101,6 +102,13 @@
 
             </div>
 
+            <div class="tutor-table-actions">
+                <button type="button" class="group-notes-btn" aria-haspopup="dialog" aria-controls="TutorGroupAppointmentNotesModal"
+                        onclick="openTutorModal('@Url.Action("ViewGroupAppointmentNotes", "Tutor", new { groupId = group.GroupId })', 'TutorGroupAppointmentNotesModal')">
+                    <i class="fas fa-sticky-note" aria-hidden="true"></i>
+                    @(string.IsNullOrWhiteSpace(group.TutorNotes) ? "Add Notes" : "Edit Notes")
+                </button>
+            </div>
         </section>
 
         <section class="group-attendance-summary">

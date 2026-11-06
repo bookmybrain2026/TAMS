@@ -277,12 +277,9 @@
                                 {
                                     var enrolledCount = group.StudentIds?.Count ?? 0;
 
-                                    var statusClass = group.Status == "Open"
-                                    ? "group-status-open"
-                                    : group.Status == "Completed"
-                                    ? "group-status-completed"
-                                    : group.Status == "Cancelled"
-                                    ? "group-status-cancelled"
+                                    var statusClass = group.Status == "Open" ? "group-status-open"
+                                    : group.Status == "Completed" ? "group-status-completed"
+                                    : group.Status == "Cancelled" ? "group-status-cancelled"
                                     : "group-status-default";
 
                                     <tr>
@@ -320,33 +317,31 @@
                                             </span>
                                         </td>
 
-
                                         <td>
                                             @{
                                                 var groupStart = group.AppointmentDate.Date.Add(group.StartTime);
                                                 var canCancel = groupStart > DateTime.Now && (group.Status == "Open" || group.Status == "Full");
                                             }
 
-                                            @if (canCancel)
-                                            {
-                                                <form asp-controller="Appointment" asp-action="CancelGroupAppointment" method="post" class="group-cancel-form"
-                                                      onsubmit="return confirm('Are you sure you want to leave this group appointment?');">
-                                                    @Html.AntiForgeryToken()
-                                                    <input type="hidden" name="groupId" value="@group.GroupId" />
-                                                    <button type="submit" class="group-cancel-btn">
-                                                        Cancel
-                                                    </button>
-                                                </form>
-                                            }
-                                            else
-                                            {
-                                                <span class="group-action-unavailable">
-                                                    Unavailable
-                                                </span>
-                                            }
+                                            <div class="d-flex gap-2 flex-wrap">
+                                                <button type="button" class="btn btn-info btn-sm" aria-haspopup="dialog" aria-controls="studentGroupAppointmentNotesModal"
+                                                        onclick="openTutorModal('@Url.Action("ViewGroupAppointmentNotes", "Student", new { groupId = group.GroupId })', 'studentGroupAppointmentNotesModal')">
+                                                    View Notes
+                                                </button>
+
+                                                @if (canCancel)
+                                                {
+                                                    <form asp-controller="Appointment" asp-action="CancelGroupAppointment" method="post" class="group-cancel-form"
+                                                          onsubmit="return confirm('Are you sure you want to leave this group appointment?');">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="groupId" value="@group.GroupId" />
+                                                        <button type="submit" class="group-cancel-btn">
+                                                            Cancel
+                                                        </button>
+                                                    </form>
+                                                }
+                                            </div>
                                         </td>
-
-
                                     </tr>
                                 }
                             </tbody>

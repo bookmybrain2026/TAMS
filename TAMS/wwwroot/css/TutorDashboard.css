@@ -1182,7 +1182,7 @@
     line-height: 1.6;
 }
 
-:is(#tutorReminderModal, #TutorAppointmentNotesModal) {
+:is(#tutorReminderModal, #TutorAppointmentNotesModal, #TutorGroupAppointmentNotesModal) {
     position: fixed !important;
     inset: 0 !important;
     z-index: 1200 !important;
@@ -1195,7 +1195,7 @@
     backdrop-filter: blur(3px);
 }
 
-:is(#tutorReminderModal, #TutorAppointmentNotesModal) .tutor-modal-content {
+:is(#tutorReminderModal, #TutorAppointmentNotesModal,#TutorGroupAppointmentNotesModal) .tutor-modal-content {
     position: relative;
     width: 100%;
     max-height: calc(100vh - 40px);
@@ -1210,7 +1210,7 @@
     max-width: 600px;
 }
 
-:is(#tutorReminderModal, #TutorAppointmentNotesModal) .tutor-modal-header {
+:is(#tutorReminderModal, #TutorAppointmentNotesModal,#TutorGroupAppointmentNotesModal) .tutor-modal-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1220,19 +1220,19 @@
     border-bottom: 1px solid #eee3d2;
 }
 
-:is(#tutorReminderModal, #TutorAppointmentNotesModal) .tutor-modal-header h2 {
+:is(#tutorReminderModal, #TutorAppointmentNotesModal, #TutorGroupAppointmentNotesModal) .tutor-modal-header h2 {
     margin: 0;
     color: #493323;
     font-size: 23px;
     font-weight: 800;
 }
 
-:is(#tutorReminderModal, #TutorAppointmentNotesModal) .tutor-modal-header h2 i {
+:is(#tutorReminderModal, #TutorAppointmentNotesModal, #TutorGroupAppointmentNotesModal) .tutor-modal-header h2 i {
     margin-right: 8px;
     color: #d99020;
 }
 
-:is(#tutorReminderModal, #TutorAppointmentNotesModal) .tutor-modal-close {
+:is(#tutorReminderModal, #TutorAppointmentNotesModal, #TutorGroupAppointmentNotesModal) .tutor-modal-close {
     position: absolute;
     top: 13px;
     right: 15px;
@@ -1250,7 +1250,7 @@
     transition: background .2s ease, transform .2s ease;
 }
 
-:is(#tutorReminderModal, #TutorAppointmentNotesModal) .tutor-modal-close:hover {
+:is(#tutorReminderModal, #TutorAppointmentNotesModal, #TutorGroupAppointmentNotesModal) .tutor-modal-close:hover {
     background: #ffe3a0;
     transform: scale(1.04);
 }
@@ -1259,13 +1259,13 @@
     max-width: 600px;
 }*/
 
-#TutorAppointmentNotesModal form {
+:is(#TutorAppointmentNotesModal, #TutorGroupAppointmentNotesModal) form {
     display: flex;
     flex-direction: column;
     gap: 16px;
 }
 
-#TutorAppointmentNotesModal label {
+:is(#TutorAppointmentNotesModal, #TutorGroupAppointmentNotesModal) label {
     display: block;
     margin-bottom: 7px;
     color: #65452e;
@@ -1273,7 +1273,7 @@
     font-weight: 700;
 }
 
-#TutorAppointmentNotesModal textarea {
+:is(#TutorAppointmentNotesModal, #TutorGroupAppointmentNotesModal) textarea {
     box-sizing: border-box;
     width: 100%;
     min-height: 150px;
@@ -1290,12 +1290,12 @@
     transition: border-color .2s ease, box-shadow .2s ease;
 }
 
-#TutorAppointmentNotesModal textarea:focus {
+:is(#TutorAppointmentNotesModal, #TutorGroupAppointmentNotesModal) textarea:focus {
     border-color: #d99020;
     box-shadow: 0 0 0 3px rgba(244, 165, 28, .16);
 }
 
-#TutorAppointmentNotesModal small {
+:is(#TutorAppointmentNotesModal, #TutorGroupAppointmentNotesModal) small {
     display: block;
     margin-top: 6px;
     color: #8b755b;
@@ -1303,7 +1303,7 @@
     line-height: 1.5;
 }
 
-#TutorAppointmentNotesModal .tutor-table-actions {
+:is(#TutorAppointmentNotesModal, #TutorGroupAppointmentNotesModal) .tutor-table-actions {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -1313,7 +1313,7 @@
     border-top: 1px solid #eadfce;
 }
 
-#TutorAppointmentNotesModal .tutor-button {
+:is(#TutorAppointmentNotesModal, #TutorGroupAppointmentNotesModal) .tutor-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1328,41 +1328,41 @@
     transition: background-color .2s ease, transform .2s ease, box-shadow .2s ease;
 }
 
-#TutorAppointmentNotesModal .tutor-button:hover {
+:is(#TutorAppointmentNotesModal, #TutorGroupAppointmentNotesModal) .tutor-button:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 10px rgba(48, 32, 20, .12);
 }
 
-#TutorAppointmentNotesModal .tutor-button:focus-visible {
+:is(#TutorAppointmentNotesModal, #TutorGroupAppointmentNotesModal) .tutor-button:focus-visible {
     outline: 3px solid #d9a441;
     outline-offset: 3px;
 }
 
-#TutorAppointmentNotesModal .tutor-button-success {
+:is(#TutorAppointmentNotesModal, #TutorGroupAppointmentNotesModal) .tutor-button-success {
     background: #426b45;
     color: #fff;
 }
 
-#TutorAppointmentNotesModal .tutor-button-success:hover {
+:is(#TutorAppointmentNotesModal, #TutorGroupAppointmentNotesModal) .tutor-button-success:hover {
     background: #345638;
 }
 
-#TutorAppointmentNotesModal .tutor-button-danger {
+:is(#TutorAppointmentNotesModal, #TutorGroupAppointmentNotesModal) .tutor-button-danger {
     background: #a83d32;
     color: #fff;
 }
 
-#TutorAppointmentNotesModal .tutor-button-danger:hover {
+:is(#TutorAppointmentNotesModal, #TutorGroupAppointmentNotesModal) .tutor-button-danger:hover {
     background: #872e26;
 }
 
-#TutorAppointmentNotesModal .tutor-button:not(.tutor-button-success):not(.tutor-button-danger) {
+:is(#TutorAppointmentNotesModal, #TutorGroupAppointmentNotesModal) .tutor-button:not(.tutor-button-success):not(.tutor-button-danger) {
     background: #fff0cf;
     color: var(--bmb-brown, #65452e);
     border-color: #f0dfbd;
 }
 
-#TutorAppointmentNotesModal .tutor-button:not(.tutor-button-success):not(.tutor-button-danger):hover {
+:is(#TutorAppointmentNotesModal, #TutorGroupAppointmentNotesModal) .tutor-button:not(.tutor-button-success):not(.tutor-button-danger):hover {
     background: #ffe3a0;
 }
 
@@ -1843,26 +1843,26 @@
 }
 
 @media (max-width: 600px) {
-    :is(#tutorReminderModal, #TutorAppointmentNotesModal) {
+    :is(#tutorReminderModal, #TutorAppointmentNotesModal, #TutorGroupAppointmentNotesModal) {
         padding: 12px;
     }
 
-    :is(#tutorReminderModal, #TutorAppointmentNotesModal) .tutor-modal-content {
+    :is(#tutorReminderModal, #TutorAppointmentNotesModal, #TutorGroupAppointmentNotesModal) .tutor-modal-content {
         max-height: calc(100vh - 24px);
         padding: 24px 18px;
     }
 
-    :is(#tutorReminderModal, #TutorAppointmentNotesModal) .tutor-modal-header h2 {
+    :is(#tutorReminderModal, #TutorAppointmentNotesModal, #TutorGroupAppointmentNotesModal) .tutor-modal-header h2 {
         padding-right: 28px;
         font-size: 20px;
     }
 
-    #TutorAppointmentNotesModal .tutor-table-actions {
+    :is(#TutorAppointmentNotesModal, #TutorGroupAppointmentNotesModal) .tutor-table-actions {
         flex-direction: column;
         align-items: stretch;
     }
 
-    #TutorAppointmentNotesModal .tutor-button {
+    :is(#TutorAppointmentNotesModal, #TutorGroupAppointmentNotesModal) .tutor-button {
         width: 100%;
     }
 }

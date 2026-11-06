@@ -304,6 +304,46 @@
     font-weight: 600;
 }
 
+.group-notes-actions {
+    margin-top: 24px;
+    display: flex;
+    justify-content: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.group-notes-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    padding: 11px 18px;
+    background: var(--bmb-yellow, #F4C542);
+    color: var(--bmb-dark, #35291F);
+    border: 1px solid var(--bmb-orange, #F4A51C);
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 800;
+    font-family: inherit;
+    text-decoration: none;
+    box-shadow: 0 3px 8px rgba(93, 57, 20, 0.08);
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    margin-top: 10px;
+}
+
+.group-notes-btn:hover {
+    background: var(--bmb-orange, #F4A51C);
+    color: var(--bmb-dark, #35291F);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(93, 57, 20, 0.15);
+}
+
+.group-notes-btn:focus-visible {
+    outline: 3px solid var(--bmb-brown, #79512F);
+    outline-offset: 3px;
+}
+
 @media (max-width: 850px) {
     .group-info-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));

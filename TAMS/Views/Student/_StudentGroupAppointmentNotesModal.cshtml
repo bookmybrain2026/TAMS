@@ -1,0 +1,56 @@
+﻿@model TAMS.Models.GroupAppointment
+
+@{
+    var tutorName = ViewBag.GroupTutorName as string ?? "Your tutor";
+}
+
+<div id="studentGroupAppointmentNotesModal" class="tutor-modal student-reminder-modal" role="dialog"
+     aria-modal="true" aria-labelledby="studentGroupAppointmentNotesTitle" aria-hidden="false">
+    <div class="tutor-modal-content">
+        <div class="tutor-modal-header">
+            <h2 id="studentGroupAppointmentNotesTitle">
+                Group Appointment Notes
+            </h2>
+
+            <button type="button" class="tutor-modal-close" aria-label="Close notes" onclick="closeTutorModal('studentGroupAppointmentNotesModal')">
+                &times;
+            </button>
+        </div>
+
+        <div class="tutor-modal-body">
+            <div class="tutor-reminder-card">
+                <h3>@tutorName</h3>
+
+                <p>
+                    <strong>Group Appointment:</strong>
+                    @Model.AppointmentDate.ToString("MMMM d, yyyy")
+                    at
+                    @DateTime.Today.Add(Model.StartTime).ToString("h:mm tt")
+                </p>
+
+                <div class="tutor-reminder-item">
+                    <div>
+                        <strong>Tutor Notes</strong>
+
+                        @if (!string.IsNullOrWhiteSpace(Model.TutorNotes))
+                        {
+                            <p>@Model.TutorNotes</p>
+                        }
+                        else
+                        {
+                            <p>
+                                No notes have been added for this appointment.
+                            </p>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tutor-modal-footer">
+            <button type="button" class="tutor-reminder-close-button" onclick="closeTutorModal('studentGroupAppointmentNotesModal')">
+                Close
+            </button>
+        </div>
+    </div>
+</div>

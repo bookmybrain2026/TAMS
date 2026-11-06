@@ -31,6 +31,29 @@
     var tutorGroupAppointments = ViewBag.TutorGroupAppointments as List<GroupAppointment> ?? new List<GroupAppointment>();
 
     var scheduleLinkedGroups = ViewBag.ScheduleLinkedGroups as List<GroupAppointment> ?? new List<GroupAppointment>();
+    
+    var upcomingScheduleItems = upcomingAppointments
+        .Select(a => new
+        {
+            DateTime = a.AppointmentDate,
+            Name = a.Student != null
+                ? $"{a.Student.FName} {a.Student.LName}"
+                : "Student unavailable",
+            IsGroup = false
+        })
+        .Concat(
+            tutorGroupAppointments
+                .Where(g => (g.Status == "Open" || g.Status == "Full") && g.AppointmentDate.Date.Add(g.StartTime) >= now)
+                .Select(g => new
+                {
+                    DateTime = g.AppointmentDate.Date.Add(g.StartTime),
+                    Name = "Group",
+                    IsGroup = true
+                })
+        )
+        .OrderBy(x => x.DateTime)
+        .Take(4)
+        .ToList();
 
 }
 
@@ -384,37 +407,33 @@
                 <strong>@DateTime.Today.ToString("dddd")</strong>
                 <span>@DateTime.Today.ToString("MMMM d, yyyy")</span>
             </div>
-
+       
             <div class="tutor-focus-section">
                 <h3>UP NEXT</h3>
-                @if (upcomingAppointments.Any())
+                @if (upcomingScheduleItems.Any())
                 {
-                    @foreach (var appointment in upcomingAppointments.Take(4))
+                    @foreach (var item in upcomingScheduleItems)
                     {
                         <div class="tutor-agenda-item">
-                            <span class="tutor-agenda-dot"></span>
+                            <span class="tutor-agenda-dot"
+                                    style="@(item.IsGroup ? "background-color: #9333ea;" : "")">
+                            </span>
+
                             <div>
-                                <strong> 
-                                    @appointment.AppointmentDate.ToString("hh:mm tt")
-                                </strong>
-                                <p>
-                                    @if (appointment.Student != null)
-                                    {
-                                        @($"{appointment.Student.FName} {appointment.Student.LName}")
-                                    }
-                                    else
-                                    {
-                                        @:Student unavailable
-                                    }
-                                </p>
-                                <small> @appointment.AppointmentDate.ToString("MMM d") </small>
+                                <strong> @item.DateTime.ToString("hh:mm tt") </strong>
+
+                                <p> @item.Name </p>
+
+                                <small> @item.DateTime.ToString("MMM d") </small>
                             </div>
                         </div>
                     }
                 }
                 else
                 {
-                    <p class="tutor-muted-copy"> No upcoming sessions. Enjoy the extra time or add availability. </p>
+                    <p class="tutor-muted-copy">
+                        No upcoming sessions.
+                    </p>
                 }
             </div>
 
@@ -449,9 +468,7 @@
         @if (tutorGroupAppointments.Any())
         {
             <div class="tutor-table-scroll tutor-groups-scroll">
-
                 <table class="table tutor-table tutor-groups-table">
-
                     <thead>
                         <tr>
                             <th>Date</th>
@@ -526,26 +543,29 @@
                                         @group.Status
                                     </span>
                                 </td>
-                            
+                                                                                       
                                 <td>
-                                    <a asp-controller="Tutor" asp-action="GroupDetails" asp-route-groupId="@group.GroupId" class="tutor-group-details-btn">
-                                        View Details
-                                    </a>
+                                    <div class="tutor-table-actions">
+                                        <a asp-controller="Tutor" asp-action="GroupDetails" asp-route-groupId="@group.GroupId" class="tutor-group-details-btn">
+                                            View Details
+                                        </a>
+                                        
+                                        <button type="button" class="tutor-group-details-btn" aria-haspopup="dialog" aria-controls="TutorGroupAppointmentNotesModal"
+                                                onclick="openTutorModal('@Url.Action("ViewGroupAppointmentNotes", "Tutor", new { groupId = group.GroupId })', 'TutorGroupAppointmentNotesModal')">
+                                            <i class="fas fa-sticky-note" aria-hidden="true"></i>
+                                            @(string.IsNullOrWhiteSpace(group.TutorNotes) ? "Add Notes" : "Edit Notes")
+                                        </button>
+                                    </div>
                                 </td>
-
                             </tr>
                         }
-
                     </tbody>
-
                 </table>
-
             </div>
         }
         else
         {
             <div class="tutor-empty-state tutor-empty-compact tutor-groups-empty">
-
                 <div class="tutor-groups-empty-icon">
                     <i class="fas fa-users" aria-hidden="true"></i>
                 </div>

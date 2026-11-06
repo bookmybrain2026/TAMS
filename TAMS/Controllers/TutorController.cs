@@ -989,7 +989,6 @@ namespace TAMS.Controllers
                 return RedirectToAction("GroupDetails", new { groupId });
             }
 
-            // It only succeeds if the student has not already been marked Completed or Absent.
             var filter = Builders<GroupAppointment>.Filter.And(
                 Builders<GroupAppointment>.Filter.Eq(g => g.GroupId, groupId),
                 Builders<GroupAppointment>.Filter.Eq(g => g.TutorId, tutorId.Value),
@@ -1011,7 +1010,6 @@ namespace TAMS.Controllers
                 return RedirectToAction("GroupDetails", new { groupId });
             }
 
-            // Check whether every enrolled student has been processed.
             var updatedGroup = await dBContext.GroupAppointments
                 .Find(g => g.GroupId == groupId)
                 .FirstOrDefaultAsync();
@@ -1071,6 +1069,79 @@ namespace TAMS.Controllers
 
         }
 
+        [HttpGet]
+        public IActionResult ViewGroupAppointmentNotes(int groupId)
+        {
+            var tutorId = HttpContext.Session.GetInt32("TutorId");
+            if (tutorId == null) { return Unauthorized(); }
+
+            var group = dBContext.GroupAppointments
+                .Find(g => g.GroupId == groupId && g.TutorId == tutorId.Value)
+                .FirstOrDefault();
+
+            if (group == null) { return NotFound(); }
+
+            return PartialView("_TutorGroupAppointmentNotesModal", group);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveGroupAppointmentNotes(int groupId, string? tutorNotes)
+        {
+            var tutorId = HttpContext.Session.GetInt32("TutorId");
+            if (tutorId == null) { return Unauthorized(); }
+
+            if (tutorNotes?.Length > 2000)
+            {
+                TempData["TutorDashboardError"] = "Group appointment notes cannot exceed 2000 characters.";
+
+                return RedirectToAction(nameof(Dashboard), new { id = tutorId.Value });
+            }
+
+            var filter = Builders<GroupAppointment>.Filter.And(
+                Builders<GroupAppointment>.Filter.Eq(g => g.GroupId, groupId),
+                Builders<GroupAppointment>.Filter.Eq(g => g.TutorId, tutorId.Value),
+                Builders<GroupAppointment>.Filter.In(g => g.Status,
+                    new[] { "Open", "Full", "Completed" })
+            );
+
+            var notes = tutorNotes?.Trim() ?? string.Empty;
+
+            var update = Builders<GroupAppointment>.Update.Set(g => g.TutorNotes, notes);
+
+            var result = await dBContext.GroupAppointments.UpdateOneAsync(filter, update);
+
+            if (result.MatchedCount == 0) { return NotFound(); }
+
+            TempData["TutorDashboardSuccess"] = "Group appointment notes saved successfully.";
+
+            return RedirectToAction(nameof(Dashboard), new { id = tutorId.Value });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteGroupAppointmentNotes(int groupId)
+        {
+            var tutorId = HttpContext.Session.GetInt32("TutorId");
+            if (tutorId == null) { return Unauthorized(); }
+
+            var filter = Builders<GroupAppointment>.Filter.And(
+                Builders<GroupAppointment>.Filter.Eq(g => g.GroupId, groupId),
+                Builders<GroupAppointment>.Filter.Eq(g => g.TutorId, tutorId.Value),
+                Builders<GroupAppointment>.Filter.In(g => g.Status,
+                    new[] { "Open", "Full", "Completed" })
+            );
+
+            var update = Builders<GroupAppointment>.Update.Set(g => g.TutorNotes, string.Empty);
+
+            var result = await dBContext.GroupAppointments.UpdateOneAsync(filter, update);
+
+            if (result.MatchedCount == 0) { return NotFound(); }
+
+            TempData["TutorDashboardSuccess"] = "Group appointment notes deleted successfully.";
+
+            return RedirectToAction(nameof(Dashboard), new { id = tutorId.Value });
+        }
 
     }
 }

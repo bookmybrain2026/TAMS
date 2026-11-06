@@ -1,0 +1,132 @@
+﻿@model TAMS.Models.GroupAppointment
+
+<div id="TutorGroupAppointmentNotesModal" class="tutor-modal" role="dialog" aria-modal="true"  aria-labelledby="tutorGroupAppointmentNotesTitle">
+    <div class="tutor-modal-content">
+        <div class="tutor-modal-header">
+            <h2 id="tutorGroupAppointmentNotesTitle">
+                <i class="fas fa-sticky-note" aria-hidden="true"></i>
+                Group Appointment Notes
+            </h2>
+
+            <button type="button" class="tutor-modal-close" aria-label="Close group appointment notes"
+                    onclick="closeTutorModal('TutorGroupAppointmentNotesModal')">
+                &times;
+            </button>
+        </div>
+
+        <div class="tutor-modal-body">
+            <div class="tutor-reminder-card">
+                <h3>
+                    Group Appointment #@Model.GroupId
+                </h3>
+
+                <p>
+                    <strong>Date:</strong>
+                    @Model.AppointmentDate.ToString("MMM dd, yyyy")
+                </p>
+
+                <p>
+                    <strong>Start Time:</strong>
+                    @DateTime.Today.Add(Model.StartTime).ToString("h:mm tt")
+                </p>
+
+                <p>
+                    <strong>End Time:</strong>
+                    @DateTime.Today.Add(Model.EndTime).ToString("h:mm tt")
+                </p>
+
+                <p>
+                    <strong>Enrollment:</strong>
+                    @(Model.StudentIds?.Count ?? 0) / @Model.Capacity
+                </p>
+
+                <p>
+                    <strong>Status:</strong>
+                    @Model.Status
+                </p>
+
+            </div>
+
+            @if (Model.Status == "Open" || Model.Status == "Full" || Model.Status == "Completed")
+            {
+                <form asp-controller="Tutor" asp-action="SaveGroupAppointmentNotes" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden" name="groupId" value="@Model.GroupId" />
+
+                    <div class="form-group">
+                        <label for="groupTutorNotes">
+                            Notes / Comments
+                        </label>
+
+                        <textarea id="groupTutorNotes" name="tutorNotes" class="form-control" rows="6" maxlength="2000"
+                                   placeholder="Add meeting location, materials to bring, preparation instructions, or other group appointment details...">@Model.TutorNotes</textarea>
+
+                        <small class="text-muted">
+                            Maximum 2000 characters.
+                        </small>
+
+                    </div>
+
+                    <div class="tutor-table-actions">
+
+                        <button type="submit"
+                                class="tutor-button tutor-button-success">
+
+                            <i class="fas fa-save" aria-hidden="true"></i>
+                            Save Notes
+
+                        </button>
+
+                        @if (!string.IsNullOrWhiteSpace(Model.TutorNotes))
+                        {
+                            <button type="submit"
+                                    formaction="@Url.Action("DeleteGroupAppointmentNotes", "Tutor")"
+                                    formnovalidate
+                                    class="tutor-button tutor-button-danger"
+                                    onclick="return confirm('Delete the notes for this group appointment?');">
+
+                                <i class="fas fa-trash" aria-hidden="true"></i>
+                                Delete Notes
+
+                            </button>
+                        }
+
+                        <button type="button"
+                                class="tutor-button"
+                                onclick="closeTutorModal('TutorGroupAppointmentNotesModal')">
+                            Close
+                        </button>
+
+                    </div>
+
+                </form>
+            }
+            else
+            {
+                <div class="form-group">
+
+                    <label>Notes / Comments</label>
+
+                    <textarea class="form-control"
+                          rows="6"
+                          readonly>@Model.TutorNotes</textarea>
+
+                </div>
+
+                <div class="tutor-table-actions">
+
+                    <button type="button"
+                            class="tutor-button"
+                            onclick="closeTutorModal('TutorGroupAppointmentNotesModal')">
+                        Close
+                    </button>
+
+                </div>
+            }
+
+        </div>
+
+    </div>
+
+</div>

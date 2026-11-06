@@ -47,12 +47,14 @@ namespace TAMS.Models
 
         public bool Reminder1HourBeforeSent { get; set; } = false;
 
-
-        // Students who attended and completed the session.
         public List<int> CompletedStudentIds { get; set; } = new();
 
-        // Students who were enrolled but did not attend.
         public List<int> AbsentStudentIds { get; set; } = new();
+
+        [BsonElement("TutorNotes")]
+        [StringLength(2000)]
+        public string TutorNotes { get; set; } = string.Empty;
+
 
     }
 }

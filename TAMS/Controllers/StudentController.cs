@@ -489,6 +489,30 @@ namespace TAMS.Controllers
             return RedirectToAction("Dashboard", new { id = studentId.Value });
         }
 
+        [HttpGet]
+        public IActionResult ViewGroupAppointmentNotes(int groupId)
+        {
+            var studentId = HttpContext.Session.GetInt32("StudentId");
+            if (studentId == null) { return Unauthorized(); }
+
+            var group = dBContext.GroupAppointments
+                .Find(g => g.GroupId == groupId &&
+                    (g.StudentIds.Contains(studentId.Value) ||
+                     g.CompletedStudentIds.Contains(studentId.Value) ||
+                     g.AbsentStudentIds.Contains(studentId.Value)))
+                .FirstOrDefault();
+
+            if (group == null) { return NotFound(); }
+
+            var tutor = dBContext.Tutor
+                .Find(t => t.TutorId == group.TutorId)
+                .FirstOrDefault();
+
+            ViewBag.GroupTutorName = tutor == null ? "Tutor unavailable" : $"{tutor.FName} {tutor.LName}";
+
+            return PartialView("_StudentGroupAppointmentNotesModal", group);
+        }
+
 
     }
 }
