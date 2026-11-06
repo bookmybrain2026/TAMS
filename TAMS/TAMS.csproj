@@ -82,6 +82,12 @@
     <None Update="EmailTemplates\AdminAppointmentFollowUp.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="EmailTemplates\TutorGroupApproved.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="EmailTemplates\TutorGroupRejected.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="EmailTemplates\TutorUpcomingGroupReminder.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

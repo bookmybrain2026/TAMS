@@ -4,11 +4,13 @@ namespace TAMS.Services
     public interface IEmailService
     {
         Task SendPasswordRecoveryCodeAsync(string userEmail, string userName, string recoveryCode);
+
         Task SendStudentAppointmentConfirmationAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate);
 
         Task SendTutorAppointmentNotificationAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate);
 
         Task SendStudentAppointmentCancellationAsync( string studentEmail, string studentName, string tutorName, DateTime appointmentDate);
+
         Task SendTutorAppointmentCancellationAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate);
 
         Task SendStudentAppointmentCancelledByTutorAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate);
@@ -48,6 +50,10 @@ namespace TAMS.Services
         Task SendAdminCancelledGroupToStudentAsync(string studentEmail, string studentName, string tutorName, string adminName, int groupId, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime);
 
         Task SendAdminCancelledGroupToTutorAsync(string tutorEmail, string tutorName, string adminName, int groupId, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime, int enrolledCount);
+
+        Task SendTutorGroupApprovedAsync(string tutorEmail, string tutorName, int groupId, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime, int capacity);
+
+        Task SendTutorGroupRejectedAsync(string tutorEmail, string tutorName, int groupId, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime, int capacity);
 
     }
 }

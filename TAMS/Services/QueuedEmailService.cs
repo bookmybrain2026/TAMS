@@ -160,6 +160,18 @@ namespace TAMS.Services
                 sender.SendAdminCancelledGroupToTutorAsync(tutorEmail, tutorName,  adminName, groupId, appointmentDate, startTime, endTime, enrolledCount)).AsTask();
         }
 
+        public Task SendTutorGroupApprovedAsync(string tutorEmail, string tutorName, int groupId, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime, int capacity)
+        {
+            return _queue.EnqueueAsync(sender =>
+                sender.SendTutorGroupApprovedAsync(tutorEmail, tutorName, groupId, appointmentDate, startTime, endTime, capacity)).AsTask();
+        }
+
+        public Task SendTutorGroupRejectedAsync(string tutorEmail, string tutorName, int groupId, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime, int capacity)
+        {
+            return _queue.EnqueueAsync(sender =>
+                sender.SendTutorGroupRejectedAsync(tutorEmail, tutorName, groupId, appointmentDate, startTime, endTime, capacity)).AsTask();
+        }
+
 
     }
 }

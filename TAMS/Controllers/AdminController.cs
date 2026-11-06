@@ -104,7 +104,7 @@ namespace TAMS.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult ApproveGroupAppointment(int groupId)
+        public async Task<IActionResult> ApproveGroupAppointment(int groupId)
         {
             var adminId = HttpContext.Session.GetInt32("AdminId");
             if (adminId == null) { return RedirectToAction("Login", "Login"); }
@@ -215,9 +215,26 @@ namespace TAMS.Controllers
                     Builders<GroupAppointment>.Update.Set(g => g.Status, "Open")
                         .Set(g => g.AppointmentId, (int?)null));
 
+
                 if (result.ModifiedCount == 0)
                 {
                     throw new InvalidOperationException("Could not finalize group approval.");
+                }
+
+                TempData["AdminDashboardSuccess"] = "Group appointment approved and added to the tutor schedule.";
+
+                // Send approval notification to tutor
+                if (!tutor.DisableEmailNotifications && !string.IsNullOrWhiteSpace(tutor.Email))
+                {
+                    try
+                    {
+                        await _emailService.SendTutorGroupApprovedAsync(tutor.Email, $"{tutor.FName} {tutor.LName}", group.GroupId,
+                            group.AppointmentDate, group.StartTime, group.EndTime, group.Capacity);
+                    }
+                    catch (Exception)
+                    {
+                        TempData["AdminDashboardSuccess"] = "Group appointment approved, but the email " + "notification could not be queued.";
+                    }
                 }
 
                 TempData["AdminDashboardSuccess"] = "Group appointment approved and added to the tutor schedule.";
@@ -232,21 +249,49 @@ namespace TAMS.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult RejectGroupAppointment(int groupId)
+        public async Task<IActionResult> RejectGroupAppointment(int groupId)
         {
             var adminId = HttpContext.Session.GetInt32("AdminId");
             if (adminId == null) { return RedirectToAction("Login", "Login"); }
 
-            var result = dBContext.GroupAppointments.UpdateOne(g => g.GroupId == groupId && g.Status == "Pending",
+            var group = dBContext.GroupAppointments
+                .Find(g => g.GroupId == groupId && g.Status == "Pending")
+                .FirstOrDefault();
+
+            if (group == null)
+            {
+                TempData["AdminDashboardError"] = "Group request not found or already reviewed.";
+                return RedirectToAction("Dashboard", new { showAdminFollowUps = true });
+            }
+
+            var tutor = dBContext.Tutor
+                .Find(t => t.TutorId == group.TutorId)
+                .FirstOrDefault();
+
+            var result = dBContext.GroupAppointments.UpdateOne(
+                g => g.GroupId == groupId && g.Status == "Pending",
                 Builders<GroupAppointment>.Update.Set(g => g.Status, "Rejected"));
 
             if (result.ModifiedCount == 0)
             {
                 TempData["AdminDashboardError"] = "Group request not found or already reviewed.";
+                return RedirectToAction("Dashboard", new { showAdminFollowUps = true });
             }
-            else
+
+            TempData["AdminDashboardSuccess"] = "Group appointment request rejected.";
+
+            // Send rejection notification to tutor
+            if (tutor != null && !tutor.DisableEmailNotifications && !string.IsNullOrWhiteSpace(tutor.Email))
             {
-                TempData["AdminDashboardSuccess"] = "Group appointment request rejected.";
+                try
+                {
+                    await _emailService.SendTutorGroupRejectedAsync(tutor.Email, $"{tutor.FName} {tutor.LName}", group.GroupId,
+                        group.AppointmentDate, group.StartTime, group.EndTime, group.Capacity);
+                }
+                catch (Exception)
+                {
+                    TempData["AdminDashboardSuccess"] = "Group request rejected, but the email " + "notification could not be queued.";
+                }
             }
 
             return RedirectToAction("Dashboard", new { showAdminFollowUps = true });

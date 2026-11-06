@@ -660,7 +660,6 @@ namespace TAMS.Services
             await smtp.DisconnectAsync(true);
         }
 
-
         //Styling Done for SendReviewReminderAsync
         public async Task SendReviewReminderAsync(string studentEmail, string studentName, string tutorName)
         {
@@ -1727,7 +1726,6 @@ namespace TAMS.Services
             await smtp.DisconnectAsync(true);
         }
 
-
         //Styling Done for SendTutorUpcomingGroupReminderAsync
         public async Task SendTutorUpcomingGroupReminderAsync(string tutorEmail, string tutorName, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime, int hoursBefore, int enrolledCount)
         {
@@ -1975,6 +1973,197 @@ namespace TAMS.Services
             await smtp.DisconnectAsync(true);
         }
 
+        //Styling Done for SendTutorGroupApprovedAsync
+        public async Task SendTutorGroupApprovedAsync(string tutorEmail, string tutorName, int groupId, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime, int capacity)
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.To.Add(new MailboxAddress(tutorName, tutorEmail));
+            message.Subject = "Group Appointment Request Approved";
+
+            var builder = new BodyBuilder();
+
+            var templatePath = Path.Combine(_environment.ContentRootPath, "EmailTemplates", "TutorGroupApproved.html");
+
+            var html = await File.ReadAllTextAsync(templatePath);
+
+            var bannerPath = Path.Combine(_environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot"), "images", "banner.png");
+
+            string bannerHtml = "";
+
+            if (File.Exists(bannerPath))
+            {
+                var banner = builder.LinkedResources.Add(bannerPath);
+                banner.ContentId = Guid.NewGuid().ToString() + "@tams";
+
+                bannerHtml = $"""
+                    <img src="cid:{banner.ContentId}"
+                         alt="BookMyBrain" width="560"
+                         style="display:block;width:100%;max-width:560px;
+                                height:auto;border:0;margin:0 auto;">
+                    """;
+            }
+
+            var formattedDate = appointmentDate.ToString("MMMM dd, yyyy");
+            var formattedStartTime = DateTime.Today.Add(startTime).ToString("h:mm tt");
+            var formattedEndTime = DateTime.Today.Add(endTime).ToString("h:mm tt");
+
+            var tName = System.Net.WebUtility.HtmlEncode(tutorName);
+            var gId = System.Net.WebUtility.HtmlEncode(groupId.ToString());
+            var aDate = System.Net.WebUtility.HtmlEncode(formattedDate);
+            var sTime = System.Net.WebUtility.HtmlEncode(formattedStartTime);
+            var eTime = System.Net.WebUtility.HtmlEncode(formattedEndTime);
+            var maxStudents = System.Net.WebUtility.HtmlEncode(capacity.ToString());
+
+            html = html.Replace("{{BannerHtml}}", bannerHtml);
+            html = html.Replace("{{TutorName}}", tName);
+            html = html.Replace("{{GroupId}}", gId);
+            html = html.Replace("{{AppointmentDate}}", aDate);
+            html = html.Replace("{{StartTime}}", sTime);
+            html = html.Replace("{{EndTime}}", eTime);
+            html = html.Replace("{{Capacity}}", maxStudents);
+
+            builder.HtmlBody = html;
+
+            builder.TextBody = $"""
+                TAMS Group Appointment Approval
+
+                Hello {tutorName},
+
+                Good news! Your group tutoring appointment request has
+                been approved by the TAMS administrator.
+
+                Your group appointment has been added to your schedule
+                and is now available for students to join.
+
+                Group Appointment Information
+
+                Group ID: {groupId}
+                Date: {formattedDate}
+                Start Time: {formattedStartTime}
+                End Time: {formattedEndTime}
+                Maximum Students: {capacity}
+                Status: Approved
+
+                Please log in to TAMS to review your approved group
+                appointment from your Tutor Dashboard.
+
+                Students can now enroll in your group session until
+                the maximum capacity is reached.
+
+                We will send a reminder for your group appointment
+                at a later date.
+
+                Thank you for using TAMS.
+
+                The BookMyBrain Team
+                Tutoring Appointment Management System
+                """;
+
+            message.Body = builder.ToMessageBody();
+
+            using var smtp = new SmtpClient();
+            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
+            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
+            await smtp.SendAsync(message);
+            await smtp.DisconnectAsync(true);
+        }
+
+        //Styling Done for SendTutorGroupRejectedAsync
+        public async Task SendTutorGroupRejectedAsync(string tutorEmail, string tutorName, int groupId, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime, int capacity)
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.To.Add(new MailboxAddress(tutorName, tutorEmail));
+            message.Subject = "Group Appointment Request Rejected";
+
+            var builder = new BodyBuilder();
+
+            var templatePath = Path.Combine(_environment.ContentRootPath, "EmailTemplates", "TutorGroupRejected.html");
+
+            var html = await File.ReadAllTextAsync(templatePath);
+
+            var bannerPath = Path.Combine(_environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot"), "images", "banner.png");
+
+            string bannerHtml = "";
+
+            if (File.Exists(bannerPath))
+            {
+                var banner = builder.LinkedResources.Add(bannerPath);
+                banner.ContentId = Guid.NewGuid().ToString() + "@tams";
+
+                bannerHtml = $"""
+                    <img src="cid:{banner.ContentId}"
+                         alt="BookMyBrain" width="560"
+                         style="display:block;width:100%;max-width:560px;
+                                height:auto;border:0;margin:0 auto;">
+                    """;
+            }
+
+            var formattedDate = appointmentDate.ToString("MMMM dd, yyyy");
+            var formattedStartTime = DateTime.Today.Add(startTime).ToString("h:mm tt");
+            var formattedEndTime = DateTime.Today.Add(endTime).ToString("h:mm tt");
+
+            var tName = System.Net.WebUtility.HtmlEncode(tutorName);
+            var gId = System.Net.WebUtility.HtmlEncode(groupId.ToString());
+            var aDate = System.Net.WebUtility.HtmlEncode(formattedDate);
+            var sTime = System.Net.WebUtility.HtmlEncode(formattedStartTime);
+            var eTime = System.Net.WebUtility.HtmlEncode(formattedEndTime);
+            var maxStudents = System.Net.WebUtility.HtmlEncode(capacity.ToString());
+
+            html = html.Replace("{{BannerHtml}}", bannerHtml);
+            html = html.Replace("{{TutorName}}", tName);
+            html = html.Replace("{{GroupId}}", gId);
+            html = html.Replace("{{AppointmentDate}}", aDate);
+            html = html.Replace("{{StartTime}}", sTime);
+            html = html.Replace("{{EndTime}}", eTime);
+            html = html.Replace("{{Capacity}}", maxStudents);
+
+            builder.HtmlBody = html;
+
+            builder.TextBody = $"""
+                TAMS Group Appointment Rejection
+
+                Hello {tutorName},
+
+                We regret to inform you that your group tutoring
+                appointment request has been rejected by the
+                TAMS administrator.
+
+                The requested group appointment has not been added
+                to your schedule and will not be available for
+                students to join.
+
+                Group Appointment Information
+
+                Group ID: {groupId}
+                Date: {formattedDate}
+                Start Time: {formattedStartTime}
+                End Time: {formattedEndTime}
+                Maximum Students: {capacity}
+                Status: Rejected
+
+                If you would still like to schedule a group tutoring
+                session, please log in to TAMS and submit a new
+                group appointment request for administrator review.
+
+                If you have any questions regarding this decision,
+                please contact the TAMS administrator.
+
+                Thank you for using TAMS.
+
+                The BookMyBrain Team
+                Tutoring Appointment Management System
+                """;
+
+            message.Body = builder.ToMessageBody();
+
+            using var smtp = new SmtpClient();
+            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
+            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
+            await smtp.SendAsync(message);
+            await smtp.DisconnectAsync(true);
+        }
 
     }
 }
