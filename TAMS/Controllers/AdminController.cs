@@ -27,6 +27,11 @@ namespace TAMS.Controllers
             var adminId = HttpContext.Session.GetInt32("AdminId");
             if (adminId == null) { return RedirectToAction("Login", "Login"); }
 
+            var loginUser = dBContext.Login
+                .Find(l => l.UserId == adminId.Value && l.Role == UserRole.Administrator)
+                .FirstOrDefault();
+            ViewBag.ShowDashboardTour = loginUser != null && !loginUser.HasCompletedTour;
+
             ViewBag.AdminId = adminId;
             ViewBag.Tutors = dBContext.Tutor.Find(_ => true).ToList();
             ViewBag.Students = dBContext.Student.Find(_ => true).ToList();
@@ -545,6 +550,13 @@ namespace TAMS.Controllers
             var adminId = HttpContext.Session.GetInt32("AdminId");
             if (adminId == null) { return RedirectToAction("Login", "Login"); }
 
+            var loginUser = dBContext.Login
+                .Find(l => l.UserId == adminId.Value && l.Role == UserRole.Administrator)
+                .FirstOrDefault();
+
+            ViewBag.ShowAdminScheduleTour = loginUser != null
+                && !loginUser.HasCompletedAdminScheduleTour;
+
             ViewBag.AdminId = adminId;
 
             int targetMonth = month ?? DateTime.Today.Month;
@@ -588,6 +600,24 @@ namespace TAMS.Controllers
 
             return View("AdminScheduler");
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult CompleteSchedulerTour()
+        {
+            var adminId = HttpContext.Session.GetInt32("AdminId");
+
+            if (adminId == null) { return Unauthorized(); }
+
+            var update = Builders<Login>.Update.Set(u => u.HasCompletedAdminScheduleTour, true);
+
+            var result = dBContext.Login.UpdateOne(u => u.UserId == adminId.Value && u.Role == UserRole.Administrator, update);
+
+            if (result.MatchedCount == 0) { return NotFound(); }
+
+            return Ok(new { success = true });
+        }
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]

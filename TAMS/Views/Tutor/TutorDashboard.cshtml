@@ -59,7 +59,8 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/TutorDashboard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/TutorDashboard.css" asp-append-version="true" />   
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.css" />
 }
 
 
@@ -859,4 +860,22 @@
             "Are you sure you want to delete this schedule slot?"
         );
     }
-</script>
+</script>      
+
+@Html.AntiForgeryToken()
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.js.iife.js"></script>
+
+    <script>
+        window.dashboardTourConfig = {
+            role: "Tutor",
+            showTour: @Json.Serialize(ViewBag.ShowDashboardTour == true),
+            completeUrl: '@Url.Action("Complete", "Tour")',
+            token: document.querySelector('input[name="__RequestVerificationToken"]').value
+        };
+    </script>
+
+    <script src="~/js/dashboard-tour.js" asp-append-version="true"></script>
+}
+

@@ -870,3 +870,157 @@ body {
         transition: none;
     }
 }
+
+.tour-skip-button {
+    border: none;
+    background: transparent;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 8px 12px;
+    font-size: 13px;
+}
+
+.tour-skip-button:hover {
+    color: #374151;
+    text-decoration: underline;
+}
+
+.driver-popover {
+    border-radius: 12px;
+    padding: 18px;
+    max-width: 350px;
+}
+
+.driver-popover-title {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.driver-popover.tams-tour {
+    width: 340px;
+    max-width: calc(100vw - 24px);
+    padding: 0;
+    border: none;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 12px 40px rgba(120, 85, 20, 0.20);
+    overflow: hidden;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.tams-tour .driver-popover-title {
+    background: linear-gradient(135deg, #ffbd35, #ffcf66);
+    color: #3d2b08;
+    font-size: 18px;
+    font-weight: 700;
+    padding: 20px 22px;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.tams-tour .driver-popover-description {
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.7;
+    padding: 18px 22px 8px;
+    margin: 0;
+}
+
+.tams-tour .driver-popover-footer {
+    padding: 12px 20px 18px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.tams-tour .driver-popover-progress-text {
+    font-size: 12px;
+    font-weight: 600;
+    color: #a66a00;
+}
+
+.tams-tour .driver-popover-navigation-btns {
+    display: flex;
+    gap: 7px;
+    align-items: center;
+}
+
+.tams-tour .driver-popover-navigation-btns button {
+    border-radius: 8px;
+    padding: 8px 13px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-shadow: none;
+}
+
+.tams-tour .driver-popover-next-btn {
+    background: #ffbd35 !important;
+    color: #3d2b08 !important;
+    border: 1px solid #ffbd35 !important;
+}
+
+.tams-tour .driver-popover-next-btn:hover {
+    background: #e5a21c !important;
+    border-color: #e5a21c !important;
+}
+
+.tams-tour .driver-popover-prev-btn {
+    background: #fff7e6 !important;
+    color: #8a5900 !important;
+    border: 1px solid #ffe2a3 !important;
+}
+
+.tams-tour .driver-popover-prev-btn:hover {
+    background: #ffedc2 !important;
+}
+
+.tams-tour .driver-popover-prev-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.tams-tour .tour-skip-button {
+    background: transparent;
+    border: none;
+    color: #8a6b32;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 8px 4px;
+}
+
+.tams-tour .tour-skip-button:hover { color: #b87900; }
+
+.tams-tour .driver-popover-close-btn { display: none; }
+
+.tams-tour button:focus-visible {
+    outline: 3px solid #ffcf66;
+    outline-offset: 2px;
+}
+
+.driver-active-element { border-radius: 10px; }
+
+.tams-progress-container {
+    height: 5px;
+    background: #fff0cc;
+    border-radius: 20px;
+    margin: 8px 22px 12px;
+    overflow: hidden;
+}
+
+.tams-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #ffbd35, #ffda80);
+    border-radius: 20px;
+    transition: width 0.3s ease;
+}
+
+@media (max-width: 480px) {
+    .driver-popover.tams-tour { width: min(320px, calc(100vw - 24px)); }
+    .tams-tour .driver-popover-footer { gap: 12px; }
+}

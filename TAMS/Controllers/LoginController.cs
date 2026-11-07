@@ -62,6 +62,11 @@ namespace TAMS.Controllers
             var update = Builders<Login>.Update.Set(u => u.LastLogin, DateTime.Now);
             dBContext.Login.UpdateOne(u => u.UserId == user.UserId, update);
 
+            HttpContext.Session.Remove("StudentId");
+            HttpContext.Session.Remove("TutorId");
+            HttpContext.Session.Remove("AdminId");
+            HttpContext.Session.SetString("ShowDashboardTour", (!user.HasCompletedTour).ToString());
+
             switch (user.Role)
             {
                 case UserRole.Student:

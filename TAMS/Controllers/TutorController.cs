@@ -75,6 +75,11 @@ namespace TAMS.Controllers
             var tutorId = HttpContext.Session.GetInt32("TutorId");
             if (tutorId == null) { return RedirectToAction("Login", "Login"); }
 
+            var loginUser = dBContext.Login
+                .Find(l => l.UserId == tutorId.Value && l.Role == UserRole.Tutor)
+                .FirstOrDefault();
+            ViewBag.ShowDashboardTour = loginUser != null && !loginUser.HasCompletedTour;
+
             if (id == null) { return RedirectToAction("Login", "Login"); }
             if (tutorId.Value != id.Value) { return Unauthorized(); }
 
@@ -343,6 +348,12 @@ namespace TAMS.Controllers
         {
             var tutorId = HttpContext.Session.GetInt32("TutorId");
             if (tutorId == null) {return RedirectToAction("Login", "Login");}
+
+            var loginUser = dBContext.Login
+                .Find(l => l.UserId == tutorId.Value && l.Role == UserRole.Tutor)
+                .FirstOrDefault();
+            ViewBag.ShowScheduleTour = loginUser != null && !loginUser.HasCompletedTutorScheduleTour;
+
             if (tutorId.Value != id) {return Unauthorized();}
             var tutor = dBContext.Tutor.Find(t => t.TutorId == id).FirstOrDefault();
 
@@ -418,7 +429,6 @@ namespace TAMS.Controllers
             TempData["TutorScheduleSuccess"] = "Schedule added successfully.";
             return RedirectToAction("Schedule", new { id = tutorId, month = date.Month, year = date.Year });
         }
-
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -566,7 +576,6 @@ namespace TAMS.Controllers
 
             return View("ScheduleCalendar");
         }
-
 
         [HttpPost]
         public async Task<IActionResult> CancelAppointment(int appointmentId)
@@ -1142,6 +1151,22 @@ namespace TAMS.Controllers
 
             return RedirectToAction(nameof(Dashboard), new { id = tutorId.Value });
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult CompletePageTour()
+        {
+            var tutorId = HttpContext.Session.GetInt32("TutorId");
+
+            if (tutorId == null) { return Unauthorized(); }
+
+            var update = Builders<Login>.Update.Set(u => u.HasCompletedTutorScheduleTour, true);
+
+            dBContext.Login.UpdateOne(u => u.UserId == tutorId.Value && u.Role == UserRole.Tutor, update);
+
+            return Ok(new { success = true });
+        }
+
 
     }
 }

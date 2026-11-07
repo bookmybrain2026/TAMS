@@ -32,6 +32,13 @@ namespace TAMS.Models
         public bool isActive { get; set; } = true;
 
         public int? CreatedBy { get; set; }
+
+        public bool HasCompletedTour { get; set; } = false;
+
+        public bool HasCompletedTutorScheduleTour { get; set; } = false;
+
+        public bool HasCompletedAdminScheduleTour { get; set; } = false;
+
     }
 
     public enum UserRole

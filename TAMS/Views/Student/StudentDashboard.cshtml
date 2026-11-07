@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="~/css/StudentDashboard.css" asp-append-version="true" />
     <link href="~/css/site.css" rel="stylesheet" asp-append-version="true" />
     @* <link rel="stylesheet" href="~/css/TutorDashboard.css" asp-append-version="true" /> *@
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.css" />
+
 }
 
 @{
@@ -20,575 +22,591 @@
     var totalAwaitingReviews = (Model.AwaitingReviews?.Count() ?? 0) + awaitingGroupReviews.Count;
 
 }
-<body>
-    <div class="student-dashboard">
-        @{
-            var studentReminderAppointments = ViewBag.StudentReminderAppointments as List<Appointment> ?? new List<Appointment>();
-            var studentReminderCount = studentReminderAppointments.Sum(a =>
-            (a.Reminder24HoursBeforeSent && !a.StudentReminder24HoursAcknowledged ? 1 : 0) + (a.Reminder1HourBeforeSent && !a.StudentReminder1HourAcknowledged ? 1 : 0));
-        }
 
-        <header class="dashboard-header">
-            <div>
-                <h1>Welcome, @Model.FName @Model.LName!</h1>
-                <p>Your tutoring journey, all in one place.</p>
-            </div>
+<div class="student-dashboard">
+    @{
+        var studentReminderAppointments = ViewBag.StudentReminderAppointments as List<Appointment> ?? new List<Appointment>();
+        var studentReminderCount = studentReminderAppointments.Sum(a =>
+        (a.Reminder24HoursBeforeSent && !a.StudentReminder24HoursAcknowledged ? 1 : 0) + (a.Reminder1HourBeforeSent && !a.StudentReminder1HourAcknowledged ? 1 : 0));
+    }
 
-            <div class="dashboard-header-actions">
-                <button type="button" class="student-notification-button" aria-label="Appointment reminders" aria-haspopup="dialog" aria-controls="studentReminderModal"
-                        onclick="openTutorModal('@Url.Action("Dashboard", "Student", new { id = Model.StudentId, showStudentReminders = true })', 'studentReminderModal')">
+    <header class="dashboard-header">
+        <div>
+            <h1>Welcome, @Model.FName @Model.LName!</h1>
+            <p>Your tutoring journey, all in one place.</p>
+        </div>
 
-                    <span class="notification-bell" aria-hidden="true">&#128276;</span>
+        <div class="dashboard-header-actions">
+            <button type="button" class="student-notification-button" aria-label="Appointment reminders" aria-haspopup="dialog" aria-controls="studentReminderModal"
+                    onclick="openTutorModal('@Url.Action("Dashboard", "Student", new { id = Model.StudentId, showStudentReminders = true })', 'studentReminderModal')">
 
-                    @if (studentReminderCount > 0)
-                    {
-                        <span class="student-notification-alert" aria-label="Reminders require attention">!</span>
-                    }
-                </button>
+                <span class="notification-bell" aria-hidden="true">&#128276;</span>
 
-                <span class="dashboard-tag">STUDENT PORTAL</span>
-            </div>
-        </header>
-
-        <div class="dashboard-grid">
-            <section class="dashboard-card profile-card">
-                <h2 class="dashboard-section-title">Personal Information</h2>
-
-                <div class="profile-detail">
-                    <strong>Full Name</strong>
-                    <span>@Model.FName @Model.LName</span>
-                </div>
-
-                <div class="profile-detail">
-                    <strong>Date of Birth</strong>
-                    <span>@Model.DOB.ToString("MM/dd/yyyy")</span>
-                </div>
-
-                <div class="profile-detail">
-                    <strong>Contact Number</strong>
-                    <span>@Model.PhoneNumber</span>
-                </div>
-
-                <div class="profile-detail">
-                    <strong>Email Address</strong>
-                    <span>@Model.Email</span>
-                </div>
-
-                <button class="btn btn-primary mt-3" type="button" data-bs-toggle="collapse" data-bs-target="#editForm" aria-expanded="false" aria-controls="editForm">
-                    Update Account Information
-                </button>
-
-                @* Update Info *@
-                <div id="editForm" class="collapse mt-3">
-                    <form asp-controller="Student" asp-action="UpdateInfo" method="post">
-                        @Html.AntiForgeryToken()
-
-                        <input type="hidden" asp-for="StudentId" />
-
-                        <div class="mb-3">
-                            <label asp-for="FName" class="form-label">First Name </label>
-                            <input class="form-control" asp-for="FName" />
-                        </div>
-
-                        <div class="mb-3">
-                            <label asp-for="LName" class="form-label">Last Name </label>
-                            <input class="form-control" asp-for="LName" />
-                        </div>
-
-                        <div class="mb-3">
-                            <label asp-for="Email"class="form-label">Email </label>
-                            <input class="form-control" asp-for="Email" />
-                        </div>
-
-                        <div class="mb-3">
-                            <label asp-for="PhoneNumber" class="form-label">Phone Number </label>
-                            <input class="form-control" asp-for="PhoneNumber" />
-                        </div>
-
-                        <div class="mb-3">
-                            <label asp-for="DOB" class="form-label">Date of Birth </label>
-                            <input class="form-control" asp-for="DOB" type="date" />
-                        </div>
-
-                        <div class="form-check mb-3">
-                            <input class="form-check-input" type="checkbox" asp-for="DisableEmailNotifications" />
-                            <label class="form-check-label" asp-for="DisableEmailNotifications">
-                                Disable Email Notifications
-                            </label>
-                            <div class="form-text">
-                                You can change this preference at any time.
-                            </div>
-                        </div>
-
-                        <button type="submit" class="btn btn-success mt-2">Save Changes</button>
-
-                        <button class="btn btn-secondary mt-2" type="button" data-bs-toggle="collapse" data-bs-target="#editForm">
-                            Cancel
-                        </button>
-                    </form>
-                </div>
-            </section>
-
-            @*Appointments*@
-            <section class="dashboard-card appointments-card">
-                <h2 class="dashboard-section-title"> Your Appointments </h2>
-                @if (Model.Appointments == null || !Model.Appointments.Any())
+                @if (studentReminderCount > 0)
                 {
-                    <div class="dashboard-empty">
-                        <p>No appointments found.</p>
-                        <p>
-                            Search for a tutor below to schedule your first tutoring session.
-                        </p>
-                    </div>
+                    <span class="student-notification-alert" aria-label="Reminders require attention">!</span>
                 }
-                else
-                {
-                    <div class="table-responsive appointments-scroll">
-                        <table class="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Status</th>
-                                    <th>Tutor</th>
-                                    <th>Subject</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
+            </button>
 
-                            <tbody>
-                                @foreach (var appt in Model.Appointments.OrderBy(a => a.AppointmentDate))
-                                {
-                                    var rowClass = appt.Status == "Cancelled" ? "table-danger"
-                                        : appt.Status == "Completed" ? "table-success"
-                                        : appt.Status == "Scheduled" ? "table-warning"
-                                        : "";
+            <span class="dashboard-tag">STUDENT PORTAL</span>
+        </div>
+    </header>
 
-                                    <tr class="@rowClass">
-                                        <td>
-                                            @appt.AppointmentDate.ToString("MM/dd/yyyy hh:mm tt")
-                                        </td>
+    <div class="dashboard-grid">
+        <section class="dashboard-card profile-card">
+            <h2 class="dashboard-section-title">Personal Information</h2>
 
-                                        <td>
-                                            @appt.Status
-                                        </td>
+            <div class="profile-detail">
+                <strong>Full Name</strong>
+                <span>@Model.FName @Model.LName</span>
+            </div>
 
-                                        <td>
-                                            @if (appt.Tutor != null)
-                                            {
-                                                @:@appt.Tutor.FName @appt.Tutor.LName
-                                            }
-                                            else
-                                            {
-                                                <span class="text-muted">Tutor information unavailable</span>
-                                            }
-                                        </td>
+            <div class="profile-detail">
+                <strong>Date of Birth</strong>
+                <span>@Model.DOB.ToString("MM/dd/yyyy")</span>
+            </div>
 
-                                        <td>
-                                            @if (appt.Tutor != null)
-                                            {
-                                                @appt.Tutor.Subject
-                                            }
-                                            else
-                                            {
-                                                <span class="text-muted">N/A</span>
-                                            }
-                                        </td>
+            <div class="profile-detail">
+                <strong>Contact Number</strong>
+                <span>@Model.PhoneNumber</span>
+            </div>
+
+            <div class="profile-detail">
+                <strong>Email Address</strong>
+                <span>@Model.Email</span>
+            </div>
+
+            <button class="btn btn-primary mt-3" type="button" data-bs-toggle="collapse" data-bs-target="#editForm" aria-expanded="false" aria-controls="editForm">
+                Update Account Information
+            </button>
+
+            @* Update Info *@
+            <div id="editForm" class="collapse mt-3">
+                <form asp-controller="Student" asp-action="UpdateInfo" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden" asp-for="StudentId" />
+
+                    <div class="mb-3">
+                        <label asp-for="FName" class="form-label">First Name </label>
+                        <input class="form-control" asp-for="FName" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="LName" class="form-label">Last Name </label>
+                        <input class="form-control" asp-for="LName" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Email"class="form-label">Email </label>
+                        <input class="form-control" asp-for="Email" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="PhoneNumber" class="form-label">Phone Number </label>
+                        <input class="form-control" asp-for="PhoneNumber" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="DOB" class="form-label">Date of Birth </label>
+                        <input class="form-control" asp-for="DOB" type="date" />
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" asp-for="DisableEmailNotifications" />
+                        <label class="form-check-label" asp-for="DisableEmailNotifications">
+                            Disable Email Notifications
+                        </label>
+                        <div class="form-text">
+                            You can change this preference at any time.
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-success mt-2">Save Changes</button>
+
+                    <button class="btn btn-secondary mt-2" type="button" data-bs-toggle="collapse" data-bs-target="#editForm">
+                        Cancel
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        @*Appointments*@
+        <section class="dashboard-card appointments-card">
+            <h2 class="dashboard-section-title"> Your Appointments </h2>
+            @if (Model.Appointments == null || !Model.Appointments.Any())
+            {
+                <div class="dashboard-empty">
+                    <p>No appointments found.</p>
+                    <p>
+                        Search for a tutor below to schedule your first tutoring session.
+                    </p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive appointments-scroll">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Tutor</th>
+                                <th>Subject</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @foreach (var appt in Model.Appointments.OrderBy(a => a.AppointmentDate))
+                            {
+                                var rowClass = appt.Status == "Cancelled" ? "table-danger"
+                                    : appt.Status == "Completed" ? "table-success"
+                                    : appt.Status == "Scheduled" ? "table-warning"
+                                    : "";
+
+                                <tr class="@rowClass">
+                                    <td>
+                                        @appt.AppointmentDate.ToString("MM/dd/yyyy hh:mm tt")
+                                    </td>
+
+                                    <td>
+                                        @appt.Status
+                                    </td>
+
+                                    <td>
+                                        @if (appt.Tutor != null)
+                                        {
+                                            @:@appt.Tutor.FName @appt.Tutor.LName
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Tutor information unavailable</span>
+                                        }
+                                    </td>
+
+                                    <td>
+                                        @if (appt.Tutor != null)
+                                        {
+                                            @appt.Tutor.Subject
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">N/A</span>
+                                        }
+                                    </td>
 
                                         
-                                        <td>
-                                            @if (appt.Status == "Scheduled")
-                                            {
-                                                <div class="d-flex gap-2 flex-wrap">
-                                                    <a class="btn btn-primary btn-sm" href="@Url.Action("Scheduler", "Appointment", new { tutorId = appt.TutorId, studentId = Model.StudentId, rescheduleAppointmentId = appt.AppointmentId })">
-                                                        Reschedule
-                                                    </a>
-
-                                                    <button type="button" class="btn btn-info btn-sm" aria-haspopup="dialog" aria-controls="studentAppointmentNotesModal"
-                                                            onclick="openTutorModal('@Url.Action("ViewAppointmentNotes", "Student", new { appointmentId = appt.AppointmentId })', 'studentAppointmentNotesModal')">
-                                                        View Notes
-                                                    </button>
-
-                                                    <form asp-controller="Student" asp-action="CancelAppointment" method="post" onsubmit="return confirm('Are you sure you want to cancel this appointment?');">
-                                                        @Html.AntiForgeryToken()
-                                                        <input type="hidden" name="appointmentId" value="@appt.AppointmentId" />
-                                                        <button type="submit" class="btn btn-danger btn-sm">
-                                                            Cancel
-                                                        </button>
-                                                    </form>
-                                                    
-                                                </div>
-                                            }
-                                            else
-                                            {
-                                                <span class="text-muted">—</span>
-                                            }
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                }
-                <form asp-controller="Reports" asp-action="GenerateAppointmentHistory" method="post" class="mt-3">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="studentId" value="@Model.StudentId" />
-                    <button type="submit" class="btn btn-primary"> Generate Appointment History </button>
-                </form>
-            </section>
-
-
-            @* My Group Appointments *@
-            <section class="dashboard-card student-groups-card">
-                <div class="student-groups-header">
-                    <div>
-                        <h2 class="dashboard-section-title">
-                            My Group Appointments
-                        </h2>
-
-                        <p class="student-groups-description">
-                            View your enrolled group tutoring sessions.
-                        </p>
-                    </div>
-
-                    <span class="student-groups-count">
-                        @studentGroupAppointments.Count
-                        @(studentGroupAppointments.Count == 1 ? "Group" : "Groups")
-                    </span>
-                </div>
-
-                @if (studentGroupAppointments.Any())
-                {
-                    <div class="table-responsive student-groups-scroll">
-                        <table class="table student-groups-table">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Time</th>
-                                    <th>Capacity</th>
-                                    <th>Status</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-
-                            <tbody>
-                                @foreach (var group in studentGroupAppointments
-                                                            .OrderBy(g => g.AppointmentDate)
-                                                            .ThenBy(g => g.StartTime))
-                                {
-                                    var enrolledCount = group.StudentIds?.Count ?? 0;
-
-                                    var statusClass = group.Status == "Open" ? "group-status-open"
-                                    : group.Status == "Completed" ? "group-status-completed"
-                                    : group.Status == "Cancelled" ? "group-status-cancelled"
-                                    : "group-status-default";
-
-                                    <tr>
-                                        <td>
-                                            <span class="group-date">
-                                                @group.AppointmentDate.ToString("MM/dd/yyyy")
-                                            </span>
-                                        </td>
-
-                                        <td>
-                                            <span class="group-time">
-                                                @DateTime.Today.Add(group.StartTime).ToString("h:mm tt")
-                                                -
-                                                @DateTime.Today.Add(group.EndTime).ToString("h:mm tt")
-                                            </span>
-                                        </td>
-
-                                        <td>
-                                            <div class="group-capacity">
-                                                <span class="group-capacity-text">
-                                                    @enrolledCount / @group.Capacity Students
-                                                </span>
-
-                                                <div class="group-capacity-bar">
-                                                    <div class="group-capacity-fill"
-                                                         style="width: @(group.Capacity > 0 ? Math.Min(100, enrolledCount * 100.0 / group.Capacity) : 0)%">
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </td>
-
-                                        <td>
-                                            <span class="group-status @statusClass">
-                                                @group.Status
-                                            </span>
-                                        </td>
-
-                                        <td>
-                                            @{
-                                                var groupStart = group.AppointmentDate.Date.Add(group.StartTime);
-                                                var canCancel = groupStart > DateTime.Now && (group.Status == "Open" || group.Status == "Full");
-                                            }
-
+                                    <td>
+                                        @if (appt.Status == "Scheduled")
+                                        {
                                             <div class="d-flex gap-2 flex-wrap">
-                                                <button type="button" class="btn btn-info btn-sm" aria-haspopup="dialog" aria-controls="studentGroupAppointmentNotesModal"
-                                                        onclick="openTutorModal('@Url.Action("ViewGroupAppointmentNotes", "Student", new { groupId = group.GroupId })', 'studentGroupAppointmentNotesModal')">
+                                                <a class="btn btn-primary btn-sm" href="@Url.Action("Scheduler", "Appointment", new { tutorId = appt.TutorId, studentId = Model.StudentId, rescheduleAppointmentId = appt.AppointmentId })">
+                                                    Reschedule
+                                                </a>
+
+                                                <button type="button" class="btn btn-info btn-sm" aria-haspopup="dialog" aria-controls="studentAppointmentNotesModal"
+                                                        onclick="openTutorModal('@Url.Action("ViewAppointmentNotes", "Student", new { appointmentId = appt.AppointmentId })', 'studentAppointmentNotesModal')">
                                                     View Notes
                                                 </button>
 
-                                                @if (canCancel)
-                                                {
-                                                    <form asp-controller="Appointment" asp-action="CancelGroupAppointment" method="post" class="group-cancel-form"
-                                                          onsubmit="return confirm('Are you sure you want to leave this group appointment?');">
-                                                        @Html.AntiForgeryToken()
-                                                        <input type="hidden" name="groupId" value="@group.GroupId" />
-                                                        <button type="submit" class="group-cancel-btn">
-                                                            Cancel
-                                                        </button>
-                                                    </form>
-                                                }
+                                                <form asp-controller="Student" asp-action="CancelAppointment" method="post" onsubmit="return confirm('Are you sure you want to cancel this appointment?');">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="appointmentId" value="@appt.AppointmentId" />
+                                                    <button type="submit" class="btn btn-danger btn-sm">
+                                                        Cancel
+                                                    </button>
+                                                </form>
+                                                    
                                             </div>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">—</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            <form asp-controller="Reports" asp-action="GenerateAppointmentHistory" method="post" class="mt-3">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="studentId" value="@Model.StudentId" />
+                <button type="submit" class="btn btn-primary"> Generate Appointment History </button>
+            </form>
+        </section>
+
+
+        @* My Group Appointments *@
+        <section class="dashboard-card student-groups-card">
+            <div class="student-groups-header">
+                <div>
+                    <h2 class="dashboard-section-title">
+                        My Group Appointments
+                    </h2>
+
+                    <p class="student-groups-description">
+                        View your enrolled group tutoring sessions.
+                    </p>
+                </div>
+
+                <span class="student-groups-count">
+                    @studentGroupAppointments.Count
+                    @(studentGroupAppointments.Count == 1 ? "Group" : "Groups")
+                </span>
+            </div>
+
+            @if (studentGroupAppointments.Any())
+            {
+                <div class="table-responsive student-groups-scroll">
+                    <table class="table student-groups-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Capacity</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @foreach (var group in studentGroupAppointments
+                                                        .OrderBy(g => g.AppointmentDate)
+                                                        .ThenBy(g => g.StartTime))
+                            {
+                                var enrolledCount = group.StudentIds?.Count ?? 0;
+
+                                var statusClass = group.Status == "Open" ? "group-status-open"
+                                : group.Status == "Completed" ? "group-status-completed"
+                                : group.Status == "Cancelled" ? "group-status-cancelled"
+                                : "group-status-default";
+
+                                <tr>
+                                    <td>
+                                        <span class="group-date">
+                                            @group.AppointmentDate.ToString("MM/dd/yyyy")
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        <span class="group-time">
+                                            @DateTime.Today.Add(group.StartTime).ToString("h:mm tt")
+                                            -
+                                            @DateTime.Today.Add(group.EndTime).ToString("h:mm tt")
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        <div class="group-capacity">
+                                            <span class="group-capacity-text">
+                                                @enrolledCount / @group.Capacity Students
+                                            </span>
+
+                                            <div class="group-capacity-bar">
+                                                <div class="group-capacity-fill"
+                                                     style="width: @(group.Capacity > 0 ? Math.Min(100, enrolledCount * 100.0 / group.Capacity) : 0)%">
+                                                </div>
+                                            </div>                                           
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <span class="group-status @statusClass">
+                                            @group.Status
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        @{
+                                            var groupStart = group.AppointmentDate.Date.Add(group.StartTime);
+                                            var canCancel = groupStart > DateTime.Now && (group.Status == "Open" || group.Status == "Full");
+                                        }
+
+                                        <div class="d-flex gap-2 flex-wrap">
+                                            <button type="button" class="btn btn-info btn-sm" aria-haspopup="dialog" aria-controls="studentGroupAppointmentNotesModal"
+                                                    onclick="openTutorModal('@Url.Action("ViewGroupAppointmentNotes", "Student", new { groupId = group.GroupId })', 'studentGroupAppointmentNotesModal')">
+                                                View Notes
+                                            </button>
+
+                                            @if (canCancel)
+                                            {
+                                                <form asp-controller="Appointment" asp-action="CancelGroupAppointment" method="post" class="group-cancel-form"
+                                                        onsubmit="return confirm('Are you sure you want to leave this group appointment?');">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="groupId" value="@group.GroupId" />
+                                                    <button type="submit" class="group-cancel-btn">
+                                                        Cancel
+                                                    </button>
+                                                </form>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="student-groups-empty">
+                    <div class="student-groups-empty-icon">
+                        &#128101;
                     </div>
-                }
-                else
-                {
-                    <div class="student-groups-empty">
-                        <div class="student-groups-empty-icon">
-                            &#128101;
-                        </div>
 
-                        <h3>No Group Appointments Yet</h3>
+                    <h3>No Group Appointments Yet</h3>
 
-                        <p>
-                            You have not joined any group appointments.
-                            Browse available group sessions to get started.
-                        </p>
-                    </div>
-                }
+                    <p>
+                        You have not joined any group appointments.
+                        Browse available group sessions to get started.
+                    </p>
+                </div>
+            }
 
-            </section>
+        </section>
 
-            <section class="dashboard-card reviews-card">
-                <div class="reviews-header">
-                    <div>
-                        <h2 class="dashboard-section-title">Awaiting Reviews</h2>
-                        <p class="reviews-description">
-                            Rate and review your completed tutoring appointments.
-                        </p>
-                    </div>
-
-                    @if (totalAwaitingReviews > 0)
-                    {
-                        <span class="reviews-count">
-                            @totalAwaitingReviews
-                            @(totalAwaitingReviews == 1 ? "Review" : "Reviews")
-                        </span>
-                    }
+        <section class="dashboard-card reviews-card">
+            <div class="reviews-header">
+                <div>
+                    <h2 class="dashboard-section-title">Awaiting Reviews</h2>
+                    <p class="reviews-description">
+                        Rate and review your completed tutoring appointments.
+                    </p>
                 </div>
 
                 @if (totalAwaitingReviews > 0)
                 {
-                    <div class="reviews-vertical-scroll">
-                        <div class="reviews-vertical-track">
-                            @foreach (var review in Model.AwaitingReviews ?? Enumerable.Empty<Review>())
-                            {
-
-                                <div class="review-item">
-                                    <h5>@review.TutorName</h5>
-
-                                    <p class="review-appointment-date">
-                                        <strong>Appointment Date:</strong>
-                                        @review.AppointmentDate.ToString("MMM dd, yyyy h:mm tt")
-                                    </p>
-
-                                    <form asp-controller="Student" asp-action="SubmitReview" method="post">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="appointmentId" value="@review.AppointmentId" />
-                                        <div class="mb-3">
-                                            <label for="rating-@review.AppointmentId" class="form-label"> Rating </label>
-                                            <select id="rating-@review.AppointmentId" name="rating" class="form-select" required>
-                                                <option value="">Select a rating</option>
-                                                <option value="1">1 - Poor</option>
-                                                <option value="2">2 - Fair</option>
-                                                <option value="3">3 - Good</option>
-                                                <option value="4">4 - Very Good</option>
-                                                <option value="5">5 - Excellent</option>
-                                            </select>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="comment-@review.AppointmentId" class="form-label"> Your Review </label>
-                                            <textarea id="comment-@review.AppointmentId" name="comment" class="form-control" rows="4" placeholder="Write your review..." required></textarea>
-                                        </div>
-
-                                        <button type="submit" class="btn btn-primary"> Submit Review </button>
-                                    </form>
-                                </div>
-                            }
-
-                            @* Group Appointment Reviews *@
-                            @foreach (var group in awaitingGroupReviews)
-                            {
-                                var tutorName = groupReviewTutorNames.TryGetValue(group.TutorId, out var name) ? name : "Tutor";
-                                <div class="review-item">
-                                    <h5>@tutorName</h5>
-
-                                    <p class="review-appointment-date">
-                                        <strong>Group Appointment Date:</strong>
-                                        @group.AppointmentDate.ToString("MMM dd, yyyy")
-                                        @DateTime.Today.Add(group.StartTime).ToString("h:mm tt")
-                                    </p>
-
-                                    <form asp-controller="Student" asp-action="SubmitGroupReview" method="post">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="groupId" value="@group.GroupId" />
-                                        <div class="mb-3">
-                                            <label for="group-rating-@group.GroupId" class="form-label">
-                                                Rating
-                                            </label>
-                                            <select id="group-rating-@group.GroupId" name="rating" class="form-select" required>
-                                                <option value="">Select a rating</option>
-                                                <option value="1">1 - Poor</option>
-                                                <option value="2">2 - Fair</option>
-                                                <option value="3">3 - Good</option>
-                                                <option value="4">4 - Very Good</option>
-                                                <option value="5">5 - Excellent</option>
-                                            </select>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="group-comment-@group.GroupId" class="form-label">
-                                                Your Review
-                                            </label>
-
-                                            <textarea id="group-comment-@group.GroupId"
-                                              name="comment"
-                                              class="form-control"
-                                              rows="4"
-                                              placeholder="Write your review..."
-                                              required></textarea>
-                                        </div>
-
-                                        <button type="submit" class="btn btn-primary">
-                                            Submit Review
-                                        </button>
-                                    </form>
-                                </div>
-                            }
-
-                        </div>
-                    </div>
+                    <span class="reviews-count">
+                        @totalAwaitingReviews
+                        @(totalAwaitingReviews == 1 ? "Review" : "Reviews")
+                    </span>
                 }
-                else
-                {
-                    <div class="alert alert-info mb-0"> You do not have any appointments awaiting review. </div>
-                }
-            </section>
+            </div>
 
-            <section class="dashboard-card tutors-card">
-                <h2 class="dashboard-section-title">Find a Tutor</h2>
-                <p> Search by tutor name or subject to find the right tutor for you. </p>
-                <div class="input-group mb-3">
-                    <input type="text" id="tutorSearch" class="form-control" placeholder="Search by tutor name or subject..."
-                           aria-label="Search tutors by name or subject" autocomplete="off" oninput="searchStudentTutors()" />
-                </div>
-                @if (tutors.Any())
-                {
-                    <div class="row" id="tutorResults">
-                        @foreach (var tutor in tutors)
+            @if (totalAwaitingReviews > 0)
+            {
+                <div class="reviews-vertical-scroll">
+                    <div class="reviews-vertical-track">
+                        @foreach (var review in Model.AwaitingReviews ?? Enumerable.Empty<Review>())
                         {
-                            <div class="col-md-6 mb-3 tutor-result-item" data-search="@($"{tutor.FName} {tutor.LName} {tutor.Subject}")">
-                                <div class="tutor-card">
-                                    <h5> @tutor.FName @tutor.LName</h5>
-                                    <p>
-                                        <strong>Subject:</strong> @tutor.Subject
-                                    </p>
 
-                                    <p>
-                                        <strong>Rating:</strong>
-                                        @if (tutor.ReviewCount > 0)
-                                        {
-                                            <span style="color: #f4a51c;">
-                                                ★ @tutor.AverageRating.ToString("0.0") / 5
-                                            </span>
+                            <div class="review-item">
+                                <h5>@review.TutorName</h5>
 
-                                            <span class="text-muted">
-                                                (@tutor.ReviewCount @(tutor.ReviewCount == 1 ? "review" : "reviews"))
-                                            </span>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted">No ratings yet </span>
-                                        }
-                                    </p>
+                                <p class="review-appointment-date">
+                                    <strong>Appointment Date:</strong>
+                                    @review.AppointmentDate.ToString("MMM dd, yyyy h:mm tt")
+                                </p>
 
-                                    <p>
-                                        <strong>Email:</strong> @tutor.Email
-                                    </p>
-
-                                    <p>
-                                        <strong>Phone:</strong> @tutor.PhoneNumber
-                                    </p>
-
-                                    <div class="tutor-actions mt-3">
-
-                                        <a class="btn btn-info" href="@Url.Action("TutorProfile", "Student", new { tutorId = tutor.TutorId })">
-                                            View Profile
-                                        </a>
-
-                                        <a class="btn btn-success" href="@Url.Action("Scheduler", "Appointment", new {tutorId = tutor.TutorId, studentId = Model.StudentId  })">
-                                            View Schedule
-                                        </a>
+                                <form asp-controller="Student" asp-action="SubmitReview" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="appointmentId" value="@review.AppointmentId" />
+                                    <div class="mb-3">
+                                        <label for="rating-@review.AppointmentId" class="form-label"> Rating </label>
+                                        <select id="rating-@review.AppointmentId" name="rating" class="form-select" required>
+                                            <option value="">Select a rating</option>
+                                            <option value="1">1 - Poor</option>
+                                            <option value="2">2 - Fair</option>
+                                            <option value="3">3 - Good</option>
+                                            <option value="4">4 - Very Good</option>
+                                            <option value="5">5 - Excellent</option>
+                                        </select>
                                     </div>
-                                </div>
+
+                                    <div class="mb-3">
+                                        <label for="comment-@review.AppointmentId" class="form-label"> Your Review </label>
+                                        <textarea id="comment-@review.AppointmentId" name="comment" class="form-control" rows="4" placeholder="Write your review..." required></textarea>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary"> Submit Review </button>
+                                </form>
+                            </div>
+                        }
+
+                        @* Group Appointment Reviews *@
+                        @foreach (var group in awaitingGroupReviews)
+                        {
+                            var tutorName = groupReviewTutorNames.TryGetValue(group.TutorId, out var name) ? name : "Tutor";
+                            <div class="review-item">
+                                <h5>@tutorName</h5>
+
+                                <p class="review-appointment-date">
+                                    <strong>Group Appointment Date:</strong>
+                                    @group.AppointmentDate.ToString("MMM dd, yyyy")
+                                    @DateTime.Today.Add(group.StartTime).ToString("h:mm tt")
+                                </p>
+
+                                <form asp-controller="Student" asp-action="SubmitGroupReview" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="groupId" value="@group.GroupId" />
+                                    <div class="mb-3">
+                                        <label for="group-rating-@group.GroupId" class="form-label">
+                                            Rating
+                                        </label>
+                                        <select id="group-rating-@group.GroupId" name="rating" class="form-select" required>
+                                            <option value="">Select a rating</option>
+                                            <option value="1">1 - Poor</option>
+                                            <option value="2">2 - Fair</option>
+                                            <option value="3">3 - Good</option>
+                                            <option value="4">4 - Very Good</option>
+                                            <option value="5">5 - Excellent</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="group-comment-@group.GroupId" class="form-label">
+                                            Your Review
+                                        </label>
+
+                                        <textarea id="group-comment-@group.GroupId"
+                                            name="comment"
+                                            class="form-control"
+                                            rows="4"
+                                            placeholder="Write your review..."
+                                            required></textarea>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary">
+                                        Submit Review
+                                    </button>
+                                </form>
                             </div>
                         }
 
                     </div>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info mb-0"> You do not have any appointments awaiting review. </div>
+            }
+        </section>
 
-                    <div id="noTutorsMatch" class="dashboard-empty" style="display: none;">
-                        <p>No tutors found matching your search.</p>
-                    </div>
-                }
-                else
-                {
-                    <div class="dashboard-empty">
-                        <p>No tutors are currently available.</p>
-                    </div>
-                }
-            </section>
+        <section class="dashboard-card tutors-card">
+            <h2 class="dashboard-section-title">Find a Tutor</h2>
+            <p> Search by tutor name or subject to find the right tutor for you. </p>
+            <div class="input-group mb-3">
+                <input type="text" id="tutorSearch" class="form-control" placeholder="Search by tutor name or subject..."
+                        aria-label="Search tutors by name or subject" autocomplete="off" oninput="searchStudentTutors()" />
+            </div>
+            @if (tutors.Any())
+            {
+                <div class="row" id="tutorResults">
+                    @foreach (var tutor in tutors)
+                    {
+                        <div class="col-md-6 mb-3 tutor-result-item" data-search="@($"{tutor.FName} {tutor.LName} {tutor.Subject}")">
+                            <div class="tutor-card">
+                                <h5> @tutor.FName @tutor.LName</h5>
+                                <p>
+                                    <strong>Subject:</strong> @tutor.Subject
+                                </p>
 
-            <section class="dashboard-card booking-card">
-                <h2 class="dashboard-section-title">Book an Appointment</h2>
-                <p>
-                    Select a tutor to view their schedule and find an available tutoring session.
-                </p>
+                                <p>
+                                    <strong>Rating:</strong>
+                                    @if (tutor.ReviewCount > 0)
+                                    {
+                                        <span style="color: #f4a51c;">
+                                            ★ @tutor.AverageRating.ToString("0.0") / 5
+                                        </span>
 
-                @if (tutors.Any())
-                {
-                    <form asp-controller="Appointment" asp-action="Scheduler" method="get">
-                        <input type="hidden" name="studentId" value="@Model.StudentId" />
-                        <div class="mb-3">
-                            <label for="tutorId" class="form-label"> Select a Tutor </label>
-                            <select id="tutorId" name="tutorId" class="form-select" required>
-                                <option value="">-- Select a Tutor --</option>
-                                @foreach (var tutor in tutors)
-                                {
-                                    <option value="@tutor.TutorId">
-                                        @tutor.FName @tutor.LName - @tutor.Subject
-                                    </option>
-                                }
-                            </select>
+                                        <span class="text-muted">
+                                            (@tutor.ReviewCount @(tutor.ReviewCount == 1 ? "review" : "reviews"))
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">No ratings yet </span>
+                                    }
+                                </p>
+
+                                <p>
+                                    <strong>Email:</strong> @tutor.Email
+                                </p>
+
+                                <p>
+                                    <strong>Phone:</strong> @tutor.PhoneNumber
+                                </p>
+
+                                <div class="tutor-actions mt-3">
+
+                                    <a class="btn btn-info" href="@Url.Action("TutorProfile", "Student", new { tutorId = tutor.TutorId })">
+                                        View Profile
+                                    </a>
+
+                                    <a class="btn btn-success" href="@Url.Action("Scheduler", "Appointment", new {tutorId = tutor.TutorId, studentId = Model.StudentId  })">
+                                        View Schedule
+                                    </a>
+                                </div>
+                            </div>
                         </div>
-                        <button type="submit" class="btn btn-success mt-2"> View Schedule </button>
-                    </form>
-                }
-                else
-                {
-                    <div class="alert alert-info">
-                        No tutors are currently available to select. Try searching for a tutor first.
-                    </div>
-                }
-            </section>
-        </div>
+                    }
 
+                </div>
+
+                <div id="noTutorsMatch" class="dashboard-empty" style="display: none;">
+                    <p>No tutors found matching your search.</p>
+                </div>
+            }
+            else
+            {
+                <div class="dashboard-empty">
+                    <p>No tutors are currently available.</p>
+                </div>
+            }
+        </section>
+
+        <section class="dashboard-card booking-card">
+            <h2 class="dashboard-section-title">Book an Appointment</h2>
+            <p>
+                Select a tutor to view their schedule and find an available tutoring session.
+            </p>
+
+            @if (tutors.Any())
+            {
+                <form asp-controller="Appointment" asp-action="Scheduler" method="get">
+                    <input type="hidden" name="studentId" value="@Model.StudentId" />
+                    <div class="mb-3">
+                        <label for="tutorId" class="form-label"> Select a Tutor </label>
+                        <select id="tutorId" name="tutorId" class="form-select" required>
+                            <option value="">-- Select a Tutor --</option>
+                            @foreach (var tutor in tutors)
+                            {
+                                <option value="@tutor.TutorId">
+                                    @tutor.FName @tutor.LName - @tutor.Subject
+                                </option>
+                            }
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-success mt-2"> View Schedule </button>
+                </form>
+            }
+            else
+            {
+                <div class="alert alert-info">
+                    No tutors are currently available to select. Try searching for a tutor first.
+                </div>
+            }
+        </section>
     </div>
-</body>
+</div>
+
+@Html.AntiForgeryToken()
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.js.iife.js"></script>
+
+    <script>
+        window.dashboardTourConfig = {
+            role: "Student",
+            showTour: @Json.Serialize(ViewBag.ShowDashboardTour == true),
+            completeUrl: '@Url.Action("Complete", "Tour")',
+            token: document.querySelector('input[name="__RequestVerificationToken"]').value
+        };
+    </script>
+
+    <script src="~/js/dashboard-tour.js"
+            asp-append-version="true"></script>
+}

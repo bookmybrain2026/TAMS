@@ -27,6 +27,12 @@ namespace TAMS.Controllers
             var loggedInStudentId = HttpContext.Session.GetInt32("StudentId");
             if (loggedInStudentId == null) { return RedirectToAction("Login", "Login"); }
 
+
+            var loginUser = dBContext.Login
+                .Find(l => l.UserId == loggedInStudentId.Value && l.Role == UserRole.Student)
+                .FirstOrDefault();
+            ViewBag.ShowDashboardTour = loginUser != null && !loginUser.HasCompletedTour;
+
             if (id == null || loggedInStudentId.Value != id.Value) { return Unauthorized(); }
 
             var student = dBContext.Student.Find(s => s.StudentId == id.Value).FirstOrDefault();
