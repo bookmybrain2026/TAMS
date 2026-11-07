@@ -30,6 +30,30 @@
         (a.Reminder24HoursBeforeSent && !a.StudentReminder24HoursAcknowledged ? 1 : 0) + (a.Reminder1HourBeforeSent && !a.StudentReminder1HourAcknowledged ? 1 : 0));
     }
 
+    @if (TempData["Success"] != null || TempData["SuccessMessage"] != null)
+    {
+        <div class="student-alert student-alert-success" role="status">
+            <span class="student-alert-icon">✓</span>
+            <span> @(TempData["Success"] ?? TempData["SuccessMessage"]) </span>
+        </div>
+    }
+
+    @if (TempData["Error"] != null || TempData["ErrorMessage"] != null)
+    {
+        <div class="student-alert student-alert-error" role="alert">
+            <span class="student-alert-icon">⚠</span>
+            <span> @(TempData["Error"] ?? TempData["ErrorMessage"]) </span>
+        </div>
+    }
+
+    @if (TempData["InfoMessage"] != null)
+    {
+        <div class="student-alert student-alert-info" role="status">
+            <span class="student-alert-icon">ⓘ</span>
+            <span>@TempData["InfoMessage"]</span>
+        </div>
+    }
+
     <header class="dashboard-header">
         <div>
             <h1>Welcome, @Model.FName @Model.LName!</h1>
@@ -266,6 +290,8 @@
                             <tr>
                                 <th>Date</th>
                                 <th>Time</th>
+                                <th>Tutor Name</th>
+                                <th>Subject</th>
                                 <th>Capacity</th>
                                 <th>Status</th>
                                 <th>Action</th>
@@ -278,6 +304,7 @@
                                                         .ThenBy(g => g.StartTime))
                             {
                                 var enrolledCount = group.StudentIds?.Count ?? 0;
+                                var groupTutor = tutors.FirstOrDefault(t => t.TutorId == group.TutorId);
 
                                 var statusClass = group.Status == "Open" ? "group-status-open"
                                 : group.Status == "Completed" ? "group-status-completed"
@@ -297,6 +324,30 @@
                                             -
                                             @DateTime.Today.Add(group.EndTime).ToString("h:mm tt")
                                         </span>
+                                    </td>
+
+                                    <td>
+                                        @if (groupTutor != null)
+                                        {
+                                            @($"{groupTutor.FName} {groupTutor.LName}")
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">
+                                                Tutor unavailable
+                                            </span>
+                                        }
+                                    </td>
+
+                                    <td>
+                                        @if (groupTutor != null)
+                                        {
+                                            @groupTutor.Subject
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">N/A</span>
+                                        }
                                     </td>
 
                                     <td>
@@ -607,6 +658,5 @@
         };
     </script>
 
-    <script src="~/js/dashboard-tour.js"
-            asp-append-version="true"></script>
+    <script src="~/js/dashboard-tour.js" asp-append-version="true"></script>
 }

@@ -921,7 +921,7 @@ namespace TAMS.Controllers
 
             dBContext.GroupAppointments.InsertOne(model);
 
-            TempData["SuccessMessage"] = "Your group appointment request has been submitted for admin approval.";
+            TempData["TutorDashboardSuccess"] = "Your group appointment request has been submitted for admin approval.";
 
             return RedirectToAction("Dashboard", new { id = tutorId.Value });
         }

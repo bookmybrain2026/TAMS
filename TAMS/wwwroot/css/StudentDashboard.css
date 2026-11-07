@@ -23,6 +23,57 @@
     box-sizing: border-box;
 }
 
+.student-dashboard div.student-alert.student-alert-error {
+    display: block !important;
+    width: 100%;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    color: #842029 !important;
+    background: #fce9e5 !important;
+    border: 1px solid #e9b8b1 !important;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.6;
+    box-shadow: 0 3px 10px rgba(93, 57, 20, 0.08);
+}
+
+.student-dashboard div.student-alert.student-alert-success {
+    display: block !important;
+    width: 100%;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    color: #315d2b !important;
+    background: #edf4e8 !important;
+    border: 1px solid #c8d9bd !important;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.6;
+    box-shadow: 0 3px 10px rgba(93, 57, 20, 0.08);
+}
+
+.student-dashboard div.student-alert.student-alert-info {
+    display: block !important;
+    width: 100%;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    color: #055160 !important;
+    background: #cff4fc !important;
+    border: 1px solid #b6effb !important;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.6;
+    box-shadow: 0 3px 10px rgba(93, 57, 20, 0.08);
+}
+
+.student-dashboard .student-alert-icon {
+    display: inline-block;
+    margin-right: 8px;
+    font-weight: 800;
+}
+
 .student-dashboard *, .student-dashboard *::before, .student-dashboard *::after { box-sizing: border-box; }
 
 .student-dashboard .dashboard-header {
