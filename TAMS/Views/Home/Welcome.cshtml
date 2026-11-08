@@ -2,8 +2,8 @@
     ViewData["Title"] = "Welcome";
 }
 @section Styles {
-    <link rel="stylesheet" href="~/css/Welcome.css" />
-    <link href="~/css/site.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/Welcome.css" asp-append-version="true" />
+    <link href="~/css/site.css" rel="stylesheet" asp-append-version="true" />
 }
 
 <body>
@@ -99,5 +99,23 @@
             <p>Log in to BookMyBrain and start managing your tutoring appointments.</p>
             <a asp-controller="Login" asp-action="Login" class="btn btn-light btn-lg"> Login to BookMyBrain </a>
         </section>
+
+        <footer class="welcome-footer">
+            <div class="welcome-footer-content">
+                <h3>BookMyBrain</h3>
+
+                <p>
+                    For questions, assistance, or inquiries about becoming a tutor, please contact an administrator.
+                </p>
+
+                <p class="welcome-footer-email">
+                    Administrator Email: bmbadmin2026@gmail.com
+                </p>
+
+                <p class="welcome-footer-copyright">
+                    &copy; @DateTime.Now.Year BookMyBrain. All rights reserved.
+                </p>
+            </div>
+        </footer>
     </div>
 </body>

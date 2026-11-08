@@ -220,6 +220,46 @@
     color: var(--bmb-dark);
 }
 
+.welcome-page .welcome-footer {
+    background: #fff8e8;
+    border-top: 2px solid #e9decc;
+    padding: 25px 20px;
+    text-align: center;
+    margin-top: 20px;
+}
+
+.welcome-page .welcome-footer-content {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.welcome-page .welcome-footer h3 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--bmb-brown);
+    margin-bottom: 10px;
+}
+
+.welcome-page .welcome-footer p {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--bmb-brown);
+    margin-bottom: 8px;
+}
+
+.welcome-page .welcome-footer .welcome-footer-email {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--bmb-dark);
+}
+
+.welcome-page .welcome-footer .welcome-footer-copyright {
+    font-size: 12px;
+    color: #8a7967;
+    margin-top: 15px;
+    margin-bottom: 0;
+}
+
 @media (max-width: 900px) {
     .welcome-content {
         flex-direction: column;

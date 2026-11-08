@@ -5,7 +5,7 @@
 }
 
 @section Styles {
-    <link href="~/css/StudentRegistration.css" rel="stylesheet" />
+    <link href="~/css/StudentRegistration.css" rel="stylesheet" asp-append-version="true" />
 }
 
 <div class="student-registration-wrapper">
@@ -24,15 +24,11 @@
                 Join BookMyBrain and start your learning journey.
             </p>
 
-            <form asp-controller="Student"
-                  asp-action="StudentRegistration"
-                  method="post">
-
+            <form asp-controller="Student" asp-action="StudentRegistration" method="post">
                 <div asp-validation-summary="ModelOnly"
                      class="text-danger mb-3">
                 </div>
 
-                <!-- Student Name -->
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label asp-for="FName" class="form-label">
@@ -63,7 +59,6 @@
                     </div>
                 </div>
 
-                <!-- Date of Birth -->
                 <div class="mb-3">
                     <label asp-for="DOB" class="form-label">
                         Date of Birth
@@ -77,7 +72,6 @@
                           class="text-danger"></span>
                 </div>
 
-                <!-- Phone Number -->
                 <div class="mb-3">
                     <label asp-for="PhoneNumber" class="form-label">
                         Phone Number
@@ -92,7 +86,6 @@
                           class="text-danger"></span>
                 </div>
 
-                <!-- Email -->
                 <div class="mb-3">
                     <label asp-for="Email" class="form-label">
                         Email
@@ -115,7 +108,6 @@
                     Login Information
                 </h5>
 
-                <!-- Username -->
                 <div class="mb-3">
                     <label asp-for="Username" class="form-label">
                         Username
@@ -130,7 +122,6 @@
                           class="text-danger"></span>
                 </div>
 
-                <!-- Password -->
                 <div class="mb-3">
                     <label asp-for="Password" class="form-label">
                         Password
@@ -146,7 +137,6 @@
                           class="text-danger"></span>
                 </div>
 
-                <!-- Confirm Password -->
                 <div class="mb-3">
                     <label asp-for="ConfirmPassword" class="form-label">
                         Confirm Password
@@ -162,22 +152,26 @@
                           class="text-danger"></span>
                 </div>
 
-                <!-- Submit -->
-                <div class="student-registration-actions d-grid">
-                    <button type="submit"
-                            class="btn student-registration-submit">
+=                <div class="student-registration-actions d-grid">
+                    <button type="submit" class="btn student-registration-submit">
                         Create Student Account
                     </button>
                 </div>
 
             </form>
 
-            <!-- Existing Account Link -->
+            <div class="student-registration-tutor-note">
+                <h5>Interested in Becoming a Tutor?</h5>
+                <p>
+                    Tutor accounts are managed by an administrator.
+                    If you would like to become a tutor,
+                    please contact an administrator for assistance.
+                </p>
+            </div>
+
             <div class="student-registration-login">
                 Already have an account?
-                <a asp-controller="Login"
-                   asp-action="Login"
-                   class="student-registration-login-link">
+                <a asp-controller="Login" asp-action="Login" class="student-registration-login-link">
                     Log In
                 </a>
             </div>
