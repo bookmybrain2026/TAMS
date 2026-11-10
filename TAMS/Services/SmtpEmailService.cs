@@ -1,6 +1,5 @@
+SmtpEmailService.cs:
 ﻿//Builds the message, authenticates with the SMTP server, and sends the email.
-using MailKit.Net.Smtp; //imports MailKit’s SMTP functionality
-using MailKit.Security; //imports security settings for the SMTP connection
 using MimeKit; //used to create the email message
 
 namespace TAMS.Services
@@ -10,11 +9,13 @@ namespace TAMS.Services
         private readonly IConfiguration _configuration;
         //IConfiguration allows the class to read values from configuration files like appsetting.json
         private readonly IWebHostEnvironment _environment; // Provides the application's file paths.
+        private readonly BrevoEmailService _brevo;
 
-        public SmtpEmailService(IConfiguration configuration, IWebHostEnvironment environment) //runs when ASP.NET Core creates an SmtpEmailService object
+        public SmtpEmailService(IConfiguration configuration, IWebHostEnvironment environment, BrevoEmailService brevo)
         {
             _configuration = configuration; //stores the configuration object in the class field so the email methods can use it
             _environment = environment; //stors the application's environment information.
+            _brevo = brevo;
         }
 
         //Styling Done for SendStudentAppointmentConfirmationAsync
@@ -23,8 +24,8 @@ namespace TAMS.Services
             var message = new MimeMessage(); //email message object
 
             message.From.Add(new MailboxAddress( //Sender's display name & email
-                _configuration["EmailSettings:SenderName"],
-                _configuration["EmailSettings:SenderEmail"]));
+                (_configuration["Brevo:SenderName"] ?? "TAMS"),
+                (_configuration["Brevo:SenderEmail"] ?? throw new InvalidOperationException("Brevo sender email is missing"))));
 
             message.To.Add(new MailboxAddress(studentName, studentEmail)); //sets the recipient
 
@@ -95,29 +96,14 @@ namespace TAMS.Services
 
             message.Body = builder.ToMessageBody();
 
-            using var smtp = new SmtpClient(); //creates an SMTP client used to connect to the email provide
-                                               //Using keyword ensure that the SMTP client is properly disposed of when the method finishes 
-                                               //even if an error occurs
-
-            await smtp.ConnectAsync( //asynchronous connection to the email provider’s SMTP server
-                _configuration["EmailSettings:SmtpServer"], //read SMTP server name and port
-                int.Parse(_configuration["EmailSettings:SmtpPort"]!),
-                SecureSocketOptions.StartTls); //tells MailKit to use STARTTLS security when connecting to the SMTP server
-
-            await smtp.AuthenticateAsync( //begins the login process with the email provider
-                _configuration["EmailSettings:Username"],
-                _configuration["EmailSettings:Password"]);
-
-            await smtp.SendAsync(message); //sends the email
-
-            await smtp.DisconnectAsync(true); //close the connection between application and email provider
+            await _brevo.SendMimeMessageAsync(message); //close the connection between application and email provider
         }
 
         //Styling Done for SendTutorAppointmentNotificationAsync
         public async Task SendTutorAppointmentNotificationAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate)
         {
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.From.Add(new MailboxAddress((_configuration["Brevo:SenderName"] ?? "TAMS"), (_configuration["Brevo:SenderEmail"] ?? throw new InvalidOperationException("Brevo sender email is missing"))));
             message.To.Add(new MailboxAddress(tutorName, tutorEmail));
             message.Subject = "New Appointment Scheduled";
 
@@ -182,18 +168,14 @@ namespace TAMS.Services
 
             message.Body = builder.ToMessageBody();
 
-            using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
-            await smtp.SendAsync(message);
-            await smtp.DisconnectAsync(true);
+            await _brevo.SendMimeMessageAsync(message);
         }
 
         //Styling Done for SendStudentAppointmentCancellationAsync
         public async Task SendStudentAppointmentCancellationAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate)
         {
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.From.Add(new MailboxAddress((_configuration["Brevo:SenderName"] ?? "TAMS"), (_configuration["Brevo:SenderEmail"] ?? throw new InvalidOperationException("Brevo sender email is missing"))));
             message.To.Add(new MailboxAddress(studentName, studentEmail));
             message.Subject = "Appointment Cancellation Confirmation";
 
@@ -262,18 +244,14 @@ namespace TAMS.Services
 
             message.Body = builder.ToMessageBody();
 
-            using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
-            await smtp.SendAsync(message);
-            await smtp.DisconnectAsync(true);
+            await _brevo.SendMimeMessageAsync(message);
         }
 
         //Styling Done for SendTutorAppointmentCancellationAsync
         public async Task SendTutorAppointmentCancellationAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate)
         {
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.From.Add(new MailboxAddress((_configuration["Brevo:SenderName"] ?? "TAMS"), (_configuration["Brevo:SenderEmail"] ?? throw new InvalidOperationException("Brevo sender email is missing"))));
             message.To.Add(new MailboxAddress(tutorName, tutorEmail));
             message.Subject = "Student Cancelled an Appointment";
 
@@ -336,18 +314,14 @@ namespace TAMS.Services
 
             message.Body = builder.ToMessageBody();
 
-            using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
-            await smtp.SendAsync(message);
-            await smtp.DisconnectAsync(true);
+            await _brevo.SendMimeMessageAsync(message);
         }
 
         //Styling Done for SendStudentAppointmentCancelledByTutorAsync
         public async Task SendStudentAppointmentCancelledByTutorAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate)
         {
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.From.Add(new MailboxAddress((_configuration["Brevo:SenderName"] ?? "TAMS"), (_configuration["Brevo:SenderEmail"] ?? throw new InvalidOperationException("Brevo sender email is missing"))));
             message.To.Add(new MailboxAddress(studentName, studentEmail));
             message.Subject = "Appointment Cancelled by Tutor";
 
@@ -420,18 +394,14 @@ namespace TAMS.Services
 
             message.Body = builder.ToMessageBody();
 
-            using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
-            await smtp.SendAsync(message);
-            await smtp.DisconnectAsync(true);
+            await _brevo.SendMimeMessageAsync(message);
         }
 
         //Styling Done for SendTutorCancellationConfirmationAsync
         public async Task SendTutorCancellationConfirmationAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate)
         {
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.From.Add(new MailboxAddress((_configuration["Brevo:SenderName"] ?? "TAMS"), (_configuration["Brevo:SenderEmail"] ?? throw new InvalidOperationException("Brevo sender email is missing"))));
             message.To.Add(new MailboxAddress(tutorName, tutorEmail));
             message.Subject = "Appointment Cancellation Confirmation";
 
@@ -503,18 +473,14 @@ namespace TAMS.Services
 
             message.Body = builder.ToMessageBody();
 
-            using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
-            await smtp.SendAsync(message);
-            await smtp.DisconnectAsync(true);
+            await _brevo.SendMimeMessageAsync(message);
         }
 
         //Styling Done for SendAdminCancelledAppointmentAsync
         public async Task SendAdminCancelledAppointmentAsync(string recipientEmail, string recipientName, string otherPersonName, DateTime appointmentDate, string recipientType, string adminName)
         {
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.From.Add(new MailboxAddress((_configuration["Brevo:SenderName"] ?? "TAMS"), (_configuration["Brevo:SenderEmail"] ?? throw new InvalidOperationException("Brevo sender email is missing"))));
             message.To.Add(new MailboxAddress(recipientName, recipientEmail));
             message.Subject = "Appointment Cancelled by Administrator";
             var otherPersonLabel = recipientType.Equals("student", StringComparison.OrdinalIgnoreCase) ? "Tutor" : "Student";
@@ -585,18 +551,14 @@ namespace TAMS.Services
                 """;
             message.Body = builder.ToMessageBody();
 
-            using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
-            await smtp.SendAsync(message);
-            await smtp.DisconnectAsync(true);
+            await _brevo.SendMimeMessageAsync(message);
         }
 
         //Styling Done for PasswordRecoveryCode
         public async Task SendPasswordRecoveryCodeAsync(string studentEmail, string studentName, string recoveryCode)
         {
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.From.Add(new MailboxAddress((_configuration["Brevo:SenderName"] ?? "TAMS"), (_configuration["Brevo:SenderEmail"] ?? throw new InvalidOperationException("Brevo sender email is missing"))));
             message.To.Add(new MailboxAddress(studentName, studentEmail));
             message.Subject = "TAMS Password Recovery Code";
 
@@ -653,18 +615,14 @@ namespace TAMS.Services
 
             message.Body = builder.ToMessageBody();
 
-            using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
-            await smtp.SendAsync(message);
-            await smtp.DisconnectAsync(true);
+            await _brevo.SendMimeMessageAsync(message);
         }
 
         //Styling Done for SendReviewReminderAsync
         public async Task SendReviewReminderAsync(string studentEmail, string studentName, string tutorName)
         {
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.From.Add(new MailboxAddress((_configuration["Brevo:SenderName"] ?? "TAMS"), (_configuration["Brevo:SenderEmail"] ?? throw new InvalidOperationException("Brevo sender email is missing"))));
             message.To.Add(new MailboxAddress(studentName, studentEmail));
             message.Subject = "Awaiting Review or Rating";
 
@@ -712,18 +670,14 @@ namespace TAMS.Services
 
             message.Body = builder.ToMessageBody();
 
-            using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
-            await smtp.SendAsync(message);
-            await smtp.DisconnectAsync(true);
+            await _brevo.SendMimeMessageAsync(message);
         }
 
         //Styling Done for SendTutorAppointmentCompletionReminderAsync
         public async Task SendTutorAppointmentCompletionReminderAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate, DateTime endDate, int hoursAfterEnd)
         {
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.From.Add(new MailboxAddress((_configuration["Brevo:SenderName"] ?? "TAMS"), (_configuration["Brevo:SenderEmail"] ?? throw new InvalidOperationException("Brevo sender email is missing"))));
             message.To.Add(new MailboxAddress(tutorName, tutorEmail));
 
             message.Subject = "Reminder: Confirm Your Tutoring Appointment";
@@ -797,18 +751,14 @@ namespace TAMS.Services
 
             message.Body = builder.ToMessageBody();
 
-            using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
-            await smtp.SendAsync(message);
-            await smtp.DisconnectAsync(true);
+            await _brevo.SendMimeMessageAsync(message);
         }
 
         //Styling Done for SendTutorAppointmentAdminFollowUpAsync
         public async Task SendTutorAppointmentAdminFollowUpAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate, DateTime endDate)
         {
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.From.Add(new MailboxAddress((_configuration["Brevo:SenderName"] ?? "TAMS"), (_configuration["Brevo:SenderEmail"] ?? throw new InvalidOperationException("Brevo sender email is missing"))));
             message.To.Add(new MailboxAddress(tutorName, tutorEmail));
             message.Subject = "Action Required: Unconfirmed Appointment";
 
@@ -878,18 +828,14 @@ namespace TAMS.Services
 
             message.Body = builder.ToMessageBody();
 
-            using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
-            await smtp.SendAsync(message);
-            await smtp.DisconnectAsync(true);
+            await _brevo.SendMimeMessageAsync(message);
         }
 
         //Styling Done for SendAdminAppointmentFollowUpAsync
         public async Task SendAdminAppointmentFollowUpAsync(string adminEmail, string tutorName, string studentName, DateTime appointmentDate, DateTime endDate, int appointmentId)
         {
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.From.Add(new MailboxAddress((_configuration["Brevo:SenderName"] ?? "TAMS"), (_configuration["Brevo:SenderEmail"] ?? throw new InvalidOperationException("Brevo sender email is missing"))));
             message.To.Add(MailboxAddress.Parse(adminEmail));
             message.Subject = $"Action Required: Appointment #{appointmentId} Needs Review";
 
@@ -961,18 +907,14 @@ namespace TAMS.Services
 
             message.Body = builder.ToMessageBody();
 
-            using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
-            await smtp.SendAsync(message);
-            await smtp.DisconnectAsync(true);
+            await _brevo.SendMimeMessageAsync(message);
         }
 
         //Styling donw for SendTutorAppointmentRescheduledAsync
         public async Task SendTutorAppointmentRescheduledAsync(string tutorEmail, string tutorName, string studentName, DateTime newAppointmentDate)
         {
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.From.Add(new MailboxAddress((_configuration["Brevo:SenderName"] ?? "TAMS"), (_configuration["Brevo:SenderEmail"] ?? throw new InvalidOperationException("Brevo sender email is missing"))));
             message.To.Add(new MailboxAddress(tutorName, tutorEmail));
             message.Subject = "Appointment Rescheduled";
 
@@ -1033,18 +975,14 @@ namespace TAMS.Services
 
             message.Body = builder.ToMessageBody();
 
-            using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
-            await smtp.SendAsync(message);
-            await smtp.DisconnectAsync(true);
+            await _brevo.SendMimeMessageAsync(message);
         }
 
         //Styling done for SendStudentAppointmentRescheduledAsync
         public async Task SendStudentAppointmentRescheduledAsync(string studentEmail, string studentName, string tutorName, DateTime newAppointmentDate)
         {
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.From.Add(new MailboxAddress((_configuration["Brevo:SenderName"] ?? "TAMS"), (_configuration["Brevo:SenderEmail"] ?? throw new InvalidOperationException("Brevo sender email is missing"))));
             message.To.Add(MailboxAddress.Parse(studentEmail));
             message.Subject = "Appointment Rescheduled";
 
@@ -1103,18 +1041,14 @@ namespace TAMS.Services
 
             message.Body = builder.ToMessageBody();
 
-            using var smtp = new MailKit.Net.Smtp.SmtpClient();
-            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
-            await smtp.SendAsync(message);
-            await smtp.DisconnectAsync(true);
+            await _brevo.SendMimeMessageAsync(message);
         }
 
         //Styling Done for SendStudentUpcomingAppointmentReminderAsync
         public async Task SendStudentUpcomingAppointmentReminderAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate, int hoursBefore, string? tutorNotes)
         {
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.From.Add(new MailboxAddress((_configuration["Brevo:SenderName"] ?? "TAMS"), (_configuration["Brevo:SenderEmail"] ?? throw new InvalidOperationException("Brevo sender email is missing"))));
             message.To.Add(new MailboxAddress(studentName, studentEmail));
 
             message.Subject = hoursBefore == 24 ? "Reminder: Your Tutoring Appointment Is Tomorrow"
@@ -1195,18 +1129,14 @@ namespace TAMS.Services
 
             message.Body = builder.ToMessageBody();
 
-            using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
-            await smtp.SendAsync(message);
-            await smtp.DisconnectAsync(true);
+            await _brevo.SendMimeMessageAsync(message);
         }
 
         //Styling Done for SendTutorUpcomingAppointmentReminderAsync
         public async Task SendTutorUpcomingAppointmentReminderAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate, int hoursBefore)
         {
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.From.Add(new MailboxAddress((_configuration["Brevo:SenderName"] ?? "TAMS"), (_configuration["Brevo:SenderEmail"] ?? throw new InvalidOperationException("Brevo sender email is missing"))));
             message.To.Add(new MailboxAddress(tutorName, tutorEmail));
 
             message.Subject = hoursBefore == 24 ? "Reminder: Your Tutoring Appointment Is Tomorrow"
@@ -1276,18 +1206,14 @@ namespace TAMS.Services
 
             message.Body = builder.ToMessageBody();
 
-            using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
-            await smtp.SendAsync(message);
-            await smtp.DisconnectAsync(true);
+            await _brevo.SendMimeMessageAsync(message);
         }
 
         //Styling Done for SendGroupAppointmentConfirmationToStudentAsync
         public async Task SendGroupAppointmentConfirmationToStudentAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime)
         {
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.From.Add(new MailboxAddress((_configuration["Brevo:SenderName"] ?? "TAMS"), (_configuration["Brevo:SenderEmail"] ?? throw new InvalidOperationException("Brevo sender email is missing"))));
             message.To.Add(new MailboxAddress(studentName, studentEmail));
             message.Subject = "Group Appointment Confirmation";
 
@@ -1362,18 +1288,14 @@ namespace TAMS.Services
 
             message.Body = builder.ToMessageBody();
 
-            using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
-            await smtp.SendAsync(message);
-            await smtp.DisconnectAsync(true);
+            await _brevo.SendMimeMessageAsync(message);
         }
 
         //Styling Done for SendGroupAppointmentConfirmationToTutorAsync
         public async Task SendGroupAppointmentConfirmationToTutorAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime)
         {
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.From.Add(new MailboxAddress((_configuration["Brevo:SenderName"] ?? "TAMS"), (_configuration["Brevo:SenderEmail"] ?? throw new InvalidOperationException("Brevo sender email is missing"))));
             message.To.Add(new MailboxAddress(tutorName, tutorEmail));
             message.Subject = "Student Joined Group Appointment";
 
@@ -1448,18 +1370,14 @@ namespace TAMS.Services
 
             message.Body = builder.ToMessageBody();
 
-            using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
-            await smtp.SendAsync(message);
-            await smtp.DisconnectAsync(true);
+            await _brevo.SendMimeMessageAsync(message);
         }
 
         //Styling Done for SendGroupAppointmentConfirmationToStudentAsync
         public async Task SendGroupAppointmentCancellationToStudentAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime)
         {
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.From.Add(new MailboxAddress((_configuration["Brevo:SenderName"] ?? "TAMS"), (_configuration["Brevo:SenderEmail"] ?? throw new InvalidOperationException("Brevo sender email is missing"))));
             message.To.Add(new MailboxAddress(studentName, studentEmail));
             message.Subject = "Group Appointment Cancellation Confirmation";
 
@@ -1538,18 +1456,14 @@ namespace TAMS.Services
 
             message.Body = builder.ToMessageBody();
 
-            using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
-            await smtp.SendAsync(message);
-            await smtp.DisconnectAsync(true);
+            await _brevo.SendMimeMessageAsync(message);
         }
 
         //Styling Done for SendGroupAppointmentCancellationToTutorAsync
         public async Task SendGroupAppointmentCancellationToTutorAsync(string tutorEmail, string tutorName, string studentName,  DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime)
         {
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.From.Add(new MailboxAddress((_configuration["Brevo:SenderName"] ?? "TAMS"), (_configuration["Brevo:SenderEmail"] ?? throw new InvalidOperationException("Brevo sender email is missing"))));
             message.To.Add(new MailboxAddress(tutorName, tutorEmail));
             message.Subject = "Student Cancelled Group Appointment";
 
@@ -1630,18 +1544,14 @@ namespace TAMS.Services
 
             message.Body = builder.ToMessageBody();
 
-            using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
-            await smtp.SendAsync(message);
-            await smtp.DisconnectAsync(true);
+            await _brevo.SendMimeMessageAsync(message);
         }
 
         //Styling Done for SendStudentUpcomingGroupReminderAsync
         public async Task SendStudentUpcomingGroupReminderAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime, int hoursBefore)
         {
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.From.Add(new MailboxAddress((_configuration["Brevo:SenderName"] ?? "TAMS"), (_configuration["Brevo:SenderEmail"] ?? throw new InvalidOperationException("Brevo sender email is missing"))));
             message.To.Add(new MailboxAddress(studentName, studentEmail));
             message.Subject = hoursBefore == 24
                 ? "Reminder: Your Group Tutoring Session Is Tomorrow"
@@ -1719,18 +1629,14 @@ namespace TAMS.Services
 
             message.Body = builder.ToMessageBody();
 
-            using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync( _configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
-            await smtp.SendAsync(message);
-            await smtp.DisconnectAsync(true);
+            await _brevo.SendMimeMessageAsync(message);
         }
 
         //Styling Done for SendTutorUpcomingGroupReminderAsync
         public async Task SendTutorUpcomingGroupReminderAsync(string tutorEmail, string tutorName, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime, int hoursBefore, int enrolledCount)
         {
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.From.Add(new MailboxAddress((_configuration["Brevo:SenderName"] ?? "TAMS"), (_configuration["Brevo:SenderEmail"] ?? throw new InvalidOperationException("Brevo sender email is missing"))));
             message.To.Add(new MailboxAddress(tutorName, tutorEmail));
             message.Subject = hoursBefore == 24
                 ? "Reminder: Your Group Tutoring Session Is Tomorrow"
@@ -1805,18 +1711,14 @@ namespace TAMS.Services
 
             message.Body = builder.ToMessageBody();
 
-            using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
-            await smtp.SendAsync(message);
-            await smtp.DisconnectAsync(true);
+            await _brevo.SendMimeMessageAsync(message);
         }
 
         //Styling Done for SendAdminCancelledGroupToStudentAsync
         public async Task SendAdminCancelledGroupToStudentAsync(string studentEmail, string studentName, string tutorName, string adminName, int groupId, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime)
         {
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.From.Add(new MailboxAddress((_configuration["Brevo:SenderName"] ?? "TAMS"), (_configuration["Brevo:SenderEmail"] ?? throw new InvalidOperationException("Brevo sender email is missing"))));
             message.To.Add(new MailboxAddress(studentName, studentEmail));
             message.Subject = $"Group Appointment #{groupId} Cancelled by Administrator";
 
@@ -1885,18 +1787,14 @@ namespace TAMS.Services
 
             message.Body = builder.ToMessageBody();
 
-            using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"],int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
-            await smtp.SendAsync(message);
-            await smtp.DisconnectAsync(true);
+            await _brevo.SendMimeMessageAsync(message);
         }
 
         //Styling Done for SendAdminCancelledGroupToTutorAsync
         public async Task SendAdminCancelledGroupToTutorAsync(string tutorEmail, string tutorName, string adminName, int groupId, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime, int enrolledCount)
         {
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.From.Add(new MailboxAddress((_configuration["Brevo:SenderName"] ?? "TAMS"), (_configuration["Brevo:SenderEmail"] ?? throw new InvalidOperationException("Brevo sender email is missing"))));
             message.To.Add(new MailboxAddress(tutorName, tutorEmail));
             message.Subject = $"Group Appointment #{groupId} Cancelled by Administrator";
 
@@ -1966,18 +1864,14 @@ namespace TAMS.Services
 
             message.Body = builder.ToMessageBody();
 
-            using var smtp = new SmtpClient();
-            await smtp.ConnectAsync( _configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
-            await smtp.SendAsync(message);
-            await smtp.DisconnectAsync(true);
+            await _brevo.SendMimeMessageAsync(message);
         }
 
         //Styling Done for SendTutorGroupApprovedAsync
         public async Task SendTutorGroupApprovedAsync(string tutorEmail, string tutorName, int groupId, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime, int capacity)
         {
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.From.Add(new MailboxAddress((_configuration["Brevo:SenderName"] ?? "TAMS"), (_configuration["Brevo:SenderEmail"] ?? throw new InvalidOperationException("Brevo sender email is missing"))));
             message.To.Add(new MailboxAddress(tutorName, tutorEmail));
             message.Subject = "Group Appointment Request Approved";
 
@@ -2062,18 +1956,14 @@ namespace TAMS.Services
 
             message.Body = builder.ToMessageBody();
 
-            using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
-            await smtp.SendAsync(message);
-            await smtp.DisconnectAsync(true);
+            await _brevo.SendMimeMessageAsync(message);
         }
 
         //Styling Done for SendTutorGroupRejectedAsync
         public async Task SendTutorGroupRejectedAsync(string tutorEmail, string tutorName, int groupId, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime, int capacity)
         {
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(_configuration["EmailSettings:SenderName"], _configuration["EmailSettings:SenderEmail"]));
+            message.From.Add(new MailboxAddress((_configuration["Brevo:SenderName"] ?? "TAMS"), (_configuration["Brevo:SenderEmail"] ?? throw new InvalidOperationException("Brevo sender email is missing"))));
             message.To.Add(new MailboxAddress(tutorName, tutorEmail));
             message.Subject = "Group Appointment Request Rejected";
 
@@ -2158,11 +2048,7 @@ namespace TAMS.Services
 
             message.Body = builder.ToMessageBody();
 
-            using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:SmtpPort"]!), SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
-            await smtp.SendAsync(message);
-            await smtp.DisconnectAsync(true);
+            await _brevo.SendMimeMessageAsync(message);
         }
 
     }
