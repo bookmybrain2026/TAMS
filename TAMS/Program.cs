@@ -36,13 +36,6 @@ builder.Services.AddScoped<SmtpEmailService>(); //Creates an SMTP sender instanc
 // New Brevo API service
 builder.Services.AddHttpClient<BrevoEmailService>();
 
-builder.Services.AddHttpClient<EmailVerificationService>(client =>
-{
-    // The verification request asks the provider
-    // to spend at most 10 seconds checking.
-    client.Timeout = TimeSpan.FromSeconds(15);
-});
-
 // Controllers use the queue-backed email service
 builder.Services.AddScoped<IEmailService, QueuedEmailService>(); //When a controller requests IEmailService, ASP.NET Core provides QueuedEmailService
 
