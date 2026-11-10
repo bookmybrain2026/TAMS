@@ -1,68 +1,109 @@
-//This sends email using Brevo's transactional email API over HTTPS, rather than an SMTP connection.
+
+using System.Net;
 using System.Net.Http.Json;
-using Microsoft.Extensions.Configuration;
+using System.Text.RegularExpressions;
+using MimeKit;
 
-namespace TAMS.Services
+namespace TAMS.Services;
+
+public sealed class BrevoEmailService
 {
-    public class BrevoEmailService
+    private readonly HttpClient _httpClient;
+    private readonly IConfiguration _configuration;
+
+    public BrevoEmailService(
+        HttpClient httpClient,
+        IConfiguration configuration)
     {
-        private readonly HttpClient _httpClient;
-        private readonly IConfiguration _configuration;
+        _httpClient = httpClient;
+        _configuration = configuration;
+    }
 
-        public BrevoEmailService(
-            HttpClient httpClient,
-            IConfiguration configuration)
-        {
-            _httpClient = httpClient;
-            _configuration = configuration;
-        }
+    public async Task SendMimeMessageAsync(MimeMessage message)
+    {
+        var apiKey = _configuration["Brevo:ApiKey"];
 
-        public async Task SendEmailAsync(
-            string recipientEmail,
-            string subject,
-            string htmlBody)
-        {
-            var apiKey = _configuration["Brevo:ApiKey"]
-                ?? throw new InvalidOperationException(
-                    "Brevo API key is not configured.");
+        if (string.IsNullOrWhiteSpace(apiKey))
+            throw new InvalidOperationException(
+                "Missing Brevo:ApiKey configuration.");
 
-            var senderEmail = _configuration["Brevo:SenderEmail"]
-                ?? throw new InvalidOperationException(
-                    "Brevo sender email is not configured.");
+        var senderEmail = _configuration["Brevo:SenderEmail"];
 
-            var senderName =
-                _configuration["Brevo:SenderName"] ?? "TAMS";
+        if (string.IsNullOrWhiteSpace(senderEmail))
+            throw new InvalidOperationException(
+                "Missing Brevo:SenderEmail configuration.");
 
-            var email = new
+        var senderName =
+            _configuration["Brevo:SenderName"] ?? "TAMS";
+
+        var bannerUrl = _configuration["Brevo:BannerUrl"];
+
+        // Replace embedded CID banner images with a public HTTPS URL.
+        var html = message.HtmlBody ?? "";
+
+        html = Regex.Replace(
+            html,
+            "<img\\b[^>]*\\bsrc\\s*=\\s*[\"']cid:[^\"']+[\"'][^>]*>",
+            match =>
             {
-                sender = new
+                if (Uri.TryCreate(
+                    bannerUrl,
+                    UriKind.Absolute,
+                    out var url)
+                    && url.Scheme == Uri.UriSchemeHttps)
                 {
-                    name = senderName,
-                    email = senderEmail
-                },
-                to = new[]
-                {
-                    new
-                    {
-                        email = recipientEmail
-                    }
-                },
-                subject = subject,
-                htmlContent = htmlBody
-            };
+                    return Regex.Replace(
+                        match.Value,
+                        "cid:[^\"']+",
+                        WebUtility.HtmlEncode(bannerUrl));
+                }
 
-            using var request = new HttpRequestMessage(
-                HttpMethod.Post,
-                "https://api.brevo.com/v3/smtp/email");
+                return "";
+            },
+            RegexOptions.IgnoreCase);
 
-            request.Headers.Add("api-key", apiKey);
-            request.Content = JsonContent.Create(email);
+        var recipients = message.To.Mailboxes
+            .Select(mailbox => new
+            {
+                email = mailbox.Address,
+                name = mailbox.Name
+            })
+            .ToArray();
 
-            using var response =
-                await _httpClient.SendAsync(request);
+        if (recipients.Length == 0)
+            throw new InvalidOperationException(
+                "The email has no recipients.");
 
-            response.EnsureSuccessStatusCode();
+        var payload = new
+        {
+            sender = new
+            {
+                name = senderName,
+                email = senderEmail
+            },
+            to = recipients,
+            subject = message.Subject,
+            htmlContent = html,
+            textContent = message.TextBody ?? ""
+        };
+
+        using var request = new HttpRequestMessage(
+            HttpMethod.Post,
+            "https://api.brevo.com/v3/smtp/email");
+
+        request.Headers.Add("api-key", apiKey);
+        request.Content = JsonContent.Create(payload);
+
+        using var response =
+            await _httpClient.SendAsync(request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var details =
+                await response.Content.ReadAsStringAsync();
+
+            throw new HttpRequestException(
+                $"Brevo rejected email: HTTP {(int)response.StatusCode}. {details}");
         }
     }
 }
-
