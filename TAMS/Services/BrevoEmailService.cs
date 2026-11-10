@@ -1,4 +1,3 @@
-
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
@@ -62,7 +61,8 @@ public sealed class BrevoEmailService
             },
             RegexOptions.IgnoreCase);
 
-        var recipients = message.To.Mailboxes
+        // Get the original student/tutor recipients.
+        var originalRecipients = message.To.Mailboxes
             .Select(mailbox => new
             {
                 email = mailbox.Address,
@@ -70,9 +70,39 @@ public sealed class BrevoEmailService
             })
             .ToArray();
 
-        if (recipients.Length == 0)
+        if (originalRecipients.Length == 0)
             throw new InvalidOperationException(
                 "The email has no recipients.");
+
+        // TEST MODE: Redirect all emails to one real inbox.
+        var testRecipient =
+            _configuration["Brevo:TestRecipientEmail"];
+
+        var recipients = !string.IsNullOrWhiteSpace(testRecipient)
+            ? new[]
+            {
+                new
+                {
+                    email = testRecipient,
+                    name = "TAMS Test Inbox"
+                }
+            }
+            : originalRecipients;
+
+        // Include original recipient information in test emails.
+        if (!string.IsNullOrWhiteSpace(testRecipient))
+        {
+            var originalAddresses = string.Join(
+                ", ",
+                originalRecipients.Select(r => r.email));
+
+            html =
+                "<p><strong>TAMS TEST MODE</strong></p>" +
+                "<p>Original recipient(s): " +
+                WebUtility.HtmlEncode(originalAddresses) +
+                "</p><hr/>" +
+                html;
+        }
 
         var payload = new
         {
