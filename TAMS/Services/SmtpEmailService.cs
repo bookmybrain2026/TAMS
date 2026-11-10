@@ -1,4 +1,3 @@
-SmtpEmailService.cs:
 ﻿//Builds the message, authenticates with the SMTP server, and sends the email.
 using MimeKit; //used to create the email message
 
