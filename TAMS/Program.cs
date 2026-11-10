@@ -1,20 +1,18 @@
-using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.HttpOverrides;
 using TAMS.Data;
 using TAMS.Models;
 using TAMS.Services;
 
+var builder = WebApplication.CreateBuilder(args);
+
+// Configure forwarded headers AFTER builder is created
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders =
         ForwardedHeaders.XForwardedFor |
         ForwardedHeaders.XForwardedProto;
-
-    // Configure trusted proxies/networks for your
-    // deployment rather than trusting all sources.
 });
-
-var builder = WebApplication.CreateBuilder(args);
 
 app.UseForwardedHeaders();
 
