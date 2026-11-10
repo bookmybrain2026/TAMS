@@ -1,3 +1,4 @@
+
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
@@ -37,9 +38,11 @@ public sealed class BrevoEmailService
 
         var bannerUrl = _configuration["Brevo:BannerUrl"];
 
-        // Replace embedded CID banner images with a public HTTPS URL.
+        // Get the original email content.
         var html = message.HtmlBody ?? "";
+        var plainText = message.TextBody ?? "";
 
+        // Replace embedded CID images with the public banner URL.
         html = Regex.Replace(
             html,
             "<img\\b[^>]*\\bsrc\\s*=\\s*[\"']cid:[^\"']+[\"'][^>]*>",
@@ -61,7 +64,7 @@ public sealed class BrevoEmailService
             },
             RegexOptions.IgnoreCase);
 
-        // Get the original student/tutor recipients.
+        // Get the original recipients.
         var originalRecipients = message.To.Mailboxes
             .Select(mailbox => new
             {
@@ -74,66 +77,146 @@ public sealed class BrevoEmailService
             throw new InvalidOperationException(
                 "The email has no recipients.");
 
-        // TEST MODE: Redirect all emails to one real inbox.
+        // Email address where dummy-account emails should go.
         var testRecipient =
             _configuration["Brevo:TestRecipientEmail"];
 
-        var recipients = !string.IsNullOrWhiteSpace(testRecipient)
-            ? new[]
-            {
-                new
-                {
-                    email = testRecipient,
-                    name = "TAMS Test Inbox"
-                }
-            }
-            : originalRecipients;
+        // Comma-separated list of dummy email addresses.
+        var dummyEmails = (
+            _configuration["Brevo:DummyEmails"] ?? ""
+        )
+        .Split(
+            ',',
+            StringSplitOptions.RemoveEmptyEntries |
+            StringSplitOptions.TrimEntries)
+        .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        // Include original recipient information in test emails.
-        if (!string.IsNullOrWhiteSpace(testRecipient))
+        // Optional comma-separated dummy domains.
+        var dummyDomains = (
+            _configuration["Brevo:DummyDomains"] ?? ""
+        )
+        .Split(
+            ',',
+            StringSplitOptions.RemoveEmptyEntries |
+            StringSplitOptions.TrimEntries)
+        .Select(domain => domain.TrimStart('@'))
+        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        // Determine whether a recipient is a designated dummy.
+        bool IsDummyEmail(string email)
         {
-            var originalAddresses = string.Join(
-                ", ",
-                originalRecipients.Select(r => r.email));
+            if (dummyEmails.Contains(email))
+                return true;
 
-            html =
-                "<p><strong>TAMS TEST MODE</strong></p>" +
-                "<p>Original recipient(s): " +
-                WebUtility.HtmlEncode(originalAddresses) +
-                "</p><hr/>" +
-                html;
+            var atIndex = email.LastIndexOf('@');
+
+            if (atIndex < 0)
+                return false;
+
+            var domain = email.Substring(atIndex + 1);
+
+            return dummyDomains.Contains(domain);
         }
 
-        var payload = new
-        {
-            sender = new
+        // Redirect only designated dummy recipients.
+        var recipients = originalRecipients
+            .Select(recipient =>
             {
-                name = senderName,
-                email = senderEmail
-            },
-            to = recipients,
-            subject = message.Subject,
-            htmlContent = html,
-            textContent = message.TextBody ?? ""
-        };
+                bool isDummy = IsDummyEmail(recipient.email);
 
-        using var request = new HttpRequestMessage(
-            HttpMethod.Post,
-            "https://api.brevo.com/v3/smtp/email");
+                if (isDummy &&
+                    string.IsNullOrWhiteSpace(testRecipient))
+                {
+                    throw new InvalidOperationException(
+                        "A dummy email was detected, but " +
+                        "Brevo:TestRecipientEmail is not configured.");
+                }
 
-        request.Headers.Add("api-key", apiKey);
-        request.Content = JsonContent.Create(payload);
+                return new
+                {
+                    email = isDummy
+                        ? testRecipient!
+                        : recipient.email,
 
-        using var response =
-            await _httpClient.SendAsync(request);
+                    name = isDummy
+                        ? "TAMS Test Inbox"
+                        : recipient.name,
 
-        if (!response.IsSuccessStatusCode)
+                    originalEmail = recipient.email,
+                    redirected = isDummy
+                };
+            })
+            .ToArray();
+
+        // Send a separate email for each original recipient.
+        // This prevents one person's email content from being
+        // shared with other recipients.
+        foreach (var recipient in recipients)
         {
-            var details =
-                await response.Content.ReadAsStringAsync();
+            var recipientHtml = html;
+            var recipientText = plainText;
 
-            throw new HttpRequestException(
-                $"Brevo rejected email: HTTP {(int)response.StatusCode}. {details}");
+            if (recipient.redirected)
+            {
+                var notice =
+                    "TAMS TEST MODE - Original recipient: " +
+                    recipient.originalEmail;
+
+                recipientHtml =
+                    "<p><strong>TAMS TEST MODE</strong></p>" +
+                    "<p>Original recipient: " +
+                    WebUtility.HtmlEncode(recipient.originalEmail) +
+                    "</p><hr/>" +
+                    recipientHtml;
+
+                recipientText =
+                    notice + Environment.NewLine +
+                    Environment.NewLine +
+                    recipientText;
+            }
+
+            var payload = new
+            {
+                sender = new
+                {
+                    name = senderName,
+                    email = senderEmail
+                },
+
+                to = new[]
+                {
+                    new
+                    {
+                        email = recipient.email,
+                        name = recipient.name
+                    }
+                },
+
+                subject = message.Subject,
+                htmlContent = recipientHtml,
+                textContent = recipientText
+            };
+
+            using var request = new HttpRequestMessage(
+                HttpMethod.Post,
+                "https://api.brevo.com/v3/smtp/email");
+
+            request.Headers.Add("api-key", apiKey);
+
+            request.Content = JsonContent.Create(payload);
+
+            using var response =
+                await _httpClient.SendAsync(request);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var details =
+                    await response.Content.ReadAsStringAsync();
+
+                throw new HttpRequestException(
+                    $"Brevo rejected email: " +
+                    $"HTTP {(int)response.StatusCode}. {details}");
+            }
         }
     }
 }
