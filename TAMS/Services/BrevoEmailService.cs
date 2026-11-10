@@ -1,4 +1,3 @@
-
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
@@ -17,6 +16,73 @@ public sealed class BrevoEmailService
     {
         _httpClient = httpClient;
         _configuration = configuration;
+    }
+
+    // Reserved domains that are clearly not real delivery inboxes.
+    private static readonly HashSet<string> DummyDomains =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            "example.com",
+            "example.org",
+            "example.net",
+            "test",
+            "invalid",
+            "localhost",
+            "local",
+            "example",
+            "test.com"
+        };
+
+    // Detect only addresses that are clearly dummy or invalid.
+    // Do not guess whether Gmail, Yahoo, Outlook, etc. exist.
+    private static bool IsObviousDummyEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return true;
+
+        email = email.Trim();
+
+        // Reject obvious malformed addresses.
+        if (!Regex.IsMatch(
+            email,
+            @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+        {
+            return true;
+        }
+
+        var atIndex = email.LastIndexOf('@');
+
+        if (atIndex < 0)
+            return true;
+
+        var domain = email[(atIndex + 1)..];
+
+        // Reserved example domains and obvious test domains.
+        if (DummyDomains.Contains(domain))
+            return true;
+
+        if (domain.EndsWith(
+            ".example",
+            StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (domain.EndsWith(
+            ".invalid",
+            StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (domain.EndsWith(
+            ".test",
+            StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (domain.EndsWith(
+            ".localhost",
+            StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        // All other addresses remain unchanged.
+        return false;
     }
 
     public async Task SendMimeMessageAsync(MimeMessage message)
@@ -38,11 +104,14 @@ public sealed class BrevoEmailService
 
         var bannerUrl = _configuration["Brevo:BannerUrl"];
 
-        // Get the original email content.
+        var testRecipient =
+            _configuration["Brevo:TestRecipientEmail"];
+
+        // Preserve original HTML and plain-text content.
         var html = message.HtmlBody ?? "";
         var plainText = message.TextBody ?? "";
 
-        // Replace embedded CID images with the public banner URL.
+        // Replace CID banner images with the public banner URL.
         html = Regex.Replace(
             html,
             "<img\\b[^>]*\\bsrc\\s*=\\s*[\"']cid:[^\"']+[\"'][^>]*>",
@@ -64,7 +133,6 @@ public sealed class BrevoEmailService
             },
             RegexOptions.IgnoreCase);
 
-        // Get the original recipients.
         var originalRecipients = message.To.Mailboxes
             .Select(mailbox => new
             {
@@ -77,100 +145,46 @@ public sealed class BrevoEmailService
             throw new InvalidOperationException(
                 "The email has no recipients.");
 
-        // Email address where dummy-account emails should go.
-        var testRecipient =
-            _configuration["Brevo:TestRecipientEmail"];
-
-        // Comma-separated list of dummy email addresses.
-        var dummyEmails = (
-            _configuration["Brevo:DummyEmails"] ?? ""
-        )
-        .Split(
-            ',',
-            StringSplitOptions.RemoveEmptyEntries |
-            StringSplitOptions.TrimEntries)
-        .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        // Optional comma-separated dummy domains.
-        var dummyDomains = (
-            _configuration["Brevo:DummyDomains"] ?? ""
-        )
-        .Split(
-            ',',
-            StringSplitOptions.RemoveEmptyEntries |
-            StringSplitOptions.TrimEntries)
-        .Select(domain => domain.TrimStart('@'))
-        .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        // Determine whether a recipient is a designated dummy.
-        bool IsDummyEmail(string email)
+        // Process each recipient individually.
+        foreach (var recipient in originalRecipients)
         {
-            if (dummyEmails.Contains(email))
-                return true;
+            var isDummy = IsObviousDummyEmail(
+                recipient.email);
 
-            var atIndex = email.LastIndexOf('@');
+            var destinationEmail = recipient.email;
+            var destinationName = recipient.name;
 
-            if (atIndex < 0)
-                return false;
-
-            var domain = email.Substring(atIndex + 1);
-
-            return dummyDomains.Contains(domain);
-        }
-
-        // Redirect only designated dummy recipients.
-        var recipients = originalRecipients
-            .Select(recipient =>
-            {
-                bool isDummy = IsDummyEmail(recipient.email);
-
-                if (isDummy &&
-                    string.IsNullOrWhiteSpace(testRecipient))
-                {
-                    throw new InvalidOperationException(
-                        "A dummy email was detected, but " +
-                        "Brevo:TestRecipientEmail is not configured.");
-                }
-
-                return new
-                {
-                    email = isDummy
-                        ? testRecipient!
-                        : recipient.email,
-
-                    name = isDummy
-                        ? "TAMS Test Inbox"
-                        : recipient.name,
-
-                    originalEmail = recipient.email,
-                    redirected = isDummy
-                };
-            })
-            .ToArray();
-
-        // Send a separate email for each original recipient.
-        // This prevents one person's email content from being
-        // shared with other recipients.
-        foreach (var recipient in recipients)
-        {
             var recipientHtml = html;
             var recipientText = plainText;
 
-            if (recipient.redirected)
+            if (isDummy)
             {
+                if (string.IsNullOrWhiteSpace(testRecipient))
+                {
+                    throw new InvalidOperationException(
+                        "An obvious dummy email was detected, " +
+                        "but Brevo:TestRecipientEmail is not configured.");
+                }
+
+                // Redirect dummy emails to the testing inbox.
+                destinationEmail = testRecipient;
+                destinationName = "TAMS Test Inbox";
+
+                // Include the original intended recipient.
                 var notice =
                     "TAMS TEST MODE - Original recipient: " +
-                    recipient.originalEmail;
+                    recipient.email;
 
                 recipientHtml =
                     "<p><strong>TAMS TEST MODE</strong></p>" +
                     "<p>Original recipient: " +
-                    WebUtility.HtmlEncode(recipient.originalEmail) +
+                    WebUtility.HtmlEncode(recipient.email) +
                     "</p><hr/>" +
                     recipientHtml;
 
                 recipientText =
-                    notice + Environment.NewLine +
+                    notice +
+                    Environment.NewLine +
                     Environment.NewLine +
                     recipientText;
             }
@@ -187,8 +201,8 @@ public sealed class BrevoEmailService
                 {
                     new
                     {
-                        email = recipient.email,
-                        name = recipient.name
+                        email = destinationEmail,
+                        name = destinationName
                     }
                 },
 
