@@ -33,6 +33,9 @@ builder.Services.AddSingleton<EmailQueue>(); //Creates one shared queue instance
 // Actual SMTP sender
 builder.Services.AddScoped<SmtpEmailService>(); //Creates an SMTP sender instance within a dependency-injection scope
 
+// New Brevo API service
+builder.Services.AddHttpClient<BrevoEmailService>();
+
 // Controllers use the queue-backed email service
 builder.Services.AddScoped<IEmailService, QueuedEmailService>(); //When a controller requests IEmailService, ASP.NET Core provides QueuedEmailService
 
