@@ -14,8 +14,6 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
         ForwardedHeaders.XForwardedProto;
 });
 
-app.UseForwardedHeaders();
-
 //configure ASP.NET Core's session support.
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
@@ -53,6 +51,8 @@ builder.Services.AddScoped<IPasswordHasher<Login>, PasswordHasher<Login>>();
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
+
+app.UseForwardedHeaders();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
