@@ -182,26 +182,28 @@ namespace TAMS.Controllers
 
             dBContext.PasswordRecoveries.DeleteMany(r => r.UserId == user.UserId && !r.IsUsed);        
             dBContext.PasswordRecoveries.InsertOne(recoveryRecord);
-
+         
             bool emailSent = false;
-
+            
             bool emailCredentialsAvailable =
-                !string.IsNullOrWhiteSpace(_configuration["EmailSettings:SenderEmail"]) &&
-                !string.IsNullOrWhiteSpace(_configuration["EmailSettings:SmtpServer"]) &&
-                !string.IsNullOrWhiteSpace(_configuration["EmailSettings:SmtpPort"]) &&
-                !string.IsNullOrWhiteSpace(_configuration["EmailSettings:Username"]) &&
-                !string.IsNullOrWhiteSpace(_configuration["EmailSettings:Password"]);
-
+                !string.IsNullOrWhiteSpace(_configuration["Brevo:ApiKey"]) &&
+                !string.IsNullOrWhiteSpace(_configuration["Brevo:SenderEmail"]);
+            
             if (emailCredentialsAvailable)
             {
                 try
                 {
-                    await _emailService.SendPasswordRecoveryCodeAsync(model.Email, recipientName, recoveryCode);
+                    await _emailService.SendPasswordRecoveryCodeAsync(
+                        model.Email,
+                        recipientName,
+                        recoveryCode);
+            
                     emailSent = true;
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Password recovery email error: {ex.Message}");
+                    Console.WriteLine(
+                        $"Password recovery email error: {ex.Message}");
                 }
             }
 
