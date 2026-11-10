@@ -1,8 +1,22 @@
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using TAMS.Data;
 using TAMS.Models;
 using TAMS.Services;
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders =
+        ForwardedHeaders.XForwardedFor |
+        ForwardedHeaders.XForwardedProto;
+
+    // Configure trusted proxies/networks for your
+    // deployment rather than trusting all sources.
+});
+
 var builder = WebApplication.CreateBuilder(args);
+
+app.UseForwardedHeaders();
 
 //configure ASP.NET Core's session support.
 builder.Services.AddDistributedMemoryCache();
