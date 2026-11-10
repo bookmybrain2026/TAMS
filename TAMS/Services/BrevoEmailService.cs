@@ -1,4 +1,3 @@
-
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
@@ -10,56 +9,109 @@ public sealed class BrevoEmailService
 {
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
-    private readonly EmailVerificationService _verification;
-    private readonly ILogger<BrevoEmailService> _logger;
 
     public BrevoEmailService(
         HttpClient httpClient,
-        IConfiguration configuration,
-        EmailVerificationService verification,
-        ILogger<BrevoEmailService> logger)
+        IConfiguration configuration)
     {
         _httpClient = httpClient;
         _configuration = configuration;
-        _verification = verification;
-        _logger = logger;
+    }
+
+    // Reserved domains that are clearly not real delivery inboxes.
+    private static readonly HashSet<string> DummyDomains =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            "example.com",
+            "example.org",
+            "example.net",
+            "test",
+            "invalid",
+            "localhost",
+            "local",
+            "example",
+            "test.com"
+        };
+
+    // Detect only addresses that are clearly dummy or invalid.
+    // Do not guess whether Gmail, Yahoo, Outlook, etc. exist.
+    private static bool IsObviousDummyEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return true;
+
+        email = email.Trim();
+
+        // Reject obvious malformed addresses.
+        if (!Regex.IsMatch(
+            email,
+            @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+        {
+            return true;
+        }
+
+        var atIndex = email.LastIndexOf('@');
+
+        if (atIndex < 0)
+            return true;
+
+        var domain = email[(atIndex + 1)..];
+
+        // Reserved example domains and obvious test domains.
+        if (DummyDomains.Contains(domain))
+            return true;
+
+        if (domain.EndsWith(
+            ".example",
+            StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (domain.EndsWith(
+            ".invalid",
+            StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (domain.EndsWith(
+            ".test",
+            StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (domain.EndsWith(
+            ".localhost",
+            StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        // All other addresses remain unchanged.
+        return false;
     }
 
     public async Task SendMimeMessageAsync(MimeMessage message)
     {
         var apiKey = _configuration["Brevo:ApiKey"];
-        var senderEmail = _configuration["Brevo:SenderEmail"];
-        var senderName = _configuration["Brevo:SenderName"] ?? "TAMS";
-        var bannerUrl = _configuration["Brevo:BannerUrl"];
-        var testRecipient = _configuration["Brevo:TestRecipientEmail"];
 
         if (string.IsNullOrWhiteSpace(apiKey))
             throw new InvalidOperationException(
-                "Missing Brevo:ApiKey.");
+                "Missing Brevo:ApiKey configuration.");
+
+        var senderEmail = _configuration["Brevo:SenderEmail"];
 
         if (string.IsNullOrWhiteSpace(senderEmail))
             throw new InvalidOperationException(
-                "Missing Brevo:SenderEmail.");
+                "Missing Brevo:SenderEmail configuration.");
 
-        // BOTH conditions must be true before redirection:
-        // 1. Render is configured for testing.
-        // 2. This particular email was explicitly approved
-        //    for test redirection by the application.
-        bool testModeEnabled =
-            _configuration.GetValue<bool>("Brevo:EnableTestRedirect");
+        var senderName =
+            _configuration["Brevo:SenderName"] ?? "TAMS";
 
-        bool messageAllowsRedirect =
-            string.Equals(
-                message.Headers["X-TAMS-Allow-Test-Redirect"],
-                "true",
-                StringComparison.OrdinalIgnoreCase);
+        var bannerUrl = _configuration["Brevo:BannerUrl"];
 
-        bool canRedirect = testModeEnabled && messageAllowsRedirect;
+        var testRecipient =
+            _configuration["Brevo:TestRecipientEmail"];
 
+        // Preserve original HTML and plain-text content.
         var html = message.HtmlBody ?? "";
         var plainText = message.TextBody ?? "";
 
-        // Convert CID banner images to public HTTPS images.
+        // Replace CID banner images with the public banner URL.
         html = Regex.Replace(
             html,
             "<img\\b[^>]*\\bsrc\\s*=\\s*[\"']cid:[^\"']+[\"'][^>]*>",
@@ -68,8 +120,8 @@ public sealed class BrevoEmailService
                 if (Uri.TryCreate(
                     bannerUrl,
                     UriKind.Absolute,
-                    out var url) &&
-                    url.Scheme == Uri.UriSchemeHttps)
+                    out var url)
+                    && url.Scheme == Uri.UriSchemeHttps)
                 {
                     return Regex.Replace(
                         match.Value,
@@ -81,68 +133,60 @@ public sealed class BrevoEmailService
             },
             RegexOptions.IgnoreCase);
 
-        var recipients = message.To.Mailboxes.ToArray();
+        var originalRecipients = message.To.Mailboxes
+            .Select(mailbox => new
+            {
+                email = mailbox.Address,
+                name = mailbox.Name
+            })
+            .ToArray();
 
-        if (recipients.Length == 0)
+        if (originalRecipients.Length == 0)
             throw new InvalidOperationException(
                 "The email has no recipients.");
 
-        // Check every recipient independently.
-        foreach (var recipient in recipients)
+        // Process each recipient individually.
+        foreach (var recipient in originalRecipients)
         {
-            string originalEmail = recipient.Address;
+            var isDummy = IsObviousDummyEmail(
+                recipient.email);
 
-            var result = await _verification.VerifyAsync(originalEmail);
+            var destinationEmail = recipient.email;
+            var destinationName = recipient.name;
 
-            string destinationEmail = originalEmail;
-            string destinationName = recipient.Name;
+            var recipientHtml = html;
+            var recipientText = plainText;
 
-            string recipientHtml = html;
-            string recipientText = plainText;
-
-            if (result == EmailVerificationResult.Undeliverable)
+            if (isDummy)
             {
-                if (!canRedirect)
-                {
-                    // Important: never send a recovery code or
-                    // another unapproved message to the admin.
-                    _logger.LogWarning(
-                        "Suppressed email to an undeliverable recipient.");
-
-                    continue;
-                }
-
                 if (string.IsNullOrWhiteSpace(testRecipient))
                 {
                     throw new InvalidOperationException(
-                        "Test redirection is enabled, but " +
-                        "Brevo:TestRecipientEmail is missing.");
+                        "An obvious dummy email was detected, " +
+                        "but Brevo:TestRecipientEmail is not configured.");
                 }
 
+                // Redirect dummy emails to the testing inbox.
                 destinationEmail = testRecipient;
                 destinationName = "TAMS Test Inbox";
+
+                // Include the original intended recipient.
+                var notice =
+                    "TAMS TEST MODE - Original recipient: " +
+                    recipient.email;
 
                 recipientHtml =
                     "<p><strong>TAMS TEST MODE</strong></p>" +
                     "<p>Original recipient: " +
-                    WebUtility.HtmlEncode(originalEmail) +
+                    WebUtility.HtmlEncode(recipient.email) +
                     "</p><hr/>" +
                     recipientHtml;
 
                 recipientText =
-                    "TAMS TEST MODE - Original recipient: " +
-                    originalEmail +
+                    notice +
                     Environment.NewLine +
                     Environment.NewLine +
                     recipientText;
-            }
-            else if (result == EmailVerificationResult.Unknown)
-            {
-                // Unknown does not mean fake.
-                // Leave the recipient unchanged.
-                _logger.LogWarning(
-                    "Email verification was inconclusive; " +
-                    "using the original recipient.");
             }
 
             var payload = new
@@ -172,13 +216,16 @@ public sealed class BrevoEmailService
                 "https://api.brevo.com/v3/smtp/email");
 
             request.Headers.Add("api-key", apiKey);
+
             request.Content = JsonContent.Create(payload);
 
-            using var response = await _httpClient.SendAsync(request);
+            using var response =
+                await _httpClient.SendAsync(request);
 
             if (!response.IsSuccessStatusCode)
             {
-                var details = await response.Content.ReadAsStringAsync();
+                var details =
+                    await response.Content.ReadAsStringAsync();
 
                 throw new HttpRequestException(
                     $"Brevo rejected email: " +
