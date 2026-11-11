@@ -322,6 +322,8 @@ namespace TAMS.Controllers
             var adminId = HttpContext.Session.GetInt32("AdminId");
             if (adminId == null){ return RedirectToAction("Login", "Login"); }
 
+            model.Email = model.Email?.Trim().ToLowerInvariant();
+
             if (!ModelState.IsValid)
             {
                 LoadSubjects();
@@ -401,7 +403,7 @@ namespace TAMS.Controllers
             model.FName = model.FName?.Trim() ?? "";
             model.LName = model.LName?.Trim() ?? "";
             model.PhoneNumber = model.PhoneNumber?.Trim() ?? "";
-            model.Email = model.Email?.Trim() ?? "";
+            model.Email = model.Email?.Trim().ToLowerInvariant() ?? "";
 
             if (dBContext.Login.Find(u => u.Username == model.Username).FirstOrDefault() != null)
             {
@@ -466,7 +468,7 @@ namespace TAMS.Controllers
             fName = fName?.Trim() ?? "";
             lName = lName?.Trim() ?? "";
             subject = subject?.Trim() ?? "";
-            email = email?.Trim() ?? "";
+            email = email?.Trim().ToLowerInvariant() ?? "";
             phoneNumber = phoneNumber?.Trim() ?? "";
 
             if (string.IsNullOrWhiteSpace(fName) || string.IsNullOrWhiteSpace(lName) || string.IsNullOrWhiteSpace(subject) || string.IsNullOrWhiteSpace(email))
