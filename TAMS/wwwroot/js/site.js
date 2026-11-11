@@ -230,8 +230,12 @@ courseBubbles.forEach(function (bubble) {
         }
     });
 });
-subjectSelect.addEventListener("change", updateCourses);
-updateCourses();
+//subjectSelect.addEventListener("change", updateCourses);
+//updateCourses();
+if (subjectSelect) {
+    subjectSelect.addEventListener("change", updateCourses);
+    updateCourses();
+}
 
 
 //Student Dashboard search
@@ -455,3 +459,40 @@ function searchGroups() {
                 : "none";
     }
 }
+
+function formatPhoneNumber(input) {
+    let numbers = input.value.replace(/\D/g, "").substring(0, 10);
+
+    if (numbers.length > 6) {
+        input.value = numbers.substring(0, 3) + "-" +
+            numbers.substring(3, 6) + "-" +
+            numbers.substring(6);
+    }
+    else if (numbers.length > 3) {
+        input.value = numbers.substring(0, 3) + "-" +
+            numbers.substring(3);
+    }
+    else {
+        input.value = numbers;
+    }
+}
+
+document.addEventListener("keydown", function (event) {
+    const input = event.target;
+
+    if (!input.matches('input[name="PhoneNumber"]')) {
+        return;
+    }
+
+    if (event.key === "Backspace") {
+        const cursor = input.selectionStart;
+
+        if (cursor === input.selectionEnd && cursor > 0 && input.value[cursor - 1] === "-"
+        ) {
+            event.preventDefault();
+            input.value = input.value.substring(0, cursor - 2) + input.value.substring(cursor);
+            formatPhoneNumber(input);
+            input.setSelectionRange(cursor - 2, cursor - 2);
+        }
+    }
+});
