@@ -78,7 +78,8 @@
 
                         <div class="col-md-6">
                             <label asp-for="PhoneNumber" class="profile-label">Phone Number</label>
-                            <input asp-for="PhoneNumber" class="form-control profile-input" autocomplete="tel" />
+                            <input asp-for="PhoneNumber" type="tel" class="form-control profile-input"  placeholder="123-456-7890"  
+                                   maxlength="12" autocomplete="tel" oninput="formatPhoneNumber(this)" />
                             <span asp-validation-for="PhoneNumber" class="text-danger profile-validation"></span>
                         </div>
 
