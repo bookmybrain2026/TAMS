@@ -117,6 +117,8 @@ namespace TAMS.Controllers
         [HttpPost]
         public async Task<IActionResult> VerifyUser(ForgotPassword model)
         {
+            model.Email = model.Email?.Trim().ToLowerInvariant();
+        
             ModelState.Remove("RecoveryCode");
             ModelState.Remove("NewPassword");
             ModelState.Remove("ConfirmPassword");
