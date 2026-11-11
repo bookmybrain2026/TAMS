@@ -267,7 +267,8 @@
 
                         <div>
                             <label class="admin-label" for="editTutorPhone">Phone Number </label>
-                            <input id="editTutorPhone" name="phoneNumber" value="@tutorToEdit.PhoneNumber" class="admin-input" />
+                            <input type="tel" id="editTutorPhone" name="phoneNumber" value="@tutorToEdit.PhoneNumber" class="admin-input"
+                                   placeholder="123-456-7890" maxlength="12" autocomplete="tel" oninput="formatPhoneNumber(this)" />
                         </div>
                     </div>
                     <div class="form-actions">
