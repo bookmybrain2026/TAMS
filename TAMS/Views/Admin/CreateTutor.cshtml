@@ -58,7 +58,8 @@
 
                 <div class="mb-3">
                     <label asp-for="PhoneNumber" class="form-label">Phone Number</label>
-                    <input asp-for="PhoneNumber" class="form-control" placeholder="Enter phone number" />
+                    <input asp-for="PhoneNumber" type="tel" class="form-control" placeholder="123-456-7890" maxlength="12"
+                           inputmode="numeric" autocomplete="tel" oninput="formatPhoneNumber(this)" />
                     <span asp-validation-for="PhoneNumber" class="text-danger"></span>
                 </div>
 
