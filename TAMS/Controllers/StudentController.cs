@@ -262,6 +262,8 @@ namespace TAMS.Controllers
 
             if (loggedinstudentId.Value != updatedStudent.StudentId) { return Unauthorized(); }
 
+            updatedStudent.Email = updatedStudent.Email?.Trim().ToLowerInvariant();
+
             var update =
                 Builders<Student>.Update
                 .Set(s => s.FName, updatedStudent.FName)
@@ -285,6 +287,8 @@ namespace TAMS.Controllers
         public IActionResult StudentRegistration(StudentRegistration model)
         {
             if (!ModelState.IsValid) { return View(model); }
+
+            model.Email = model.Email?.Trim().ToLowerInvariant();
 
             var existingUsername = dBContext.Login.Find(u => u.Username == model.Username).FirstOrDefault();
             var existingEmail = dBContext.Student.Find(s => s.Email == model.Email).FirstOrDefault();
