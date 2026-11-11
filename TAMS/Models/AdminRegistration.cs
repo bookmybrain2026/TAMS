@@ -13,8 +13,9 @@ namespace TAMS.Models
         public string LName { get; set; } = "";
 
         [Required]
-        [StringLength(13)]
-        public string PhoneNumber { get; set; } = "";
+        [StringLength(12)]
+        [RegularExpression(@"^\d{3}-\d{3}-\d{4}$", ErrorMessage = "Phone number must be in the format 123-456-7890.")]
+        public string PhoneNumber { get; set; }
 
         [Required]
         [EmailAddress]
