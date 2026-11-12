@@ -3,11 +3,12 @@ using MongoDB.Driver;
 using System.Numerics;
 using TAMS.Data;
 using TAMS.Models;
-using TAMS.Models.ViewModels;
 using TAMS.Services;
+using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace TAMS.Controllers
 {
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public class TutorController : Controller
     {
         private readonly MongoDBContext dBContext;
@@ -17,6 +18,31 @@ namespace TAMS.Controllers
         {
             this.dBContext = dBContext;
             _emailService = emailService;
+        }
+
+        public override void OnActionExecuting(ActionExecutingContext context)
+        {
+            var tutorId = HttpContext.Session.GetInt32("TutorId");
+        
+            if (tutorId == null)
+            {
+                context.Result = RedirectToAction("Login", "Login");
+                return;
+            }
+        
+            var activeTutor = dBContext.Login.Find(l =>
+                l.UserId == tutorId.Value &&
+                l.Role == UserRole.Tutor &&
+                l.isActive).FirstOrDefault();
+        
+            if (activeTutor == null)
+            {
+                HttpContext.Session.Clear();
+                context.Result = RedirectToAction("Login", "Login");
+                return;
+            }
+        
+            base.OnActionExecuting(context);
         }
 
         [HttpGet]
