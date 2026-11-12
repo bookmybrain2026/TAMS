@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 using System.Numerics;
 using TAMS.Data;
@@ -26,25 +26,25 @@ namespace TAMS.Controllers
         public override void OnActionExecuting(ActionExecutingContext context)
         {
             var studentId = HttpContext.Session.GetInt32("StudentId");
-        
+
             if (studentId == null)
             {
                 context.Result = RedirectToAction("Login", "Login");
                 return;
             }
-        
+
             var activeStudent = dBContext.Login.Find(l =>
                 l.UserId == studentId.Value &&
                 l.Role == UserRole.Student &&
                 l.isActive).FirstOrDefault();
-        
+
             if (activeStudent == null)
             {
                 HttpContext.Session.Clear();
                 context.Result = RedirectToAction("Login", "Login");
                 return;
             }
-        
+
             base.OnActionExecuting(context);
         }
 
