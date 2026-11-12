@@ -73,15 +73,22 @@
     </footer> *@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>    
     
     <script>
+        window.addEventListener("pagehide", function () {
+            document.documentElement.style.visibility = "hidden";
+        });
+    
         window.addEventListener("pageshow", function (event) {
             if (event.persisted) {
                 window.location.reload();
+            } else {
+                document.documentElement.style.visibility = "visible";
             }
         });
     </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
