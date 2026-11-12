@@ -22,6 +22,7 @@ namespace TAMS.Controllers
             _passwordHasher = passwordHasher;
         }
 
+        [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
         [HttpGet]
         public IActionResult Login()
         {
@@ -308,6 +309,8 @@ namespace TAMS.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
+        [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
         public IActionResult Logout()
         {
             HttpContext.Session.Clear();
