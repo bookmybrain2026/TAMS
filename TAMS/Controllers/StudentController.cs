@@ -5,9 +5,11 @@ using TAMS.Data;
 using TAMS.Models;
 using TAMS.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace TAMS.Controllers
 {
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public class StudentController : Controller
     {
         private readonly MongoDBContext dBContext;
@@ -19,6 +21,31 @@ namespace TAMS.Controllers
             this.dBContext = dBContext;
             _emailService = emailService;
             _passwordHasher = passwordHasher;
+        }
+
+        public override void OnActionExecuting(ActionExecutingContext context)
+        {
+            var studentId = HttpContext.Session.GetInt32("StudentId");
+        
+            if (studentId == null)
+            {
+                context.Result = RedirectToAction("Login", "Login");
+                return;
+            }
+        
+            var activeStudent = dBContext.Login.Find(l =>
+                l.UserId == studentId.Value &&
+                l.Role == UserRole.Student &&
+                l.isActive).FirstOrDefault();
+        
+            if (activeStudent == null)
+            {
+                HttpContext.Session.Clear();
+                context.Result = RedirectToAction("Login", "Login");
+                return;
+            }
+        
+            base.OnActionExecuting(context);
         }
 
         [HttpGet]
