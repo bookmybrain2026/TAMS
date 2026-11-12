@@ -20,29 +20,41 @@ namespace TAMS.Controllers
             this.dBContext = dBContext;
             _emailService = emailService;
         }
-
+  
         public override void OnActionExecuting(ActionExecutingContext context)
         {
+            // Allow everyone to view tutor profiles and details
+            var actionName = context.ActionDescriptor.RouteValues["action"];
+        
+            if (actionName == nameof(OurTutors) ||
+                actionName == nameof(Details))
+            {
+                base.OnActionExecuting(context);
+                return;
+            }
+        
+            // Require tutor login for all other TutorController actions
             var tutorId = HttpContext.Session.GetInt32("TutorId");
-
+        
             if (tutorId == null)
             {
                 context.Result = RedirectToAction("Login", "Login");
                 return;
             }
-
+        
+            // Verify the tutor account is active
             var activeTutor = dBContext.Login.Find(l =>
                 l.UserId == tutorId.Value &&
                 l.Role == UserRole.Tutor &&
                 l.isActive).FirstOrDefault();
-
+        
             if (activeTutor == null)
             {
                 HttpContext.Session.Clear();
                 context.Result = RedirectToAction("Login", "Login");
                 return;
             }
-
+        
             base.OnActionExecuting(context);
         }
 
