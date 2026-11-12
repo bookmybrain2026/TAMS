@@ -5,9 +5,11 @@ using TAMS.Data;
 using TAMS.Models;
 using TAMS.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace TAMS.Controllers
 {
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public class AdminController : Controller
     {
         private readonly MongoDBContext dBContext;
@@ -19,6 +21,31 @@ namespace TAMS.Controllers
             this.dBContext = dBContext;
             _emailService = emailService;
             _passwordHasher = passwordHasher;
+        }
+
+        public override void OnActionExecuting(ActionExecutingContext context)
+        {
+            var adminId = HttpContext.Session.GetInt32("AdminId");
+        
+            if (adminId == null)
+            {
+                context.Result = RedirectToAction("Login", "Login");
+                return;
+            }
+        
+            var activeAdmin = dBContext.Login.Find(l =>
+                l.UserId == adminId.Value &&
+                l.Role == UserRole.Administrator &&
+                l.isActive).FirstOrDefault();
+        
+            if (activeAdmin == null)
+            {
+                HttpContext.Session.Clear();
+                context.Result = RedirectToAction("Login", "Login");
+                return;
+            }
+        
+            base.OnActionExecuting(context);
         }
 
         [HttpGet]
