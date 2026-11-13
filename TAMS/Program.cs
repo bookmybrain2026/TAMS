@@ -78,7 +78,7 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Welcome}/{id?}");
 
 // Public endpoint for the cron scheduler
-app.MapGet("/health", () => //added
+app.MapGet("/health", () =>
 {
     return Results.Ok(new
     {
