@@ -78,14 +78,14 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Welcome}/{id?}");
 
 // Public endpoint for the cron scheduler
-app.MapGet("/health", () =>
-{
-    return Results.Ok(new
-    {
-        status = "Healthy",
-        application = "TAMS",
-        timestamp = DateTime.UtcNow
-    });
-});
+// app.MapGet("/health", () =>
+// {
+//     return Results.Ok(new
+//     {
+//         status = "Healthy",
+//         application = "TAMS",
+//         timestamp = DateTime.UtcNow
+//     });
+// });
 
 app.Run();
