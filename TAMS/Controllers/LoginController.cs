@@ -22,10 +22,29 @@ namespace TAMS.Controllers
             _passwordHasher = passwordHasher;
         }
 
-        [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
         [HttpGet]
+        [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)] // prevents the browser and other caches from storing the login page response
         public IActionResult Login()
         {
+            var studentId = HttpContext.Session.GetInt32("StudentId");
+            var tutorId = HttpContext.Session.GetInt32("TutorId");
+            var adminId = HttpContext.Session.GetInt32("AdminId");
+        
+            if (studentId.HasValue)
+            {
+                return RedirectToAction("Dashboard", "Student", new { id = studentId.Value });
+            }
+        
+            if (tutorId.HasValue)
+            {
+                return RedirectToAction("Dashboard", "Tutor", new { id = tutorId.Value });
+            }
+        
+            if (adminId.HasValue)
+            {
+                return RedirectToAction("Dashboard", "Admin", new { id = adminId.Value });
+            }
+        
             return View();
         }
 
