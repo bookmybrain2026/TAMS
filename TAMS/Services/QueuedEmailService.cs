@@ -1,5 +1,3 @@
-QueuedEmailService.cs:
-﻿
 using System;
 using System.Threading.Tasks;
 // allows controllers to work without knowing that a queue exists
