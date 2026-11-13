@@ -25,26 +25,33 @@ namespace TAMS.Controllers
 
         public override void OnActionExecuting(ActionExecutingContext context)
         {
+            var actionName = context.ActionDescriptor.RouteValues["action"];
+        
+            if (actionName == nameof(StudentRegistration))
+            {
+                base.OnActionExecuting(context);
+                return;
+            }
+        
             var studentId = HttpContext.Session.GetInt32("StudentId");
-
             if (studentId == null)
             {
                 context.Result = RedirectToAction("Login", "Login");
                 return;
             }
-
+        
             var activeStudent = dBContext.Login.Find(l =>
                 l.UserId == studentId.Value &&
                 l.Role == UserRole.Student &&
                 l.isActive).FirstOrDefault();
-
+        
             if (activeStudent == null)
             {
                 HttpContext.Session.Clear();
                 context.Result = RedirectToAction("Login", "Login");
                 return;
             }
-
+        
             base.OnActionExecuting(context);
         }
 
