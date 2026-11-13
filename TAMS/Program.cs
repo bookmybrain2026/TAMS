@@ -77,4 +77,6 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Welcome}/{id?}");
 
+app.MapControllers(); //added
+
 app.Run();
