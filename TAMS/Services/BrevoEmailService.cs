@@ -1,3 +1,4 @@
+BrevoEmailService.cs:
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
@@ -9,16 +10,13 @@ public sealed class BrevoEmailService
 {
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
-    private readonly ILogger<BrevoEmailService> _logger;
 
     public BrevoEmailService(
         HttpClient httpClient,
-        IConfiguration configuration,
-        ILogger<BrevoEmailService> logger)
+        IConfiguration configuration)
     {
         _httpClient = httpClient;
         _configuration = configuration;
-        _logger = logger;
     }
 
     // Reserved domains that are clearly not real delivery inboxes.
@@ -222,34 +220,18 @@ public sealed class BrevoEmailService
 
             request.Content = JsonContent.Create(payload);
 
-            var started = DateTime.UtcNow;
             using var response =
                 await _httpClient.SendAsync(request);
-            var responseBody = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)
             {
-                var details = responseBody;
+                var details =
+                    await response.Content.ReadAsStringAsync();
 
                 throw new HttpRequestException(
-                    $"Brevo rejected email: HTTP {(int)response.StatusCode}. {details}",
-                    null, response.StatusCode);
+                    $"Brevo rejected email: " +
+                    $"HTTP {(int)response.StatusCode}. {details}");
             }
-            string? messageId = null;
-            try
-            {
-                using var json = System.Text.Json.JsonDocument.Parse(responseBody);
-                if (json.RootElement.TryGetProperty("messageId", out var mid))
-                    messageId = mid.GetString();
-            }
-            catch (System.Text.Json.JsonException)
-            {
-                // Successful API response must not be retried just because
-                // its logging metadata cannot be parsed.
-            }
-            _logger.LogInformation(
-                "Brevo accepted email. MessageId={MessageId}, ApiDurationMs={DurationMs}",
-                messageId, (DateTime.UtcNow - started).TotalMilliseconds);
         }
     }
 }
