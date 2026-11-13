@@ -28,7 +28,7 @@ builder.Services.AddSession(options =>
 builder.Services.AddSingleton<MongoDBContext>();
 
 // Email services
-builder.Services.AddSingleton<EmailOutbox>(); // Durable MongoDB email queue.
+builder.Services.AddSingleton<EmailQueue>(); //Creates one shared queue instance for the application.
 
 // Actual SMTP sender
 builder.Services.AddScoped<SmtpEmailService>(); //Creates an SMTP sender instance within a dependency-injection scope
