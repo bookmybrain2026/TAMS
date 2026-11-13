@@ -12,7 +12,7 @@ public sealed class EmailQueueWorker : BackgroundService
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<EmailQueueWorker> _logger;
 
-    private const int WorkerCount = 10; // Allow up to 3 email jobs to be processed at the same time.
+    private const int WorkerCount = 3; // Allow up to 3 email jobs to be processed at the same time.
 
     public EmailQueueWorker(EmailQueue queue, IServiceScopeFactory scopeFactory, ILogger<EmailQueueWorker> logger)
     {
