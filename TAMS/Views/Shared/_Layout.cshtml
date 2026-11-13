@@ -45,6 +45,31 @@
                             <a class="nav-link" asp-area="" asp-controller="Login" asp-action="Login">Login</a>
                         </li>
 
+                        @if (Context.Session.GetInt32("StudentId") is int studentId)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Student" asp-action="Dashboard" asp-route-id="@studentId">
+                                    Dashboard
+                                </a>
+                            </li>
+                        }
+                        else if (Context.Session.GetInt32("TutorId") is int tutorId)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Tutor" asp-action="Dashboard" asp-route-id="@tutorId">
+                                    Dashboard
+                                </a>
+                            </li>
+                        }
+                        else if (Context.Session.GetInt32("AdminId") is int adminId)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Admin" asp-action="Dashboard"asp-route-id="@adminId">
+                                    Dashboard
+                                </a>
+                            </li>
+                        }
+
                     </ul>
 
                     @if (Context.Session.GetInt32("StudentId") != null || Context.Session.GetInt32("TutorId") != null || Context.Session.GetInt32("AdminId") != null)
