@@ -1,177 +1,63 @@
-﻿
 using System;
 using System.Threading.Tasks;
-// allows controllers to work without knowing that a queue exists
-namespace TAMS.Services
+
+namespace TAMS.Services;
+
+// The Task completes after MongoDB persists the job, NOT after email delivery.
+public sealed class QueuedEmailService : IEmailService
 {
-    public class QueuedEmailService : IEmailService
-    {
-        private readonly EmailQueue _queue;
+    private readonly EmailOutbox _queue;
+    public QueuedEmailService(EmailOutbox queue) => _queue = queue;
 
-        public QueuedEmailService(EmailQueue queue)
-        {
-            _queue = queue;
-        }
-        //_queue is the EmailQueue instance injected into QueuedEmailService. EnqueueAsync adds a job to the queue
-        //sender => sender. .....) defines the job to be executed by the email sender. takes an IEmailSender instance (sender) and calls the method on it 
-        //.AsTask() converts the returned ValueTask into a Task, allowing this method to satisfy the interface's return type
+    public Task SendPasswordRecoveryCodeAsync(string userEmail, string userName, string recoveryCode) => _queue.EnqueueAsync(nameof(SendPasswordRecoveryCodeAsync), new object?[] { userEmail, userName, recoveryCode });
 
-        public Task SendPasswordRecoveryCodeAsync(string userEmail, string userName, string recoveryCode)
-        {            
-            return _queue.EnqueueAsync(sender => 
-                sender.SendPasswordRecoveryCodeAsync(userEmail, userName, recoveryCode)).AsTask();      
-        }
+    public Task SendStudentAppointmentConfirmationAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate) => _queue.EnqueueAsync(nameof(SendStudentAppointmentConfirmationAsync), new object?[] { studentEmail, studentName, tutorName, appointmentDate });
 
-        public Task SendStudentAppointmentConfirmationAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate)
-        {
-            return _queue.EnqueueAsync(sender =>
-                sender.SendStudentAppointmentConfirmationAsync(studentEmail, studentName, tutorName, appointmentDate)).AsTask();
-        }
+    public Task SendTutorAppointmentNotificationAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate) => _queue.EnqueueAsync(nameof(SendTutorAppointmentNotificationAsync), new object?[] { tutorEmail, tutorName, studentName, appointmentDate });
 
-        public Task SendTutorAppointmentNotificationAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate)
-        {
-            return _queue.EnqueueAsync(sender =>
-                sender.SendTutorAppointmentNotificationAsync(tutorEmail, tutorName, studentName, appointmentDate)).AsTask();
-        }
+    public Task SendStudentAppointmentCancellationAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate) => _queue.EnqueueAsync(nameof(SendStudentAppointmentCancellationAsync), new object?[] { studentEmail, studentName, tutorName, appointmentDate });
 
-        public Task SendStudentAppointmentCancellationAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate)
-        {
-            return _queue.EnqueueAsync(sender =>
-                sender.SendStudentAppointmentCancellationAsync(studentEmail, studentName, tutorName, appointmentDate)).AsTask();
-        }
+    public Task SendTutorAppointmentCancellationAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate) => _queue.EnqueueAsync(nameof(SendTutorAppointmentCancellationAsync), new object?[] { tutorEmail, tutorName, studentName, appointmentDate });
 
-        public Task SendTutorAppointmentCancellationAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate)
-        {
-            return _queue.EnqueueAsync(sender =>
-                sender.SendTutorAppointmentCancellationAsync(tutorEmail, tutorName, studentName, appointmentDate)).AsTask();
-        }
+    public Task SendStudentAppointmentCancelledByTutorAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate) => _queue.EnqueueAsync(nameof(SendStudentAppointmentCancelledByTutorAsync), new object?[] { studentEmail, studentName, tutorName, appointmentDate });
 
-        public Task SendStudentAppointmentCancelledByTutorAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate)
-        {
-            return _queue.EnqueueAsync(sender =>
-                sender.SendStudentAppointmentCancelledByTutorAsync(studentEmail, studentName, tutorName, appointmentDate)).AsTask();
-        }
+    public Task SendTutorCancellationConfirmationAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate) => _queue.EnqueueAsync(nameof(SendTutorCancellationConfirmationAsync), new object?[] { tutorEmail, tutorName, studentName, appointmentDate });
 
-        public Task SendTutorCancellationConfirmationAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate)
-        {
-            return _queue.EnqueueAsync(sender =>
-                sender.SendTutorCancellationConfirmationAsync(tutorEmail, tutorName, studentName, appointmentDate)).AsTask();
-        }
+    public Task SendAdminCancelledAppointmentAsync(string recipientEmail, string recipientName, string otherPersonName, DateTime appointmentDate, string recipientType, string adminName) => _queue.EnqueueAsync(nameof(SendAdminCancelledAppointmentAsync), new object?[] { recipientEmail, recipientName, otherPersonName, appointmentDate, recipientType, adminName });
 
-        public Task SendAdminCancelledAppointmentAsync(string recipientEmail, string recipientName, string otherPersonName, DateTime appointmentDate, string recipientType, string adminName)
-        {
-            return _queue.EnqueueAsync(sender =>
-                sender.SendAdminCancelledAppointmentAsync(recipientEmail, recipientName, otherPersonName, appointmentDate, recipientType, adminName)).AsTask();
-        }
+    public Task SendReviewReminderAsync(string studentEmail, string studentName, string tutorName) => _queue.EnqueueAsync(nameof(SendReviewReminderAsync), new object?[] { studentEmail, studentName, tutorName });
 
-        public Task SendReviewReminderAsync(string studentEmail, string studentName, string tutorName)
-        {
-            return _queue.EnqueueAsync(sender =>
-                sender.SendReviewReminderAsync(studentEmail, studentName, tutorName)).AsTask();
-        }
+    public Task SendTutorAppointmentCompletionReminderAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate, DateTime endDate, int hoursAfterEnd) => _queue.EnqueueAsync(nameof(SendTutorAppointmentCompletionReminderAsync), new object?[] { tutorEmail, tutorName, studentName, appointmentDate, endDate, hoursAfterEnd });
 
-        public Task SendTutorAppointmentCompletionReminderAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate, DateTime endDate, int hoursAfterEnd)
-        {
-            return _queue.EnqueueAsync(sender =>
-                sender.SendTutorAppointmentCompletionReminderAsync(tutorEmail, tutorName, studentName, appointmentDate, endDate, hoursAfterEnd)).AsTask();
-        }
+    public Task SendTutorAppointmentAdminFollowUpAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate, DateTime endDate) => _queue.EnqueueAsync(nameof(SendTutorAppointmentAdminFollowUpAsync), new object?[] { tutorEmail, tutorName, studentName, appointmentDate, endDate });
 
-        public Task SendTutorAppointmentAdminFollowUpAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate, DateTime endDate)
-        {
-            return _queue.EnqueueAsync(sender =>
-                sender.SendTutorAppointmentAdminFollowUpAsync(tutorEmail, tutorName, studentName, appointmentDate, endDate)).AsTask();
-        }
+    public Task SendAdminAppointmentFollowUpAsync(string adminEmail, string tutorName, string studentName, DateTime appointmentDate, DateTime endDate, int appointmentId) => _queue.EnqueueAsync(nameof(SendAdminAppointmentFollowUpAsync), new object?[] { adminEmail, tutorName, studentName, appointmentDate, endDate, appointmentId });
 
-        public Task SendAdminAppointmentFollowUpAsync(string adminEmail, string tutorName, string studentName, DateTime appointmentDate, DateTime endDate, int appointmentId)
-        {
-            return _queue.EnqueueAsync(sender =>
-                sender.SendAdminAppointmentFollowUpAsync(adminEmail, tutorName, studentName, appointmentDate, endDate, appointmentId)).AsTask();
-        }
+    public Task SendTutorAppointmentRescheduledAsync(string tutorEmail, string tutorName, string studentName, DateTime newAppointmentDate) => _queue.EnqueueAsync(nameof(SendTutorAppointmentRescheduledAsync), new object?[] { tutorEmail, tutorName, studentName, newAppointmentDate });
 
-        public Task SendTutorAppointmentRescheduledAsync(string tutorEmail, string tutorName, string studentName, DateTime newAppointmentDate)
-        {
-            return _queue.EnqueueAsync(sender =>
-                sender.SendTutorAppointmentRescheduledAsync(tutorEmail, tutorName, studentName, newAppointmentDate)).AsTask();
-        }
+    public Task SendStudentAppointmentRescheduledAsync(string studentEmail, string studentName, string tutorName, DateTime newAppointmentDate) => _queue.EnqueueAsync(nameof(SendStudentAppointmentRescheduledAsync), new object?[] { studentEmail, studentName, tutorName, newAppointmentDate });
 
-        public Task SendStudentAppointmentRescheduledAsync(string studentEmail, string studentName, string tutorName, DateTime newAppointmentDate)
-        {
-            return _queue.EnqueueAsync(sender =>
-                sender.SendStudentAppointmentRescheduledAsync(studentEmail, studentName, tutorName, newAppointmentDate)).AsTask();
-        }
+    public Task SendStudentUpcomingAppointmentReminderAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate, int hoursBefore, string? tutorNotes) => _queue.EnqueueAsync(nameof(SendStudentUpcomingAppointmentReminderAsync), new object?[] { studentEmail, studentName, tutorName, appointmentDate, hoursBefore, tutorNotes });
 
-        public Task SendStudentUpcomingAppointmentReminderAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate, int hoursBefore, string? tutorNotes)
-        {
-            return _queue.EnqueueAsync(sender =>
-                sender.SendStudentUpcomingAppointmentReminderAsync(studentEmail, studentName, tutorName, appointmentDate, hoursBefore, tutorNotes)).AsTask();
-        }
+    public Task SendTutorUpcomingAppointmentReminderAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate, int hoursBefore) => _queue.EnqueueAsync(nameof(SendTutorUpcomingAppointmentReminderAsync), new object?[] { tutorEmail, tutorName, studentName, appointmentDate, hoursBefore });
 
-        public Task SendTutorUpcomingAppointmentReminderAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate, int hoursBefore)
-        {
-            return _queue.EnqueueAsync(sender =>
-                sender.SendTutorUpcomingAppointmentReminderAsync(tutorEmail, tutorName, studentName, appointmentDate, hoursBefore)).AsTask();
-        }
+    public Task SendGroupAppointmentConfirmationToStudentAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime) => _queue.EnqueueAsync(nameof(SendGroupAppointmentConfirmationToStudentAsync), new object?[] { studentEmail, studentName, tutorName, appointmentDate, startTime, endTime });
 
-        public Task SendGroupAppointmentConfirmationToStudentAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime)
-        {
-            return _queue.EnqueueAsync(sender =>
-                sender.SendGroupAppointmentConfirmationToStudentAsync(studentEmail, studentName, tutorName, appointmentDate, startTime, endTime)).AsTask();
-        }
+    public Task SendGroupAppointmentConfirmationToTutorAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime) => _queue.EnqueueAsync(nameof(SendGroupAppointmentConfirmationToTutorAsync), new object?[] { tutorEmail, tutorName, studentName, appointmentDate, startTime, endTime });
 
-        public Task SendGroupAppointmentConfirmationToTutorAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime)
-        {
-            return _queue.EnqueueAsync(sender =>
-                sender.SendGroupAppointmentConfirmationToTutorAsync(tutorEmail, tutorName, studentName, appointmentDate, startTime, endTime)).AsTask();
-        }
+    public Task SendGroupAppointmentCancellationToStudentAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime) => _queue.EnqueueAsync(nameof(SendGroupAppointmentCancellationToStudentAsync), new object?[] { studentEmail, studentName, tutorName, appointmentDate, startTime, endTime });
 
-        public Task SendGroupAppointmentCancellationToStudentAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime)
-        {
-            return _queue.EnqueueAsync(sender =>
-                sender.SendGroupAppointmentCancellationToStudentAsync(studentEmail, studentName, tutorName, appointmentDate, startTime, endTime)).AsTask();
-        }
+    public Task SendGroupAppointmentCancellationToTutorAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime) => _queue.EnqueueAsync(nameof(SendGroupAppointmentCancellationToTutorAsync), new object?[] { tutorEmail, tutorName, studentName, appointmentDate, startTime, endTime });
 
-        public Task SendGroupAppointmentCancellationToTutorAsync(string tutorEmail, string tutorName, string studentName, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime)
-        {
-            return _queue.EnqueueAsync(sender =>
-                sender.SendGroupAppointmentCancellationToTutorAsync(tutorEmail, tutorName, studentName, appointmentDate, startTime, endTime)).AsTask();
-        }
+    public Task SendStudentUpcomingGroupReminderAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime, int hoursBefore) => _queue.EnqueueAsync(nameof(SendStudentUpcomingGroupReminderAsync), new object?[] { studentEmail, studentName, tutorName, appointmentDate, startTime, endTime, hoursBefore });
 
-        public Task SendStudentUpcomingGroupReminderAsync(string studentEmail, string studentName, string tutorName, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime, int hoursBefore)
-        {
-            return _queue.EnqueueAsync(sender =>
-                sender.SendStudentUpcomingGroupReminderAsync(studentEmail, studentName, tutorName, appointmentDate, startTime, endTime, hoursBefore)).AsTask();
-        }
+    public Task SendTutorUpcomingGroupReminderAsync(string tutorEmail, string tutorName, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime, int hoursBefore, int enrolledCount) => _queue.EnqueueAsync(nameof(SendTutorUpcomingGroupReminderAsync), new object?[] { tutorEmail, tutorName, appointmentDate, startTime, endTime, hoursBefore, enrolledCount });
 
-        public Task SendTutorUpcomingGroupReminderAsync(string tutorEmail, string tutorName, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime, int hoursBefore, int enrolledCount)
-        {
-            return _queue.EnqueueAsync(sender =>
-                sender.SendTutorUpcomingGroupReminderAsync(tutorEmail, tutorName, appointmentDate, startTime, endTime, hoursBefore, enrolledCount)).AsTask();
-        }
+    public Task SendAdminCancelledGroupToStudentAsync(string studentEmail, string studentName, string tutorName, string adminName, int groupId, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime) => _queue.EnqueueAsync(nameof(SendAdminCancelledGroupToStudentAsync), new object?[] { studentEmail, studentName, tutorName, adminName, groupId, appointmentDate, startTime, endTime });
 
-        public Task SendAdminCancelledGroupToStudentAsync(string studentEmail, string studentName, string tutorName, string adminName, int groupId, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime)
-        {
-            return _queue.EnqueueAsync(sender =>
-                sender.SendAdminCancelledGroupToStudentAsync(studentEmail, studentName, tutorName, adminName, groupId, appointmentDate, startTime, endTime)).AsTask();
-        }
+    public Task SendAdminCancelledGroupToTutorAsync(string tutorEmail, string tutorName, string adminName, int groupId, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime, int enrolledCount) => _queue.EnqueueAsync(nameof(SendAdminCancelledGroupToTutorAsync), new object?[] { tutorEmail, tutorName, adminName, groupId, appointmentDate, startTime, endTime, enrolledCount });
 
-        public Task SendAdminCancelledGroupToTutorAsync(string tutorEmail, string tutorName, string adminName, int groupId, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime, int enrolledCount)
-        {
-            return _queue.EnqueueAsync(sender =>
-                sender.SendAdminCancelledGroupToTutorAsync(tutorEmail, tutorName,  adminName, groupId, appointmentDate, startTime, endTime, enrolledCount)).AsTask();
-        }
+    public Task SendTutorGroupApprovedAsync(string tutorEmail, string tutorName, int groupId, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime, int capacity) => _queue.EnqueueAsync(nameof(SendTutorGroupApprovedAsync), new object?[] { tutorEmail, tutorName, groupId, appointmentDate, startTime, endTime, capacity });
 
-        public Task SendTutorGroupApprovedAsync(string tutorEmail, string tutorName, int groupId, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime, int capacity)
-        {
-            return _queue.EnqueueAsync(sender =>
-                sender.SendTutorGroupApprovedAsync(tutorEmail, tutorName, groupId, appointmentDate, startTime, endTime, capacity)).AsTask();
-        }
-
-        public Task SendTutorGroupRejectedAsync(string tutorEmail, string tutorName, int groupId, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime, int capacity)
-        {
-            return _queue.EnqueueAsync(sender =>
-                sender.SendTutorGroupRejectedAsync(tutorEmail, tutorName, groupId, appointmentDate, startTime, endTime, capacity)).AsTask();
-        }
-
-
-    }
+    public Task SendTutorGroupRejectedAsync(string tutorEmail, string tutorName, int groupId, DateTime appointmentDate, TimeSpan startTime, TimeSpan endTime, int capacity) => _queue.EnqueueAsync(nameof(SendTutorGroupRejectedAsync), new object?[] { tutorEmail, tutorName, groupId, appointmentDate, startTime, endTime, capacity });
 }
