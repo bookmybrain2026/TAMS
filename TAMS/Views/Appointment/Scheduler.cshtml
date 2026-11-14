@@ -1,4 +1,4 @@
-﻿@using TAMS.Models
+@using TAMS.Models
 @using System.Linq
 
 @{
@@ -247,42 +247,81 @@ var groupAppointments = ViewBag.GroupAppointments
                                                         {
                                                             if (group != null)
                                                             {
-                                                                var isFull = group.Status == "Full" || enrolledCount >= group.Capacity;
+                                                                var isFull = string.Equals(group.Status, "Full", StringComparison.OrdinalIgnoreCase) || availableSeats <= 0;
                                                                 var isExpired = slotDateTime <= now;
+                                                                var isOpen = string.Equals(group.Status, "Open", StringComparison.OrdinalIgnoreCase);
+                                                                var isAvailable = isOpen && !isEnrolled && !isFull && !isExpired;
 
-                                                                if (isEnrolled || isFull || isExpired || isRescheduling)
+                                                                if (!isAvailable)
                                                                 {
-                                                                    <div class="scheduler-slot scheduler-slot-group" >
-                                                                        <span class="scheduler-slot-time"> @slotLabel </span>
-                                                                        <span class="scheduler-slot-status"> @enrolledCount/@group.Capacity </span>
-                                                                        <span class="scheduler-slot-status"> Group </span>
+                                                                    <div class="scheduler-slot scheduler-slot-group">
+
+                                                                        <span class="scheduler-slot-time">
+                                                                            @slotLabel
+                                                                        </span>
+
+                                                                        <span class="scheduler-slot-status">
+                                                                            @enrolledCount/@group.Capacity
+                                                                        </span>
+
+                                                                        <span class="scheduler-slot-status">
+                                                                            Group
+                                                                        </span>
 
                                                                         @if (isEnrolled)
                                                                         {
-                                                                            <span>Joined</span>
+                                                                            <span class="scheduler-slot-status">Joined</span>
                                                                         }
                                                                         else if (isFull)
                                                                         {
-                                                                            <span>Full</span>
+                                                                            <span class="scheduler-slot-status">Full</span>
                                                                         }
                                                                         else if (isExpired)
                                                                         {
-                                                                            <span>Expired</span>
+                                                                            <span class="scheduler-slot-status">Expired</span>
                                                                         }
+                                                                        else
+                                                                        {
+                                                                            <span class="scheduler-slot-status">Unavailable</span>
+                                                                        }
+
                                                                     </div>
                                                                 }
                                                                 else
                                                                 {
-                                                                    <form asp-controller="Appointment" asp-action="JoinGroupAppointment" method="post"
-                                                                            onsubmit="return confirm('Do you want to join this group?');">
+                                                                    var groupAction = isRescheduling ? "RescheduleToGroup" : "JoinGroupAppointment";
+                                                                    var confirmationMessage = isRescheduling ? "Reschedule your individual appointment to this group?" : "Do you want to join this group?";
+
+                                                                    <form asp-controller="Appointment" asp-action="@groupAction" method="post" onsubmit="return confirm('@confirmationMessage');">
 
                                                                         @Html.AntiForgeryToken()
+
                                                                         <input type="hidden" name="groupId" value="@group.GroupId" />
+
+                                                                        @if (isRescheduling)
+                                                                        {
+                                                                            <input type="hidden" name="appointmentId" value="@rescheduleAppointmentId" />
+                                                                        }
+
                                                                         <button type="submit" class="scheduler-slot scheduler-slot-group">
-                                                                            <span class="scheduler-slot-time"> @slotLabel </span>
-                                                                            <span class="scheduler-slot-status"> @enrolledCount/@group.Capacity </span>
-                                                                            <span class="scheduler-slot-status"> Group </span>
+                                                                            <span class="scheduler-slot-time">
+                                                                                @slotLabel
+                                                                            </span>
+
+                                                                            <span class="scheduler-slot-status">
+                                                                                @enrolledCount/@group.Capacity
+                                                                            </span>
+
+                                                                            <span class="scheduler-slot-status">
+                                                                                Group
+                                                                            </span>
+
+                                                                            <span class="scheduler-slot-status">
+                                                                                @(isRescheduling ? "Reschedule →" : "Join Group →")
+                                                                            </span>
+
                                                                         </button>
+
                                                                     </form>
                                                                 }
                                                             }
@@ -296,35 +335,61 @@ var groupAppointments = ViewBag.GroupAppointments
                                                                     <span class="scheduler-slot-status">
                                                                         Unavailable
                                                                     </span>
+
                                                                 </div>
                                                             }
                                                         }
+
                                                         else if (slotCompleted)
                                                         {
                                                             <div class="scheduler-slot scheduler-slot-completed">
-                                                                <span class="scheduler-slot-time">@slotLabel</span>
-                                                                <span class="scheduler-slot-status">Completed</span>
+                                                                <span class="scheduler-slot-time">
+                                                                    @slotLabel
+                                                                </span>
+
+                                                                <span class="scheduler-slot-status">
+                                                                    Completed
+                                                                </span>
+
                                                             </div>
                                                         }
+
                                                         else if (slotBooked)
                                                         {
                                                             <div class="scheduler-slot scheduler-slot-booked">
-                                                                <span class="scheduler-slot-time">@slotLabel</span>
-                                                                <span class="scheduler-slot-status">Booked</span>
+                                                                <span class="scheduler-slot-time">
+                                                                    @slotLabel
+                                                                </span>
+
+                                                                <span class="scheduler-slot-status">
+                                                                    Booked
+                                                                </span>
+
                                                             </div>
                                                         }
+
                                                         else if (slotExpired)
                                                         {
                                                             <div class="scheduler-slot scheduler-slot-expired">
-                                                                <span class="scheduler-slot-time">@slotLabel</span>
-                                                                <span class="scheduler-slot-status">Expired</span>
+
+                                                                <span class="scheduler-slot-time">
+                                                                    @slotLabel
+                                                                </span>
+
+                                                                <span class="scheduler-slot-status">
+                                                                    Expired
+                                                                </span>
+
                                                             </div>
                                                         }
+
                                                         else
                                                         {
-                                                            <form class="scheduler-booking-form" asp-controller="Appointment" asp-action="@(isRescheduling ? "RescheduleAppointment" : "BookAppointment")"
-                                                                  method="post" onsubmit="return confirm('Do you want to confirm this appointment?');">
+                                                            var individualAction = isRescheduling ? "RescheduleAppointment" : "BookAppointment";
+                                                            var confirmationMessage = isRescheduling ? "Do you want to reschedule your appointment to this time?" : "Do you want to confirm this appointment?";
 
+                                                            <form class="scheduler-booking-form" asp-controller="Appointment" asp-action="@individualAction"
+                                                                  method="post" onsubmit="return confirm('@confirmationMessage');">
                                                                 @Html.AntiForgeryToken()
 
                                                                 <input type="hidden" name="scheduleId" value="@s.ScheduleId" />
@@ -339,9 +404,13 @@ var groupAppointments = ViewBag.GroupAppointments
                                                                 }
 
                                                                 <button type="submit" class="scheduler-slot scheduler-slot-available">
-                                                                    <span class="scheduler-slot-time">@slotLabel</span>
+                                                                    <span class="scheduler-slot-time">
+                                                                        @slotLabel
+                                                                    </span>
+
                                                                     <span class="scheduler-slot-status">
-                                                                        Book <span aria-hidden="true">→</span>
+                                                                        @(isRescheduling ? "Reschedule" : "Book")
+                                                                        <span aria-hidden="true"> → </span>
                                                                     </span>
                                                                 </button>
                                                             </form>
