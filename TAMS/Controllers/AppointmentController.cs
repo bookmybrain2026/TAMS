@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
 using MongoDB.Driver; 
@@ -449,6 +449,256 @@ namespace TAMS.Controllers
 
             return RedirectToAction("Dashboard", "Student", new { id = studentId });
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RescheduleToGroup(int appointmentId, int groupId)
+        {
+            var studentId = HttpContext.Session.GetInt32("StudentId");
+            if (studentId == null)
+            {
+                return RedirectToAction("Login", "Login");
+            }
+
+            var oldAppointment = dBContext.Appointments
+                .Find(a => a.AppointmentId == appointmentId
+                    && a.StudentId == studentId.Value
+                    && a.Status == "Scheduled")
+                .FirstOrDefault();
+
+            if (oldAppointment == null)
+            {
+                return NotFound();
+            }         
+
+            var group = dBContext.GroupAppointments
+                .Find(g => g.GroupId == groupId)
+                .FirstOrDefault();
+
+            if (group == null)
+            {
+                return NotFound();
+            }
+                
+            IActionResult ReturnToScheduler()
+            {
+                return RedirectToAction("Scheduler", new
+                {
+                    tutorId = group.TutorId,
+                    month = group.AppointmentDate.Month,
+                    year = group.AppointmentDate.Year,
+                    rescheduleAppointmentId = appointmentId
+                });
+            }
+
+            var student = dBContext.Student
+                .Find(s => s.StudentId == studentId.Value)
+                .FirstOrDefault();
+
+            var newTutor = dBContext.Tutor
+                .Find(t => t.TutorId == group.TutorId)
+                .FirstOrDefault();
+
+            if (student == null || newTutor == null)
+            {
+                return NotFound();
+            }
+
+            var groupStart = group.AppointmentDate.Date.Add(group.StartTime);
+            var groupEnd = group.AppointmentDate.Date.Add(group.EndTime);
+
+            if (group.Status != "Open" || group.StudentIds == null || group.StudentIds.Count >= group.Capacity)
+            {
+                TempData["AppointmentError"] = "This group appointment is no longer available.";
+                return ReturnToScheduler();
+            }
+
+            if (groupStart <= DateTime.Now || groupEnd <= groupStart)
+            {
+                TempData["AppointmentError"] = "Please select a valid future group appointment.";
+                return ReturnToScheduler();
+            }
+
+            var groupSchedule = dBContext.Schedule
+                .Find(s => s.IsGroup && s.GroupId == groupId && s.TutorId == group.TutorId)
+                .FirstOrDefault();
+
+            if (groupSchedule == null)
+            {
+                TempData["AppointmentError"] = "The group schedule could not be found.";
+                return ReturnToScheduler();
+            }
+
+            if (group.StudentIds.Contains(studentId.Value))
+            {
+                TempData["AppointmentError"] = "You are already enrolled in this group.";
+                return ReturnToScheduler();
+            }
+
+            var conflicts = dBContext.Appointments
+                .Find(a => a.Status == "Scheduled" && a.AppointmentId != appointmentId &&
+                    (a.StudentId == studentId.Value || a.TutorId == group.TutorId))
+                .ToList();
+
+            foreach (var appointment in conflicts)
+            {
+                var start = appointment.AppointmentDate;
+                var end = appointment.EndDate;
+
+                if (end <= start)
+                {
+                    var schedule = dBContext.Schedule
+                        .Find(s => s.ScheduleId == appointment.ScheduleId)
+                        .FirstOrDefault();
+
+                    if (schedule == null)
+                    {
+                        TempData["AppointmentError"] = "An existing appointment has invalid time information.";
+                        return ReturnToScheduler();
+                    }
+
+                    start = schedule.Date.Date.Add(schedule.StartTime);
+                    end = schedule.Date.Date.Add(schedule.EndTime);
+                }
+
+                if (groupStart < end && groupEnd > start)
+                {
+                    TempData["AppointmentError"] =
+                        appointment.StudentId == studentId.Value
+                        ? "You already have an appointment during this time."
+                        : "This tutor has an individual appointment during this time.";
+
+                    return ReturnToScheduler();
+                }
+            }
+
+            var otherGroups = dBContext.GroupAppointments
+                .Find(g => g.GroupId != groupId &&
+                    (g.Status == "Open" || g.Status == "Full") && g.StudentIds.Contains(studentId.Value))
+                .ToList();
+
+            foreach (var existingGroup in otherGroups)
+            {
+                var start = existingGroup.AppointmentDate.Date.Add(existingGroup.StartTime);
+                var end = existingGroup.AppointmentDate.Date.Add(existingGroup.EndTime);
+
+                if (groupStart < end && groupEnd > start)
+                {
+                    TempData["AppointmentError"] = "You already have a group appointment during this time.";
+                    return ReturnToScheduler();
+                }
+            }
+
+            var capacityFilter = 
+                new BsonDocumentFilterDefinition<GroupAppointment>(
+                    new BsonDocument("$expr",
+                        new BsonDocument("$lt", new BsonArray
+                    {
+                            new BsonDocument("$size", "$StudentIds"), "$Capacity"
+                    }
+                        )));
+
+            var filter = Builders<GroupAppointment>.Filter.And(
+                Builders<GroupAppointment>.Filter.Eq(g => g.GroupId, groupId),
+                Builders<GroupAppointment>.Filter.Eq(g => g.Status, "Open"),
+                Builders<GroupAppointment>.Filter.Not(
+                Builders<GroupAppointment>.Filter.AnyEq(
+                    g => g.StudentIds, studentId.Value)), capacityFilter
+            );
+
+            var enrollResult = dBContext.GroupAppointments.UpdateOne(filter,
+                Builders<GroupAppointment>.Update.AddToSet(g => g.StudentIds, studentId.Value));
+
+            if (enrollResult.ModifiedCount != 1)
+            {
+                TempData["AppointmentError"] = "The group may be full. Please select another.";
+                return ReturnToScheduler();
+            }
+
+            var cancelResult = dBContext.Appointments.UpdateOne(a => a.AppointmentId == appointmentId &&
+                     a.StudentId == studentId.Value && a.Status == "Scheduled",
+                Builders<Appointment>.Update.Set(a => a.Status, "Cancelled"));
+
+            if (cancelResult.ModifiedCount != 1)
+            {
+                dBContext.GroupAppointments.UpdateOne(g => g.GroupId == groupId,
+                    Builders<GroupAppointment>.Update.Pull(g => g.StudentIds, studentId.Value));
+                TempData["AppointmentError"] = "Rescheduling failed. Please try again.";
+                return ReturnToScheduler();
+            }
+
+
+            var fullFilter = Builders<GroupAppointment>.Filter.And(
+                Builders<GroupAppointment>.Filter.Eq(g => g.GroupId, groupId),
+                Builders<GroupAppointment>.Filter.Eq(g => g.Status, "Open"),
+                new BsonDocumentFilterDefinition<GroupAppointment>(
+                    new BsonDocument(
+                        "$expr",
+                        new BsonDocument(
+                            "$gte",
+                            new BsonArray
+                            {
+                    new BsonDocument("$size", "$StudentIds"),
+                    "$Capacity"
+                            }
+                        )
+                    )
+                )
+            );
+
+            dBContext.GroupAppointments.UpdateOne(fullFilter,
+                Builders<GroupAppointment>.Update.Set(g => g.Status, "Full"));
+
+            var oldTutor = dBContext.Tutor
+                .Find(t => t.TutorId == oldAppointment.TutorId)
+                .FirstOrDefault();
+
+            try
+            {
+                if (!student.DisableEmailNotifications && !string.IsNullOrWhiteSpace(student.Email))
+                {
+                    await _emailService
+                        .SendGroupAppointmentConfirmationToStudentAsync(
+                            student.Email,
+                            student.FName,
+                            newTutor.FName,
+                            group.AppointmentDate,
+                            group.StartTime,
+                            group.EndTime);
+                }
+
+                if (!newTutor.DisableEmailNotifications && !string.IsNullOrWhiteSpace(newTutor.Email))
+                {
+                    await _emailService
+                        .SendGroupAppointmentConfirmationToTutorAsync(
+                            newTutor.Email,
+                            newTutor.FName,
+                            student.FName,
+                            group.AppointmentDate,
+                            group.StartTime,
+                            group.EndTime);
+                }
+
+                if (oldTutor != null && !oldTutor.DisableEmailNotifications && !string.IsNullOrWhiteSpace(oldTutor.Email))
+                {
+                    await _emailService
+                        .SendTutorAppointmentCancellationAsync(
+                            oldTutor.Email,
+                            $"{oldTutor.FName} {oldTutor.LName}",
+                            $"{student.FName} {student.LName}",
+                            oldAppointment.AppointmentDate.AddHours(5));
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Group rescheduling email error: {ex.Message}");
+            }
+
+            TempData["SuccessMessage"] = "Your individual appointment was successfully rescheduled to a group appointment.";
+
+            return RedirectToAction("Dashboard", "Student", new { id = studentId.Value });
+        }
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]
