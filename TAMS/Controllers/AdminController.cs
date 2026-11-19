@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace TAMS.Controllers
 {
+    // prevent the admin pages from being cached
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public class AdminController : Controller
     {
@@ -23,21 +24,24 @@ namespace TAMS.Controllers
             _passwordHasher = passwordHasher;
         }
 
+        // check if the admin is logged in and has an active account
         public override void OnActionExecuting(ActionExecutingContext context)
         {
             var adminId = HttpContext.Session.GetInt32("AdminId");
 
-            if (adminId == null)
+            if (adminId == null) // redirect to Login if there is no admin session 
             {
                 context.Result = RedirectToAction("Login", "Login");
                 return;
             }
 
-            var activeAdmin = dBContext.Login.Find(l =>
-                l.UserId == adminId.Value &&
-                l.Role == UserRole.Administrator &&
-                l.isActive).FirstOrDefault();
+            // verify that the account is an active admin
+            var activeAdmin = dBContext.Login.Find(login =>
+                login.UserId == adminId.Value &&
+                login.Role == UserRole.Administrator &&
+                login.isActive).FirstOrDefault();
 
+            // clear session if the admin is no longer active
             if (activeAdmin == null)
             {
                 HttpContext.Session.Clear();
@@ -51,80 +55,116 @@ namespace TAMS.Controllers
         [HttpGet]
         public IActionResult Dashboard(int? id, int? editTutorId, int? viewTutorId, int? reviewTutorId, bool showAdminFollowUps = false)
         {
+            // check if admin is logged in
             var adminId = HttpContext.Session.GetInt32("AdminId");
-            if (adminId == null) { return RedirectToAction("Login", "Login"); }
+            if (adminId == null) 
+            { 
+                return RedirectToAction("Login", "Login"); 
+            }
 
+            // check if admin needs to see the dashboard tour
             var loginUser = dBContext.Login
-                .Find(l => l.UserId == adminId.Value && l.Role == UserRole.Administrator)
+                .Find(login => login.UserId == adminId.Value && login.Role == UserRole.Administrator)
                 .FirstOrDefault();
             ViewBag.ShowDashboardTour = loginUser != null && !loginUser.HasCompletedTour;
 
+            // load admin details
             ViewBag.AdminId = adminId;
-            ViewBag.Tutors = dBContext.Tutor.Find(_ => true).ToList();
-            ViewBag.Students = dBContext.Student.Find(_ => true).ToList();
             ViewBag.ShowAdminFollowUps = showAdminFollowUps;
 
-            var pendingGroupRequests = dBContext.GroupAppointments
-                .Find(g => g.Status == "Pending")
-                .SortBy(g => g.AppointmentDate)
-                .ToList();
+            // Load tutors and students once
+            var tutors = dBContext.Tutor.Find(tutor => true).ToList();
+            var students = dBContext.Student.Find(student => true).ToList();
 
+            // dictionaries for lookup
+            var tutorLookup = tutors.ToDictionary(tutor => tutor.TutorId);
+            var studentLookup = students.ToDictionary(student => student.StudentId);
+
+            ViewBag.Tutors = tutors;
+            ViewBag.Students = students;
+
+            // get pending group appointment requests
+            var pendingGroupRequests = dBContext.GroupAppointments
+                .Find(group => group.Status == "Pending")
+                .SortBy(group => group.AppointmentDate)
+                .ToList();
             ViewBag.PendingGroupRequests = pendingGroupRequests;
 
-            var appointments = dBContext.Appointments.Find(_ => true).SortBy(a => a.AppointmentDate).ToList();
-
-            foreach (var appointment in appointments)
-            {
-                appointment.Tutor = dBContext.Tutor.Find(t => t.TutorId == appointment.TutorId).FirstOrDefault();
-                appointment.Student = dBContext.Student.Find(s => s.StudentId == appointment.StudentId).FirstOrDefault();
-            }
-            ViewBag.Appointments = appointments;
-
-            var adminGroupAppointments = dBContext.GroupAppointments
-                .Find(g =>
-                    g.Status == "Open" ||
-                    g.Status == "Full" ||
-                    g.Status == "Completed")
-                .ToList()
-                .OrderBy(g => g.AppointmentDate)
-                .ThenBy(g => g.StartTime)
+            // Load all appointments
+            var appointments = dBContext.Appointments
+                .Find(appointment => true)
+                .SortBy(appointment => appointment.AppointmentDate)
                 .ToList();
 
+            // Assign tutor and student details without extra database queries
+            foreach (var appointment in appointments)
+            {
+                //Get Tutor details
+                tutorLookup.TryGetValue(appointment.TutorId, out var tutor);
+                appointment.Tutor = tutor;
+
+                // Get student details if StudentId is not null
+                if (appointment.StudentId.HasValue)
+                {
+                    studentLookup.TryGetValue(appointment.StudentId.Value, out var student);
+                    appointment.Student = student;
+                }
+            }
+
+            ViewBag.Appointments = appointments;
+
+            // get active and complete group appointments
+            var adminGroupAppointments = dBContext.GroupAppointments
+                .Find(group => group.Status == "Open" || group.Status == "Full" || group.Status == "Completed")
+                .SortBy(group => group.AppointmentDate)
+                .ThenBy(group => group.StartTime)
+                .ToList();
             ViewBag.AdminGroupAppointments = adminGroupAppointments;
 
+            // load the selected tutor's details for editing
             if (editTutorId.HasValue)
             {
-                var tutor = dBContext.Tutor.Find(t => t.TutorId == editTutorId.Value).FirstOrDefault();
+                var tutor = dBContext.Tutor
+                    .Find(tutor => tutor.TutorId == editTutorId.Value).FirstOrDefault();
 
                 if (tutor != null)
                 {
                     ViewBag.EditTutor = tutor;
-                    ViewBag.EditLogin = dBContext.Login.Find(l => l.UserId == editTutorId.Value).FirstOrDefault();
+                    ViewBag.EditLogin = dBContext.Login
+                        .Find(login => login.UserId == editTutorId.Value).FirstOrDefault();
                 }
             }
 
+            // Load the selected tutor's schedules
             if (viewTutorId.HasValue)
             {
-                var tutor = dBContext.Tutor.Find(t => t.TutorId == viewTutorId.Value).FirstOrDefault();
-
-                if (tutor != null)
+                // Get tutor from the existing dictionary
+                if (tutorLookup.TryGetValue(viewTutorId.Value, out var tutor))
                 {
-                    var schedules = dBContext.Schedule.Find(s => s.TutorId == viewTutorId.Value).ToList()
-                        .OrderBy(s => s.Date).ThenBy(s => s.StartTime).ToList();
+                    // Load schedules belonging to the selected tutor
+                    var schedules = dBContext.Schedule
+                        .Find(schedule => schedule.TutorId == viewTutorId.Value)
+                        .SortBy(schedule => schedule.Date)
+                        .ThenBy(schedule => schedule.StartTime)
+                        .ToList();
+
                     ViewBag.ViewTutorSchedules = schedules;
                     ViewBag.ViewTutorName = $"{tutor.FName} {tutor.LName}";
                     ViewBag.CurrentTutorId = viewTutorId.Value;
                 }
             }
 
+            // load the selected tutor's reviews
             if (reviewTutorId.HasValue)
             {
-                var tutor = dBContext.Tutor.Find(t => t.TutorId == reviewTutorId.Value).FirstOrDefault();
+                var tutor = dBContext.Tutor
+                    .Find(tutor => tutor.TutorId == reviewTutorId.Value)
+                    .FirstOrDefault();
                 if (tutor != null)
                 {
                     var reviews = dBContext.Reviews
-                        .Find(r => r.TutorId == reviewTutorId.Value)
-                        .SortByDescending(r => r.AppointmentDate).ToList();
+                        .Find(review => review.TutorId == reviewTutorId.Value)
+                        .SortByDescending(review => review.AppointmentDate).ToList();
 
                     ViewBag.TutorReviews = reviews;
                     ViewBag.ReviewTutorName = $"{tutor.FName} {tutor.LName}";
@@ -139,52 +179,57 @@ namespace TAMS.Controllers
         public async Task<IActionResult> ApproveGroupAppointment(int groupId)
         {
             var adminId = HttpContext.Session.GetInt32("AdminId");
-            if (adminId == null) { return RedirectToAction("Login", "Login"); }
+            if (adminId == null) 
+            { 
+                return RedirectToAction("Login", "Login"); 
+            }
 
+            // find the group request and make sure it is still pending
             var group = dBContext.GroupAppointments
-                .Find(g => g.GroupId == groupId)
+                .Find(group => group.GroupId == groupId)
                 .FirstOrDefault();
-
             if (group == null || group.Status != "Pending")
             {
                 TempData["AdminDashboardError"] = "Group request not found or already reviewed.";
                 return RedirectToAction("Dashboard", new { showAdminFollowUps = true });
             }
 
+            // check if the tutor is assigned to the group exists
             var tutor = dBContext.Tutor
-                .Find(t => t.TutorId == group.TutorId)
+                .Find(tutor => tutor.TutorId == group.TutorId)
                 .FirstOrDefault();
-
             if (tutor == null)
             {
                 TempData["AdminDashboardError"] = "The tutor for this request was not found.";
                 return RedirectToAction("Dashboard", new { showAdminFollowUps = true });
             }
 
+            // verify the date, time and group capacity
             DateTime startDate = group.AppointmentDate.Date.Add(group.StartTime);
             DateTime endDate = group.AppointmentDate.Date.Add(group.EndTime);
-
             if (startDate <= DateTime.Now || endDate <= startDate || group.Capacity < 2)
             {
                 TempData["AdminDashboardError"] = "The requested date, time, or capacity is invalid.";
                 return RedirectToAction("Dashboard", new { showAdminFollowUps = true });
             }
 
+            // check if the tutor already has an appointment at this time
             var conflict = dBContext.Appointments
-                .Find(a => a.TutorId == group.TutorId &&
-                    a.Status == "Scheduled" &&
-                    a.AppointmentDate < endDate &&
-                    a.EndDate > startDate)
+                .Find(appointment => appointment.TutorId == group.TutorId &&
+                    appointment.Status == "Scheduled" &&
+                    appointment.AppointmentDate < endDate &&
+                    appointment.EndDate > startDate)
                 .Any();
-
             if (conflict)
             {
                 TempData["AdminDashboardError"] = "The tutor already has an appointment during this time.";
                 return RedirectToAction("Dashboard", new { showAdminFollowUps = true });
             }
 
-            var claim = dBContext.GroupAppointments.UpdateOne(g => g.GroupId == groupId && g.Status == "Pending",
-                Builders<GroupAppointment>.Update.Set(g => g.Status, "Approving"));
+            // mark the request as being approved
+            var claim = dBContext.GroupAppointments
+                .UpdateOne(group => group.GroupId == groupId && group.Status == "Pending", Builders<GroupAppointment>.Update
+                .Set(group => group.Status, "Approving"));
 
             if (claim.ModifiedCount == 0)
             {
@@ -196,25 +241,30 @@ namespace TAMS.Controllers
 
             try
             {
+                // check for overlapping tutor schedule slots
                 var existingSchedules = dBContext.Schedule
-                    .Find(s => s.TutorId == group.TutorId)
+                    .Find(schedule => schedule.TutorId == group.TutorId)
                     .ToList();
 
-                bool scheduleConflict = existingSchedules.Any(s =>
-                    s.Date.Date == group.AppointmentDate.Date &&
-                    group.StartTime < s.EndTime &&
-                    group.EndTime > s.StartTime);
+                bool scheduleConflict = existingSchedules
+                    .Any(schedule => schedule.Date.Date == group.AppointmentDate.Date &&
+                    group.StartTime < schedule.EndTime &&
+                    group.EndTime > schedule.StartTime);
 
                 if (scheduleConflict)
                 {
                     throw new InvalidOperationException("The tutor already has availability during this time.");
                 }
 
+                // check for appointment conflicts
                 bool appointmentConflict = dBContext.Appointments
-                    .Find(a => a.TutorId == group.TutorId &&
-                        a.Status == "Scheduled" &&
-                        a.AppointmentDate < endDate &&
-                        a.EndDate > startDate)
+                    .Find
+                        (
+                            appointment => appointment.TutorId == group.TutorId &&
+                            appointment.Status == "Scheduled" &&
+                            appointment.AppointmentDate < endDate &&
+                            appointment.EndDate > startDate
+                        )
                     .Any();
 
                 if (appointmentConflict)
@@ -222,13 +272,15 @@ namespace TAMS.Controllers
                     throw new InvalidOperationException("The tutor already has an appointment during this time.");
                 }
 
+                // generate an id
                 var lastSchedule = dBContext.Schedule
-                    .Find(_ => true)
-                    .SortByDescending(s => s.ScheduleId)
+                    .Find(schedule => true)
+                    .SortByDescending(schedule => schedule.ScheduleId)
                     .FirstOrDefault();
 
                 int newScheduleId = lastSchedule == null ? 1 : lastSchedule.ScheduleId + 1;
 
+                // create and save the tutor's group schedule
                 var schedule = new Schedule
                 {
                     ScheduleId = newScheduleId,
@@ -239,15 +291,15 @@ namespace TAMS.Controllers
                     IsGroup = true,
                     GroupId = group.GroupId
                 };
-
                 dBContext.Schedule.InsertOne(schedule);
 
-                // Open the group for student enrollment.
-                var result = dBContext.GroupAppointments.UpdateOne(g => g.GroupId == groupId && g.Status == "Approving",
-                    Builders<GroupAppointment>.Update.Set(g => g.Status, "Open")
-                        .Set(g => g.AppointmentId, (int?)null));
+                // open the group for student enrollment.
+                var result = dBContext.GroupAppointments
+                    .UpdateOne(group => group.GroupId == groupId && group.Status == "Approving", Builders<GroupAppointment>.Update
+                    .Set(group => group.Status, "Open")
+                    .Set(group => group.AppointmentId, (int?)null));
 
-
+                // make sure the group status was updated
                 if (result.ModifiedCount == 0)
                 {
                     throw new InvalidOperationException("Could not finalize group approval.");
@@ -283,27 +335,34 @@ namespace TAMS.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RejectGroupAppointment(int groupId)
         {
+            // check if the admin is logged in
             var adminId = HttpContext.Session.GetInt32("AdminId");
-            if (adminId == null) { return RedirectToAction("Login", "Login"); }
+            if (adminId == null) 
+            { 
+                return RedirectToAction("Login", "Login"); 
+            }
 
+            // find the group request and make sure it is still pending
             var group = dBContext.GroupAppointments
-                .Find(g => g.GroupId == groupId && g.Status == "Pending")
+                .Find(group => group.GroupId == groupId && group.Status == "Pending")
                 .FirstOrDefault();
-
             if (group == null)
             {
                 TempData["AdminDashboardError"] = "Group request not found or already reviewed.";
                 return RedirectToAction("Dashboard", new { showAdminFollowUps = true });
             }
 
+            // get tutor for the group
             var tutor = dBContext.Tutor
-                .Find(t => t.TutorId == group.TutorId)
+                .Find(tutor => tutor.TutorId == group.TutorId)
                 .FirstOrDefault();
 
-            var result = dBContext.GroupAppointments.UpdateOne(
-                g => g.GroupId == groupId && g.Status == "Pending",
-                Builders<GroupAppointment>.Update.Set(g => g.Status, "Rejected"));
+            // update the group status to rejected
+            var result = dBContext.GroupAppointments
+                .UpdateOne(group => group.GroupId == groupId && group.Status == "Pending",
+                Builders<GroupAppointment>.Update.Set(group => group.Status, "Rejected"));
 
+            // check if the rejection was saved
             if (result.ModifiedCount == 0)
             {
                 TempData["AdminDashboardError"] = "Group request not found or already reviewed.";
@@ -331,33 +390,50 @@ namespace TAMS.Controllers
 
         private void LoadSubjects()
         {
-            ViewBag.Subjects = dBContext.Subject.Find(_ => true).SortBy(s => s.Name).ToList();
+            // load all subject in order
+            ViewBag.Subjects = dBContext.Subject
+                .Find(subject => true)
+                .SortBy(subject => subject.Name)
+                .ToList();
         }
 
         [HttpGet]
         public IActionResult CreateTutor()
         {
+            // check if the admin is logged in
             var adminId = HttpContext.Session.GetInt32("AdminId");
-            if (adminId == null) { return RedirectToAction("Login", "Login"); }
-            LoadSubjects();
+            if (adminId == null) 
+            { 
+                return RedirectToAction("Login", "Login"); 
+            }
+
+            LoadSubjects(); // load the subjects
             return View();
         }
       
         [HttpPost]
         public IActionResult CreateTutor(TutorRegistration model)
         {
+            // check if the admin is logged in
             var adminId = HttpContext.Session.GetInt32("AdminId");
-            if (adminId == null){ return RedirectToAction("Login", "Login"); }
+            if (adminId == null)
+            { 
+                return RedirectToAction("Login", "Login"); 
+            }
 
+            // remove extra space
             model.Email = model.Email?.Trim().ToLowerInvariant();
 
-            if (!ModelState.IsValid)
+            if (!ModelState.IsValid) // validate the registration details
             {
                 LoadSubjects();
                 return View(model);
             }
 
-            var existingUsername = dBContext.Login.Find(u => u.Username == model.Username).FirstOrDefault();
+            // check if the name is already taken
+            var existingUsername = dBContext.Login
+                .Find(login => login.Username == model.Username)
+                .FirstOrDefault();
             if (existingUsername != null)
             {
                 ModelState.AddModelError("Username", "This username is already in use.");
@@ -365,7 +441,10 @@ namespace TAMS.Controllers
                 return View(model);
             }
 
-            var existingEmail = dBContext.Tutor.Find(t => t.Email == model.Email).FirstOrDefault();
+            // check if another tutor is using the same email
+            var existingEmail = dBContext.Tutor
+                .Find(tutor => tutor.Email == model.Email)
+                .FirstOrDefault();
             if (existingEmail != null)
             {
                 ModelState.AddModelError("Email", "A tutor with this email already exists.");
@@ -373,10 +452,14 @@ namespace TAMS.Controllers
                 return View(model);
             }
 
-            var lastUser = dBContext.Login.Find(_ => true).SortByDescending(u => u.UserId).FirstOrDefault();
+            // generate a new user id
+            var lastUser = dBContext.Login
+                .Find(login => true)
+                .SortByDescending(login => login.UserId).FirstOrDefault();
+
             int newUserId = lastUser == null ? 1 : lastUser.UserId + 1;
 
-            var newLogin = new Login
+            var newLogin = new Login // create the tutor's login account
             {
                 UserId = newUserId,
                 Username = model.Username,
@@ -388,9 +471,11 @@ namespace TAMS.Controllers
                 CreatedBy = adminId.Value
             };
 
+            // hash the password and save it
             newLogin.Password = _passwordHasher.HashPassword(newLogin, model.Password);
             dBContext.Login.InsertOne(newLogin);
 
+            // create the tutor's profile 
             var newTutor = new Tutor
             {
                 TutorId = newUserId,
@@ -400,16 +485,19 @@ namespace TAMS.Controllers
                 PhoneNumber = model.PhoneNumber,
                 Email = model.Email
             };
-
-            dBContext.Tutor.InsertOne(newTutor);
+            dBContext.Tutor.InsertOne(newTutor); // save tutor profile
             return RedirectToAction("Dashboard");
         }
 
         [HttpGet]
         public IActionResult CreateAdmin()
         {
+            // check if the admin is logged in
             var adminId = HttpContext.Session.GetInt32("AdminId");
-            if (adminId == null) { return RedirectToAction("Login", "Login"); }
+            if (adminId == null) 
+            { 
+                return RedirectToAction("Login", "Login"); 
+            }
 
             return View(new AdminRegistration());
         }
@@ -419,7 +507,10 @@ namespace TAMS.Controllers
         public IActionResult CreateAdmin(AdminRegistration model)
         {
             var adminId = HttpContext.Session.GetInt32("AdminId");
-            if (adminId == null) { return RedirectToAction("Login", "Login"); }
+            if (adminId == null) 
+            { 
+                return RedirectToAction("Login", "Login"); 
+            }
 
             if (!ModelState.IsValid)
             {
@@ -432,21 +523,27 @@ namespace TAMS.Controllers
             model.PhoneNumber = model.PhoneNumber?.Trim() ?? "";
             model.Email = model.Email?.Trim().ToLowerInvariant() ?? "";
 
-            if (dBContext.Login.Find(u => u.Username == model.Username).FirstOrDefault() != null)
+            // check if the username is already taken
+            if (dBContext.Login.Find(login => login.Username == model.Username).FirstOrDefault() != null)
             {
                 ModelState.AddModelError(nameof(model.Username), "This username is already in use.");
                 return View(model);
             }
 
-            if (dBContext.Admin.Find(a => a.Email == model.Email).FirstOrDefault() != null ||
-                dBContext.Tutor.Find(t => t.Email == model.Email).FirstOrDefault() != null ||
-                dBContext.Student.Find(s => s.Email == model.Email).FirstOrDefault() != null)
+            // check if the email is already used by an admin, tutor, or student
+            if (dBContext.Admin.Find(admin => admin.Email == model.Email).FirstOrDefault() != null ||
+                dBContext.Tutor.Find(tutor => tutor.Email == model.Email).FirstOrDefault() != null ||
+                dBContext.Student.Find(student => student.Email == model.Email).FirstOrDefault() != null)
             {
                 ModelState.AddModelError(nameof(model.Email), "This email address is already in use.");
                 return View(model);
             }
 
-            var lastUser = dBContext.Login.Find(_ => true).SortByDescending(u => u.UserId).FirstOrDefault();
+            // generate a new user Id and create new admin login
+            var lastUser = dBContext.Login
+                .Find(login => true)
+                .SortByDescending(login => login.UserId).FirstOrDefault();
+
             int newUserId = lastUser == null ? 1 : lastUser.UserId + 1;
 
             var newLogin = new Login
@@ -460,10 +557,12 @@ namespace TAMS.Controllers
                 isActive = true,
                 CreatedBy = adminId.Value
             };
+
+            // hash the password and save login
             newLogin.Password = _passwordHasher.HashPassword(newLogin, model.Password);
             dBContext.Login.InsertOne(newLogin);
 
-            var newAdmin = new Admin
+            var newAdmin = new Admin // create the admin profile
             {
                 AdminId = newUserId,
                 FName = model.FName,
@@ -482,9 +581,13 @@ namespace TAMS.Controllers
         public IActionResult UpdateTutor(int tutorId, string fName, string lName, string subject, string email, string phoneNumber)
         {
             var adminId = HttpContext.Session.GetInt32("AdminId");
-            if (adminId == null) { return RedirectToAction("Login", "Login"); }
+            if (adminId == null) 
+            { 
+                return RedirectToAction("Login", "Login"); 
+            }
 
-            var tutor = dBContext.Tutor.Find(t => t.TutorId == tutorId).FirstOrDefault();
+            var tutor = dBContext.Tutor
+                .Find(tutor => tutor.TutorId == tutorId).FirstOrDefault();
 
             if (tutor == null)
             {
@@ -498,26 +601,30 @@ namespace TAMS.Controllers
             email = email?.Trim().ToLowerInvariant() ?? "";
             phoneNumber = phoneNumber?.Trim() ?? "";
 
+            //make sure all required fields are filled in
             if (string.IsNullOrWhiteSpace(fName) || string.IsNullOrWhiteSpace(lName) || string.IsNullOrWhiteSpace(subject) || string.IsNullOrWhiteSpace(email))
             {
                 TempData["AdminDashboardError"] = "Please complete all required tutor fields.";
                 return RedirectToAction("Dashboard", new { editTutorId = tutorId });
             }
 
-            var duplicateEmail = dBContext.Tutor.Find(t => t.Email == email && t.TutorId != tutorId).FirstOrDefault();
+            // check if another tutor is using the same email
+            var duplicateEmail = dBContext.Tutor
+                .Find(t => t.Email == email && t.TutorId != tutorId).FirstOrDefault();
             if (duplicateEmail != null)
             {
                 TempData["AdminDashboardError"] = "Another tutor is already using this email.";
                 return RedirectToAction("Dashboard", new { editTutorId = tutorId });
             }
 
+            // update the tutor's info
             var update = Builders<Tutor>.Update
-                .Set(t => t.FName, fName)
-                .Set(t => t.LName, lName)
-                .Set(t => t.Subject, subject)
-                .Set(t => t.Email, email)
-                .Set(t => t.PhoneNumber, phoneNumber);
-            dBContext.Tutor.UpdateOne(t => t.TutorId == tutorId, update);
+                .Set(tutor => tutor.FName, fName)
+                .Set(tutor => tutor.LName, lName)
+                .Set(tutor => tutor.Subject, subject)
+                .Set(tutor => tutor.Email, email)
+                .Set(tutor => tutor.PhoneNumber, phoneNumber);
+            dBContext.Tutor.UpdateOne(tutor => tutor.TutorId == tutorId, update);
 
             TempData["AdminDashboardSuccess"] = "Tutor information updated successfully.";
             return RedirectToAction("Dashboard");
@@ -527,24 +634,31 @@ namespace TAMS.Controllers
         public IActionResult DeleteTutor(int id)
         {
             var adminId = HttpContext.Session.GetInt32("AdminId");
-            if (adminId == null){ return RedirectToAction("Login", "Login"); }
+            if (adminId == null)
+            { 
+                return RedirectToAction("Login", "Login"); 
+            }
 
             var tutor = dBContext.Tutor
-                .Find(t => t.TutorId == id).FirstOrDefault();
+                .Find(tutor => tutor.TutorId == id).FirstOrDefault();
 
             if (tutor != null)
             {
-                dBContext.Tutor.DeleteOne(t => t.TutorId == id);
-                dBContext.Login.DeleteOne(l => l.UserId == id);
+                // remove tutor profile and login
+                dBContext.Tutor.DeleteOne(tutor => tutor.TutorId == id);
+                dBContext.Login.DeleteOne(login => login.UserId == id);
 
+                // find any schedule appointments
                 var affectedAppointments = dBContext.Appointments.Find(a => a.TutorId == id && a.Status == "Scheduled").ToList();
 
+                // cancel the tutor's scheduled appointments
                 foreach (var appointment in affectedAppointments)
                 {
-                    var update = Builders<Appointment>.Update.Set(a => a.Status, "Cancelled");
-                    dBContext.Appointments.UpdateOne(a => a.AppointmentId == appointment.AppointmentId, update);
-                }
-                dBContext.Schedule.DeleteMany(s => s.TutorId == id);
+                    var update = Builders<Appointment>.Update.Set(appointment => appointment.Status, "Cancelled");
+                    dBContext.Appointments.UpdateOne(appointment => appointment.AppointmentId == appointment.AppointmentId, update);
+                }       
+                // remove all schedule slots
+                dBContext.Schedule.DeleteMany(schedule => schedule.TutorId == id);
             }
             return RedirectToAction("Dashboard");
         }
@@ -554,21 +668,28 @@ namespace TAMS.Controllers
         public IActionResult DeleteStudent(int id)
         {
             var adminId = HttpContext.Session.GetInt32("AdminId");
-            if (adminId == null) { return RedirectToAction("Login", "Login"); }
+            if (adminId == null) 
+            { 
+                return RedirectToAction("Login", "Login"); 
+            }
 
-            var student = dBContext.Student.Find(s => s.StudentId == id).FirstOrDefault();
+            var student = dBContext.Student
+                .Find(student => student.StudentId == id).FirstOrDefault();
 
             if (student != null)
             {
-                var appointments = dBContext.Appointments.Find(a => a.StudentId == id && a.Status == "Scheduled").ToList();
+                // find and cancel the student's scheduled appointments
+                var appointments = dBContext.Appointments
+                    .Find(appointment => appointment.StudentId == id && appointment.Status == "Scheduled").ToList();
                 foreach (var appointment in appointments)
                 {
                     var update = Builders<Appointment>.Update.Set(a => a.Status, "Cancelled");
                     dBContext.Appointments.UpdateOne(a => a.AppointmentId == appointment.AppointmentId, update);
                 }
-
-                dBContext.Login.DeleteOne(l => l.UserId == id);
-                dBContext.Student.DeleteOne(s => s.StudentId == id);
+                
+                // remove the login and profile
+                dBContext.Login.DeleteOne(login => login.UserId == id);
+                dBContext.Student.DeleteOne(student => student.StudentId == id);
             }
             return RedirectToAction("Dashboard");
         }
@@ -577,14 +698,16 @@ namespace TAMS.Controllers
         public IActionResult Scheduler(int? month, int? year)
         {
             var adminId = HttpContext.Session.GetInt32("AdminId");
-            if (adminId == null) { return RedirectToAction("Login", "Login"); }
+            if (adminId == null) 
+            { 
+                return RedirectToAction("Login", "Login"); 
+            }
 
+            // check if admin needs to see tour
             var loginUser = dBContext.Login
-                .Find(l => l.UserId == adminId.Value && l.Role == UserRole.Administrator)
+                .Find(login => login.UserId == adminId.Value && login.Role == UserRole.Administrator)
                 .FirstOrDefault();
-
-            ViewBag.ShowAdminScheduleTour = loginUser != null
-                && !loginUser.HasCompletedAdminScheduleTour;
+            ViewBag.ShowAdminScheduleTour = loginUser != null && !loginUser.HasCompletedAdminScheduleTour;
 
             ViewBag.AdminId = adminId;
 
@@ -600,26 +723,43 @@ namespace TAMS.Controllers
             var startOfMonth = new DateTime(targetYear, targetMonth, 1);
             var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
 
-            var appointments = dBContext.Appointments.Find(_ => true).ToList()
-                .Where(a => a.AppointmentDate.Date >= startOfMonth.Date && a.AppointmentDate.Date <= endOfMonth.Date)
-                .OrderBy(a => a.AppointmentDate).ToList();
+            // load all appointment scheduled with the specific month
+            var appointments = dBContext.Appointments
+                .Find(appointment => appointment.AppointmentDate >= startOfMonth.Date &&
+                    appointment.AppointmentDate < endOfMonth.Date.AddDays(1))
+                .SortBy(appointment => appointment.AppointmentDate)
+                .ToList();
 
+            // get the tutor and student details for each appointment
             foreach (var appointment in appointments)
             {
-                appointment.Tutor = dBContext.Tutor.Find(t => t.TutorId == appointment.TutorId).FirstOrDefault();
-                appointment.Student = dBContext.Student.Find(s => s.StudentId == appointment.StudentId).FirstOrDefault();
+                appointment.Tutor = dBContext.Tutor
+                    .Find(tutor => tutor.TutorId == appointment.TutorId).FirstOrDefault();
+                appointment.Student = dBContext.Student
+                    .Find(student => student.StudentId == appointment.StudentId).FirstOrDefault();
             }
 
-            var schedules = dBContext.Schedule.Find(_ => true).ToList()
-                .Where(s => s.Date.Month == targetMonth && s.Date.Year == targetYear)
-                .OrderBy(s => s.Date).ThenBy(s => s.StartTime).ToList();
+            // load tutor schedules
+            var schedules = dBContext.Schedule
+                .Find(schedule => schedule.Date >= startOfMonth && schedule.Date < endOfMonth.AddDays(1))
+                .SortBy(schedule => schedule.Date)
+                .ThenBy(schedule => schedule.StartTime)
+                .ToList();
 
+            // Load all tutors from MongoDB once
+            var tutors = dBContext.Tutor.Find(tutor => true).ToList();
+
+            // Store tutors in a dictionary for faster lookup
+            var tutorLookup = tutors.ToDictionary(tutor => tutor.TutorId);
+
+            // Assign tutor details to each schedule
             foreach (var schedule in schedules)
             {
-                schedule.Tutor = dBContext.Tutor.Find(t => t.TutorId == schedule.TutorId).FirstOrDefault();
+                if (tutorLookup.TryGetValue(schedule.TutorId, out var tutor))
+                {
+                    schedule.Tutor = tutor;
+                }
             }
-
-            var tutors = dBContext.Tutor.Find(_ => true).ToList();
 
             ViewBag.Appointments = appointments;
             ViewBag.Schedules = schedules;
@@ -635,65 +775,84 @@ namespace TAMS.Controllers
         public IActionResult CompleteSchedulerTour()
         {
             var adminId = HttpContext.Session.GetInt32("AdminId");
+            if (adminId == null) 
+            { 
+                return Unauthorized(); 
+            }
 
-            if (adminId == null) { return Unauthorized(); }
+            // mark tour complete
+            var update = Builders<Login>.Update
+                .Set(login => login.HasCompletedAdminScheduleTour, true);
 
-            var update = Builders<Login>.Update.Set(u => u.HasCompletedAdminScheduleTour, true);
-
-            var result = dBContext.Login.UpdateOne(u => u.UserId == adminId.Value && u.Role == UserRole.Administrator, update);
-
-            if (result.MatchedCount == 0) { return NotFound(); }
-
+            // save tour status
+            var result = dBContext.Login
+                .UpdateOne(login => login.UserId == adminId.Value && login.Role == UserRole.Administrator, update);
+            if (result.MatchedCount == 0)  // if admin account is not found return error
+            { 
+                return NotFound(); 
+            }
+            // confirm tour was completed
             return Ok(new { success = true });
         }
-
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult AddSlot(int tutorId, DateTime date, TimeSpan startTime, TimeSpan endTime)
         {
             var adminId = HttpContext.Session.GetInt32("AdminId");
-            if (adminId == null) { return RedirectToAction("Login", "Login"); }
+            if (adminId == null) 
+            { 
+                return RedirectToAction("Login", "Login"); 
+            }
 
             var now = DateTime.Now;
             var today = now.Date;
 
+            // prevent adding schedule slots for past dates
             if (date.Date < today)
             {
                 TempData["AdminSchedulerError"] = "You cannot add a schedule slot for a date that has already passed.";
                 return RedirectToAction("Scheduler", new { month = date.Month, year = date.Year });
             }
 
+            // today's  slots start at a future time
             if (date.Date == today && startTime <= now.TimeOfDay)
             {
                 TempData["AdminSchedulerError"] = "You cannot add a schedule slot with a start time that has already passed. Please choose a future time.";
                 return RedirectToAction("Scheduler", new { month = date.Month, year = date.Year });
             }
 
+            // end time is after the start time
             if (endTime <= startTime)
             {
                 TempData["AdminSchedulerError"] = "End time must be after start time.";
                 return RedirectToAction("Scheduler", new { month = date.Month, year = date.Year });
             }
 
-            var tutor = dBContext.Tutor.Find(t => t.TutorId == tutorId).FirstOrDefault();
+            var tutor = dBContext.Tutor
+                .Find(tutor => tutor.TutorId == tutorId).FirstOrDefault();
             if (tutor == null)
             {
                 TempData["AdminSchedulerError"] = "The selected tutor was not found.";
                 return RedirectToAction("Scheduler", new { month = date.Month, year = date.Year });
             }
 
-            var existingSlots = dBContext.Schedule.Find(s => s.TutorId == tutorId).ToList();
-            bool overlaps = existingSlots.Any(s => s.Date.Date == date.Date && startTime < s.EndTime && endTime > s.StartTime);
+            var existingSlots = dBContext.Schedule.
+                Find(schedule => schedule.TutorId == tutorId).ToList();
+            bool overlaps = existingSlots
+                .Any(schedule => schedule.Date.Date == date.Date && startTime < schedule.EndTime && endTime > schedule.StartTime);
             if (overlaps)
             {
                 TempData["AdminSchedulerError"] = "An existing schedule already overlaps with this time for the selected tutor. " + "If you want to add this time, please delete the preexisting schedule first.";
                 return RedirectToAction("Scheduler", new { month = date.Month, year = date.Year });
             }
 
-            var lastSchedule = dBContext.Schedule.Find(_ => true).SortByDescending(s => s.ScheduleId).FirstOrDefault();
+            var lastSchedule = dBContext.Schedule
+                .Find(schedule => true)
+                .SortByDescending(schedule => schedule.ScheduleId).FirstOrDefault();
+
             int newScheduleId = lastSchedule == null ? 1 : lastSchedule.ScheduleId + 1;
-            var schedule = new Schedule
+            var schedule = new Schedule // create a new schedule slot for the tutor
             {
                 ScheduleId = newScheduleId,
                 TutorId = tutorId,
@@ -701,7 +860,7 @@ namespace TAMS.Controllers
                 StartTime = startTime,
                 EndTime = endTime
             };
-            dBContext.Schedule.InsertOne(schedule);
+            dBContext.Schedule.InsertOne(schedule); // save the schedule
             TempData["AdminSchedulerSuccess"] = "Schedule added successfully.";
 
             return RedirectToAction("Scheduler", new { month = date.Month, year = date.Year });
@@ -711,14 +870,22 @@ namespace TAMS.Controllers
         public async Task<IActionResult> CancelAppointment(int appointmentId)
         {
             var adminId = HttpContext.Session.GetInt32("AdminId");
-            if (adminId == null) { return RedirectToAction("Login", "Login"); }
+            if (adminId == null) 
+            { 
+                return RedirectToAction("Login", "Login"); 
+            }
 
+            // find appointment
             var appointment = dBContext.Appointments
-                .Find(a => a.AppointmentId == appointmentId)
+                .Find(appointment => appointment.AppointmentId == appointmentId)
                 .FirstOrDefault();
 
-            if (appointment == null) { return NotFound(); }
+            if (appointment == null) 
+            { 
+                return NotFound(); 
+            }
 
+            // appointment is still scheduled
             if (appointment.Status?.Trim() != "Scheduled")
             {
                 TempData["AdminDashboardError"] = "Only scheduled appointments can be cancelled.";
@@ -726,11 +893,11 @@ namespace TAMS.Controllers
             }
 
             var student = dBContext.Student
-                .Find(s => s.StudentId == appointment.StudentId)
+                .Find(student => student.StudentId == appointment.StudentId)
                 .FirstOrDefault();
 
             var tutor = dBContext.Tutor
-                .Find(t => t.TutorId == appointment.TutorId)
+                .Find(tutor => tutor.TutorId == appointment.TutorId)
                 .FirstOrDefault();
 
             if (student == null || tutor == null)
@@ -739,12 +906,12 @@ namespace TAMS.Controllers
                 return RedirectToAction("Dashboard");
             }
 
-            var admin = dBContext.Admin.Find(a => a.AdminId == adminId.Value).FirstOrDefault();
+            var admin = dBContext.Admin
+                .Find(admin => admin.AdminId == adminId.Value).FirstOrDefault();
 
             if (admin == null)
             {
                 TempData["AdminDashboardError"] = "The administrator account could not be found.";
-
                 return RedirectToAction("Dashboard");
             }
 
@@ -755,11 +922,17 @@ namespace TAMS.Controllers
                 adminName = $"Admin #{adminId.Value}";
             }
 
-            var update = Builders<Appointment>.Update.Set(a => a.Status, "Cancelled")
-                .Set(a => a.CancelledByAdminId, adminId.Value).Set(a => a.CancelledByAdminName, adminName);
+            // update the appointment status and record who cancelled it
+            var update = Builders<Appointment>.Update
+                .Set(appointment => appointment.Status, "Cancelled")
+                .Set(appointment => appointment.CancelledByAdminId, adminId.Value)
+                .Set(appointment => appointment.CancelledByAdminName, adminName);
 
-            var result = dBContext.Appointments.UpdateOne(a => a.AppointmentId == appointmentId && a.Status == "Scheduled", update);
+            var result = dBContext.Appointments
+                .UpdateOne(appointment => appointment.AppointmentId == appointmentId 
+                            && appointment.Status == "Scheduled", update);
 
+            // check if the cancellation was saved 
             if (result.ModifiedCount == 0)
             {
                 TempData["AdminDashboardError"] = "The appointment could not be cancelled. " + "It may already have been cancelled.";
@@ -794,25 +967,35 @@ namespace TAMS.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CompleteAppointment(int appointmentId)
         {
-            var appointment = await dBContext.Appointments.Find(a => a.AppointmentId == appointmentId).FirstOrDefaultAsync();
-            if (appointment == null) { return NotFound(); }
+            var appointment = await dBContext.Appointments
+                .Find(appointment => appointment.AppointmentId == appointmentId).FirstOrDefaultAsync();
+            if (appointment == null) 
+            { 
+                return NotFound(); 
+            }
 
+            // appointment is scheduled and the admin notification was sent
             if (appointment.Status != "Scheduled" || !appointment.AdminNotificationSent)
             {
                 TempData["AdminDashboardError"] = "This appointment cannot be completed until the Admin notification has been sent.";
                 return RedirectToAction("AdminDashboard");
             }
 
+            // conditions required to complete appointment
             var filter =
-                Builders<Appointment>.Filter.Eq(a => a.AppointmentId, appointmentId)
+                Builders<Appointment>.Filter.Eq(appointment => appointment.AppointmentId, appointmentId)
                 &
-                Builders<Appointment>.Filter.Eq(a => a.Status, "Scheduled")
+                Builders<Appointment>.Filter.Eq(appointment => appointment.Status, "Scheduled")
                 &
-                Builders<Appointment>.Filter.Eq(a => a.AdminNotificationSent, true);
+                Builders<Appointment>.Filter.Eq(appointment => appointment.AdminNotificationSent, true);
 
-            var update = Builders<Appointment>.Update.Set(a => a.Status, "Completed");
-            var result = await dBContext.Appointments.UpdateOneAsync(filter, update);
+            // mark appointment as completed
+            var update = Builders<Appointment>.Update
+                .Set(appointment => appointment.Status, "Completed");
+            var result = await dBContext.Appointments
+                .UpdateOneAsync(filter, update);
 
+            // appointmnet status updated?
             if (result.ModifiedCount == 0)
             {
                 TempData["AdminDashboardError"] = "The appointment could not be completed. It may have already been updated.";
@@ -823,19 +1006,28 @@ namespace TAMS.Controllers
             var appointmentDate = appointment.AppointmentDate.Date;
             var appointmentTime = appointment.AppointmentDate.TimeOfDay;
 
-            var schedules = await dBContext.Schedule.Find(s => s.TutorId == appointment.TutorId).ToListAsync();
-            var schedule = schedules.FirstOrDefault(s => s.Date.Date == appointmentDate && appointmentTime >= s.StartTime && appointmentTime < s.EndTime);
+            var schedules = await dBContext.Schedule
+                .Find(schedule => schedule.TutorId == appointment.TutorId).ToListAsync();
+            var schedule = schedules
+                .FirstOrDefault(schedule => schedule.Date.Date == appointmentDate 
+                                && appointmentTime >= schedule.StartTime 
+                                && appointmentTime < schedule.EndTime);
 
+            // remove the matching schedule slot
             if (schedule != null)
             {
-                await dBContext.Schedule.DeleteOneAsync(s => s.ScheduleId == schedule.ScheduleId && s.TutorId == appointment.TutorId);
+                await dBContext.Schedule
+                    .DeleteOneAsync(schedule => schedule.ScheduleId == schedule.ScheduleId 
+                                && schedule.TutorId == appointment.TutorId);
             }
 
             // Send the student a review reminder.
             try
             {
-                var student = await dBContext.Student.Find(s => s.StudentId == appointment.StudentId).FirstOrDefaultAsync();
-                var tutor = await dBContext.Tutor.Find(t => t.TutorId == appointment.TutorId).FirstOrDefaultAsync();
+                var student = await dBContext.Student
+                    .Find(student => student.StudentId == appointment.StudentId).FirstOrDefaultAsync();
+                var tutor = await dBContext.Tutor
+                    .Find(tutor => tutor.TutorId == appointment.TutorId).FirstOrDefaultAsync();
 
                 if (student != null && tutor != null && !student.DisableEmailNotifications && !string.IsNullOrWhiteSpace(student.Email))
                 {
@@ -859,18 +1051,19 @@ namespace TAMS.Controllers
         public async Task<IActionResult> CancelGroupAppointment(int groupId)
         {
             var adminId = HttpContext.Session.GetInt32("AdminId");
-            if (adminId == null) { return RedirectToAction("Login", "Login"); }
+            if (adminId == null) 
+            { return RedirectToAction("Login", "Login"); 
+            }
 
+            // find group appointment
             var group = await dBContext.GroupAppointments
-                .Find(g => g.GroupId == groupId)
+                .Find(group => group.GroupId == groupId)
                 .FirstOrDefaultAsync();
-
             if (group == null)
             {
                 TempData["AdminDashboardError"] = "The selected group appointment could not be found.";
                 return RedirectToAction("Dashboard");
             }
-
             if (group.Status != "Open" && group.Status != "Full")
             {
                 TempData["AdminDashboardError"] = "Only open or full group appointments can be cancelled.";
@@ -878,9 +1071,8 @@ namespace TAMS.Controllers
             }
 
             var admin = await dBContext.Admin
-                .Find(a => a.AdminId == adminId.Value)
+                .Find(admin => admin.AdminId == adminId.Value)
                 .FirstOrDefaultAsync();
-
             if (admin == null)
             {
                 TempData["AdminDashboardError"] = "The administrator account could not be found.";
@@ -894,15 +1086,17 @@ namespace TAMS.Controllers
                 adminName = $"Admin #{adminId.Value}";
             }
 
-            // Only one administrator can successfully cancel the group.
-            var filter = Builders<GroupAppointment>.Filter.Eq(g => g.GroupId, groupId)
+            // Only one administrator can cancel the group.
+            var filter = Builders<GroupAppointment>.Filter.Eq(group => group.GroupId, groupId)
                 &
-                Builders<GroupAppointment>.Filter.In(g => g.Status, new[] { "Open", "Full" });
+                Builders<GroupAppointment>.Filter.In(group => group.Status, new[] { "Open", "Full" });
 
-            var update = Builders<GroupAppointment>.Update.Set(g => g.Status, "Cancelled");
+            // updte the group status
+            var update = Builders<GroupAppointment>.Update.Set(group => group.Status, "Cancelled");
 
             var result = await dBContext.GroupAppointments.UpdateOneAsync(filter, update);
 
+            // cancellation saved?
             if (result.ModifiedCount == 0)
             {
                 TempData["AdminDashboardError"] = "This group appointment has already been updated.";
@@ -912,7 +1106,8 @@ namespace TAMS.Controllers
             // Remove only this group's schedule
             try
             {
-                await dBContext.Schedule.DeleteManyAsync(s => s.GroupId == groupId && s.IsGroup);
+                await dBContext.Schedule
+                    .DeleteManyAsync(schedule => schedule.GroupId == groupId && schedule.IsGroup);
             }
             catch (Exception ex)
             {
@@ -922,7 +1117,7 @@ namespace TAMS.Controllers
             }
 
             var tutor = await dBContext.Tutor
-                .Find(t => t.TutorId == group.TutorId)
+                .Find(tutor => tutor.TutorId == group.TutorId)
                 .FirstOrDefaultAsync();
 
             string tutorName = tutor != null ? $"{tutor.FName} {tutor.LName}".Trim() : "Tutor";
@@ -930,7 +1125,7 @@ namespace TAMS.Controllers
             var studentIds = group.StudentIds?.Distinct().ToList() ?? new List<int>();
 
             var students = await dBContext.Student
-                .Find(s => studentIds.Contains(s.StudentId))
+                .Find(student => studentIds.Contains(student.StudentId))
                 .ToListAsync();
 
             bool emailFailed = false;
@@ -986,9 +1181,13 @@ namespace TAMS.Controllers
         public IActionResult DeleteScheduleSlot(int scheduleId)
         {
             var adminId = HttpContext.Session.GetInt32("AdminId");
-            if (adminId == null) { return RedirectToAction("Login", "Login"); }
+            if (adminId == null) 
+            { 
+                return RedirectToAction("Login", "Login"); 
+            }
 
-            var slot = dBContext.Schedule.Find(s => s.ScheduleId == scheduleId).FirstOrDefault();
+            var slot = dBContext.Schedule
+                .Find(schedule => schedule.ScheduleId == scheduleId).FirstOrDefault();
             if (slot == null)
             {
                 TempData["AdminDashboardError"] = "Schedule slot not found.";
@@ -996,13 +1195,18 @@ namespace TAMS.Controllers
             }
 
             int tutorId = slot.TutorId;
-            var tutorAppointments = dBContext.Appointments.Find(a => a.TutorId == tutorId).ToList();
-            var hasAppointments = tutorAppointments.Any(a =>
+            var tutorAppointments = dBContext.Appointments
+                .Find(appointment => appointment.TutorId == tutorId).ToList();
+            var hasAppointments = tutorAppointments.Any(appointment =>
             {
-                if (a.Status != "Scheduled")
+                if (appointment.Status != "Scheduled")
+                {
                     return false;
-                var localAppointmentDate = a.AppointmentDate;
-                return localAppointmentDate.Date == slot.Date.Date && localAppointmentDate.TimeOfDay >= slot.StartTime && localAppointmentDate.TimeOfDay < slot.EndTime;
+                }
+                var localAppointmentDate = appointment.AppointmentDate;
+                return localAppointmentDate.Date == slot.Date.Date 
+                        && localAppointmentDate.TimeOfDay >= slot.StartTime 
+                        && localAppointmentDate.TimeOfDay < slot.EndTime;
             });
 
             if (hasAppointments)
@@ -1027,22 +1231,35 @@ namespace TAMS.Controllers
             var allLogins = dBContext.Login.Find(_ => true).ToList();
             var last7Days = DateTime.Today.AddDays(-6);
 
-            var loginsPerDay = allLogins.Where(l => l.LastLogin >= last7Days).GroupBy(l => l.LastLogin.Date)
-                .Select(g => new { Date = g.Key, Count = g.Count() }).OrderBy(g => g.Date).ToList();
+            var loginsPerDay = allLogins
+                .Where(l => l.LastLogin >= last7Days)
+                .GroupBy(l => l.LastLogin.Date)
+                .Select(g => new { Date = g.Key, Count = g.Count() })
+                .OrderBy(g => g.Date).ToList();
 
-            var roleLogins = allLogins.GroupBy(l => l.Role).Select(g => new { Role = g.Key.ToString(), Count = g.Count() }).OrderBy(g => g.Role).ToList();
+            var roleLogins = allLogins
+                .GroupBy(l => l.Role)
+                .Select(g => new { Role = g.Key.ToString(), Count = g.Count() })
+                .OrderBy(g => g.Role).ToList();
 
             var userLastLogins = allLogins
                 .Select(l => new
                 {
                     l.Username, Role = l.Role.ToString(), l.LastLogin
-                }).OrderBy(u => u.Username).ToList();
+                })
+                .OrderBy(u => u.Username).ToList();
 
             int dateWidth = 14;
             int totalLoginsWidth = 24;
-            int roleWidth = roleLogins.Any() ? Math.Max(roleLogins.Max(r => r.Role.Length), "Role".Length) + 4 : "Role".Length + 4;
-            int usernameWidth = userLastLogins.Any() ? Math.Max(userLastLogins.Max(u => u.Username.Length), "Username".Length) + 2 : "Username".Length + 2;
-            int roleUserWidth = userLastLogins.Any() ? Math.Max(userLastLogins.Max(u => u.Role.Length), "Role".Length) + 4 : "Role".Length + 4;
+            int roleWidth = roleLogins
+                .Any() ? Math.Max(roleLogins.Max(r => r.Role.Length), "Role".Length) + 4 : "Role".Length + 4;
+
+            int usernameWidth = userLastLogins
+                .Any() ? Math.Max(userLastLogins.Max(u => u.Username.Length), "Username".Length) + 2 : "Username".Length + 2;
+
+            int roleUserWidth = userLastLogins
+                .Any() ? Math.Max(userLastLogins.Max(u => u.Role.Length), "Role".Length) + 4 : "Role".Length + 4;
+
             int lastLoginWidth = 24;
 
             string separator = new string('-', usernameWidth + roleUserWidth + lastLoginWidth + 10);
@@ -1126,7 +1343,8 @@ namespace TAMS.Controllers
             DateTime reportDate = (date ?? DateTime.Today).Date;
             DateTime nextDate = reportDate.AddDays(1);
 
-            var appointments = dBContext.Appointments.Find(a => a.AppointmentDate >= reportDate && a.AppointmentDate < nextDate).ToList()
+            var appointments = dBContext.Appointments
+                .Find(a => a.AppointmentDate >= reportDate && a.AppointmentDate < nextDate).ToList()
                 .Where(a => !string.Equals(a.Status?.Trim(), "Cancelled", StringComparison.OrdinalIgnoreCase))
                 .OrderBy(a => a.AppointmentDate).ToList();
 
@@ -1215,24 +1433,26 @@ namespace TAMS.Controllers
 
             DateTime now = DateTime.Now;
 
-            var schedules = dBContext.Schedule.Find(_ => true).ToList();
-            var tutors = dBContext.Tutor.Find(_ => true).ToList();
+            var schedules = dBContext.Schedule.Find(schedule => true).ToList();
+            var tutors = dBContext.Tutor.Find(tutor => true).ToList();
             var tutorSchedules = schedules
-                .Where(s => s.Date.Date.Add(s.EndTime) > now)
-                .Select(s =>
+                .Where(schedule => schedule.Date.Date.Add(schedule.EndTime) > now)
+                .Select(schedule =>
                 {
-                    var tutor = tutors.FirstOrDefault(t => t.TutorId == s.TutorId);
+                    var tutor = tutors.FirstOrDefault(t => t.TutorId == schedule.TutorId);
                     return new
                     {
-                        s.ScheduleId,
-                        s.TutorId,
-                        TutorName = tutor == null ? "Unknown Tutor" : $"{tutor.FName} {tutor.LName}",
-                        s.Date,
-                        s.StartTime,
-                        s.EndTime
+                        schedule.ScheduleId,
+                        schedule.TutorId, TutorName = tutor == null ? "Unknown Tutor" : $"{tutor.FName} {tutor.LName}",
+                        schedule.Date,
+                        schedule.StartTime,
+                        schedule.EndTime
                     };
                 })
-                .OrderBy(s => s.TutorId).ThenBy(s => s.Date).ThenBy(s => s.StartTime).ToList();
+                .OrderBy(schedule => schedule.TutorId)
+                .ThenBy(schedule => schedule.Date)
+                .ThenBy(schedule => schedule.StartTime)
+                .ToList();
 
             int tutorWidth = Math.Max("Tutor Name".Length, tutorSchedules.Any() ? tutorSchedules.Max(s => s.TutorName.Length) : 0) + 4;
             int dateWidth = 12;
@@ -1299,7 +1519,8 @@ namespace TAMS.Controllers
             var adminId = HttpContext.Session.GetInt32("AdminId");
             if (adminId == null) { return RedirectToAction("Login", "Login"); }
 
-            var appointments = dBContext.Appointments.Find(_ => true).ToList()
+            var appointments = dBContext.Appointments
+                .Find(_ => true).ToList()
                 .Where(a => !string.Equals(a.Status?.Trim(), "Cancelled", StringComparison.OrdinalIgnoreCase))
                 .OrderBy(a => a.AppointmentDate).ToList();
 
@@ -1394,8 +1615,15 @@ namespace TAMS.Controllers
             var adminId = HttpContext.Session.GetInt32("AdminId");
             if (adminId == null) { return RedirectToAction("Login", "Login"); }
 
-            var tutors = dBContext.Tutor.Find(_ => true).ToList().OrderBy(t => t.TutorId).ToList();
-            var students = dBContext.Student.Find(_ => true).ToList().OrderBy(s => s.StudentId).ToList();
+            var tutors = dBContext.Tutor
+                .Find(_ => true).ToList()
+                .OrderBy(t => t.TutorId)
+                .ToList();
+
+            var students = dBContext.Student
+                .Find(_ => true).ToList()
+                .OrderBy(s => s.StudentId)
+                .ToList();
 
             var lines = new List<string>
                 {
