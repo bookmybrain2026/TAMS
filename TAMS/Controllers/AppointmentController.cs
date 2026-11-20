@@ -22,37 +22,40 @@ namespace TAMS.Controllers
 
         private string? GetGroupAppointmentConflict(int studentId, int tutorId, DateTime newStart, DateTime newEnd)
         {
+            //find group appointment that are open or full that invold tutor or student
             var groups = dBContext.GroupAppointments
-                .Find(g =>
-                    (g.Status == "Open" || g.Status == "Full") &&
-                    (g.TutorId == tutorId || g.StudentIds.Contains(studentId)))
+                .Find(group =>
+                    (group.Status == "Open" || group.Status == "Full") &&
+                    (group.TutorId == tutorId || group.StudentIds.Contains(studentId)))
                 .ToList();
 
+            //take that group 
             foreach (var group in groups)
             {
+                //get start and end time
                 DateTime groupStart = group.AppointmentDate.Date.Add(group.StartTime);
                 DateTime groupEnd = group.AppointmentDate.Date.Add(group.EndTime);
 
+                //check if there is overlap
                 bool overlaps = newStart < groupEnd && newEnd > groupStart;
 
-                if (!overlaps)
+                if (!overlaps) //continue if tno overlap
                 {
                     continue;
                 }
 
+                //has overlap
                 if (group.StudentIds != null && group.StudentIds.Contains(studentId))
                 {
                     return "You already have a group appointment during this time.";
                 }
 
-                if (group.TutorId == tutorId &&
-                    group.StudentIds != null &&
-                    group.StudentIds.Count > 0)
+                if (group.TutorId == tutorId && group.StudentIds != null && group.StudentIds.Count > 0)
                 {
                     return "This tutor already has a group appointment during this time.";
                 }
             }
-
+            //no overlap
             return null;
         }
 
@@ -60,14 +63,20 @@ namespace TAMS.Controllers
         public IActionResult Scheduler(int tutorId, int? month, int? year, int studentId, int? rescheduleAppointmentId = null)
         {
             var loggedinstudentId = HttpContext.Session.GetInt32("StudentId");
-            if (loggedinstudentId == null) { return RedirectToAction("Login", "Login"); }
+            if (loggedinstudentId == null) 
+            { 
+                return RedirectToAction("Login", "Login"); 
+            }
 
             Appointment? rescheduleAppointment = null;
 
+            //validate existing appointment
             if (rescheduleAppointmentId.HasValue)
             {
                 rescheduleAppointment = dBContext.Appointments
-                    .Find(a => a.AppointmentId == rescheduleAppointmentId.Value && a.StudentId == loggedinstudentId.Value && a.Status == "Scheduled")
+                    .Find(appointment => appointment.AppointmentId == rescheduleAppointmentId.Value 
+                        && appointment.StudentId == loggedinstudentId.Value 
+                        && appointment.Status == "Scheduled")
                     .FirstOrDefault();
 
                 if (rescheduleAppointment == null) { return NotFound(); }
@@ -75,42 +84,55 @@ namespace TAMS.Controllers
 
             studentId = loggedinstudentId.Value;
 
-            var tutor = dBContext.Tutor .Find(t => t.TutorId == tutorId).FirstOrDefault();
+            var tutor = dBContext.Tutor //load tutors
+                .Find(tutor => tutor.TutorId == tutorId).FirstOrDefault();
 
-            if (tutor == null) { return NotFound(); }
+            if (tutor == null) //404 if tutor is null
+            { 
+                return NotFound(); 
+            }
 
             int targetMonth = month ?? DateTime.Today.Month;
             int targetYear = year ?? DateTime.Today.Year;
 
-            var startOfMonth = new DateTime( targetYear, targetMonth, 1);
+            var startOfMonth = new DateTime( targetYear, targetMonth, 1); //new DateTime(year, month, day);
             var startOfNextMonth = startOfMonth.AddMonths(1);
 
-            var appointments = dBContext.Appointments .Find(a =>  a.TutorId == tutorId && a.AppointmentDate >= startOfMonth && a.AppointmentDate < startOfNextMonth) .ToList();
+            var appointments = dBContext.Appointments //load all appointments of a specific month associated with a tutor
+                .Find(appointment => appointment.TutorId == tutorId 
+                    && appointment.AppointmentDate >= startOfMonth 
+                    && appointment.AppointmentDate < startOfNextMonth) 
+                .ToList();
 
-            foreach (var appointment in appointments)
+            foreach (var appointment in appointments) //add student info
             {
-                appointment.Student = dBContext.Student.Find(s => s.StudentId == appointment.StudentId).FirstOrDefault();
+                appointment.Student = dBContext.Student
+                    .Find(student => student.StudentId == appointment.StudentId).FirstOrDefault();
             }
 
-            var schedules = dBContext.Schedule.Find(s => s.TutorId == tutorId).ToList().Where(s => s.Date.Month == targetMonth && s.Date.Year == targetYear).ToList();
+            var schedules = dBContext.Schedule //load tutor schedules of a specific month
+                .Find(s => s.TutorId == tutorId)
+                .ToList()
+                .Where(s => s.Date.Month == targetMonth 
+                    && s.Date.Year == targetYear)
+                .ToList();
 
-
-            var groupAppointments = dBContext.GroupAppointments
-                .Find(g => g.TutorId == tutorId && (g.Status == "Open" || g.Status == "Full") &&
-                    g.AppointmentDate >= startOfMonth && g.AppointmentDate < startOfNextMonth)
+            var groupAppointments = dBContext.GroupAppointments //load group appointments of tutor in a specific month
+                .Find(group => group.TutorId == tutorId 
+                    && (group.Status == "Open" || group.Status == "Full") 
+                    && group.AppointmentDate >= startOfMonth 
+                    && group.AppointmentDate < startOfNextMonth)
                 .ToList();
 
             ViewBag.GroupAppointments = groupAppointments;
-
             ViewBag.Tutor = tutor;
             ViewBag.Appointments = appointments;
             ViewBag.Schedules = schedules;
             ViewBag.Month = targetMonth;
             ViewBag.Year = targetYear;
             ViewBag.StudentId = loggedinstudentId.Value;
-
             ViewBag.RescheduleAppointmentId = rescheduleAppointmentId;
-            ViewBag.Tutors = dBContext.Tutor.Find(_ => true).ToList();
+            ViewBag.Tutors = dBContext.Tutor.Find(tutor => true).ToList();
 
             return View();
         }
@@ -120,22 +142,33 @@ namespace TAMS.Controllers
         public async Task<IActionResult> BookAppointment(int scheduleId, int tutorId, DateTime date, TimeSpan startTime, int studentId)
         {
             var loggedInStudentId = HttpContext.Session.GetInt32("StudentId");
-            if (loggedInStudentId == null) { return RedirectToAction("Login", "Login"); }
+            if (loggedInStudentId == null) 
+            { 
+                return RedirectToAction("Login", "Login"); 
+            }
 
             studentId = loggedInStudentId.Value;
 
-            var tutor = dBContext.Tutor.Find(t => t.TutorId == tutorId).FirstOrDefault();
-            var student = dBContext.Student.Find(s => s.StudentId == studentId).FirstOrDefault();
-            var schedule = dBContext.Schedule.Find(s => s.ScheduleId == scheduleId).FirstOrDefault();
+            var tutor = dBContext.Tutor
+                .Find(tutor => tutor.TutorId == tutorId).FirstOrDefault();
+            var student = dBContext.Student
+                .Find(student => student.StudentId == studentId).FirstOrDefault();
+            var schedule = dBContext.Schedule
+                .Find(schedule => schedule.ScheduleId == scheduleId).FirstOrDefault();
 
-            if (tutor == null || student == null || schedule == null){ return NotFound(); }
+            if (tutor == null || student == null || schedule == null)
+            { 
+                return NotFound(); 
+            }
 
+            //prevent individual bookings for group schedules
             if (schedule.IsGroup)
             {
                 TempData["AppointmentError"] = "Please use the group enrollment option for group appointments.";
                 return RedirectToAction("Scheduler", new { tutorId, studentId, month = date.Month, year = date.Year });
             }
 
+            //selected schedule matches the requested tutor, date and time?
             if (schedule.TutorId != tutorId || schedule.Date.Date != date.Date || schedule.StartTime != startTime)
             {
                 TempData["AppointmentError"] = "Invalid appointment selection.";
@@ -145,6 +178,7 @@ namespace TAMS.Controllers
             DateTime newStart = schedule.Date.Date.Add(schedule.StartTime);
             DateTime newEnd = schedule.Date.Date.Add(schedule.EndTime);
 
+            //check for conflicts
             string? groupConflict = GetGroupAppointmentConflict(studentId, tutorId, newStart, newEnd);
             if (groupConflict != null)
             {
@@ -152,13 +186,15 @@ namespace TAMS.Controllers
                 return RedirectToAction("Scheduler", new { tutorId, studentId, month = date.Month, year = date.Year });
             }
 
-            if (newEnd <= newStart)
+            if (newEnd <= newStart) //valid time?
             {
                 TempData["AppointmentError"] = "The selected schedule has an invalid time.";
                 return RedirectToAction("Scheduler", new { tutorId, studentId, month = date.Month, year = date.Year });
             }
 
-            var possibleConflicts = dBContext.Appointments.Find(a => a.Status == "Scheduled" && (a.StudentId == studentId || a.TutorId == tutorId)).ToList();
+            var possibleConflicts = dBContext.Appointments
+                .Find(appointment => appointment.Status == "Scheduled" 
+                    && (appointment.StudentId == studentId || appointment.TutorId == tutorId)).ToList();
 
             foreach (var existing in possibleConflicts)
             {
@@ -167,7 +203,8 @@ namespace TAMS.Controllers
 
                 if (existingEnd <= existingStart)
                 {
-                    var oldSchedule = dBContext.Schedule.Find(s => s.ScheduleId == existing.ScheduleId).FirstOrDefault();
+                    var oldSchedule = dBContext.Schedule
+                        .Find(schedule => schedule.ScheduleId == existing.ScheduleId).FirstOrDefault();
 
                     if (oldSchedule != null)
                     {
@@ -181,8 +218,8 @@ namespace TAMS.Controllers
                     }
                 }
 
-                bool overlaps = newStart < existingEnd &&
-                    newEnd > existingStart;
+                //checl for overlap
+                bool overlaps = newStart < existingEnd && newEnd > existingStart;
 
                 if (overlaps)
                 {
@@ -200,6 +237,7 @@ namespace TAMS.Controllers
                 }
             }
 
+            // schedule has not been booked?
             var existingScheduleBooking = dBContext.Appointments.Find(a => a.ScheduleId == scheduleId && a.Status == "Scheduled").FirstOrDefault();
             if (existingScheduleBooking != null)
             {
@@ -207,8 +245,12 @@ namespace TAMS.Controllers
                 return RedirectToAction("Scheduler", new {tutorId, studentId, month = date.Month, year = date.Year });
             }
 
-            var lastAppointment = dBContext.Appointments.Find(_ => true).SortByDescending(a => a.AppointmentId).FirstOrDefault();
+            var lastAppointment = dBContext.Appointments
+                .Find(appointment => true)
+                .SortByDescending(appointment => appointment.AppointmentId).FirstOrDefault();
+
             int newAppointmentId = lastAppointment == null ? 1 : lastAppointment.AppointmentId + 1;
+
             var newAppointment = new Appointment
             {
                 AppointmentId = newAppointmentId,
@@ -251,30 +293,49 @@ namespace TAMS.Controllers
         public async Task<IActionResult> RescheduleAppointment(int appointmentId, int scheduleId, int tutorId, DateTime date, TimeSpan startTime)
         {
             var loggedInStudentId = HttpContext.Session.GetInt32("StudentId");
-            if (loggedInStudentId == null) { return RedirectToAction("Login", "Login"); }
+            if (loggedInStudentId == null) 
+            { 
+                return RedirectToAction("Login", "Login"); 
+            }
 
             int studentId = loggedInStudentId.Value;
 
+            //student's existing scheduled appointment
             var oldAppointment = dBContext.Appointments
-                .Find(a => a.AppointmentId == appointmentId && a.StudentId == studentId && a.Status == "Scheduled")
+                .Find(appointment => appointment.AppointmentId == appointmentId 
+                        && appointment.StudentId == studentId 
+                        && appointment.Status == "Scheduled")
                 .FirstOrDefault();
-            if (oldAppointment == null) { return NotFound(); }
+
+            if (oldAppointment == null) 
+            { 
+                return NotFound(); 
+            }
 
             DateTime oldAppointmentDate = oldAppointment.AppointmentDate;
             int oldTutorId = oldAppointment.TutorId;
 
-            var student = dBContext.Student.Find(s => s.StudentId == studentId).FirstOrDefault();
-            var newTutor = dBContext.Tutor.Find(t => t.TutorId == tutorId).FirstOrDefault();
-            var schedule = dBContext.Schedule.Find(s => s.ScheduleId == scheduleId).FirstOrDefault();
+            //get sudent, selected tutor and new schedule
+            var student = dBContext.Student
+                .Find(student => student.StudentId == studentId).FirstOrDefault();
+            var newTutor = dBContext.Tutor
+                .Find(tutor => tutor.TutorId == tutorId).FirstOrDefault();
+            var schedule = dBContext.Schedule
+                .Find(schedule => schedule.ScheduleId == scheduleId).FirstOrDefault();
 
+            //individual appointment cannot be rescheduled to group appointments
             if (schedule != null && schedule.IsGroup)
             {
                 TempData["AppointmentError"] = "Individual appointments cannot be rescheduled into group sessions.";
                 return RedirectToAction("Scheduler", new { tutorId, month = date.Month, year = date.Year, rescheduleAppointmentId = appointmentId });
             }
 
-            if (student == null || newTutor == null || schedule == null) { return NotFound(); }
+            if (student == null || newTutor == null || schedule == null) 
+            { 
+                return NotFound(); 
+            }
 
+            //verify selected schedule matches tutor, date and time
             if (schedule.TutorId != tutorId || schedule.Date.Date != date.Date || schedule.StartTime != startTime)
             {
                 TempData["AppointmentError"] = "Invalid appointment selection.";
@@ -284,6 +345,7 @@ namespace TAMS.Controllers
             DateTime newStart = schedule.Date.Date.Add(schedule.StartTime);
             DateTime newEnd = schedule.Date.Date.Add(schedule.EndTime);
 
+            //check for conflicts
             string? groupConflict = GetGroupAppointmentConflict(studentId, tutorId, newStart, newEnd);
 
             if (groupConflict != null)
@@ -292,23 +354,30 @@ namespace TAMS.Controllers
                 return RedirectToAction("Scheduler", new { tutorId, studentId, month = date.Month, year = date.Year, rescheduleAppointmentId = appointmentId });
             }
 
+            //validate appointment time
             if (newStart <= DateTime.Now || newEnd <= newStart)
             {
                 TempData["AppointmentError"] = "Please select a valid future appointment time.";
                 return RedirectToAction("Scheduler", new { tutorId, studentId, month = date.Month, year = date.Year, rescheduleAppointmentId = appointmentId });
             }
 
+            //get possible indivual appointment conflicts not including the orginal
             var possibleConflicts = dBContext.Appointments
-                .Find(a => a.Status == "Scheduled" && a.AppointmentId != appointmentId && (a.StudentId == studentId || a.TutorId == tutorId)).ToList();
+                .Find(appointment => appointment.Status == "Scheduled" 
+                        && appointment.AppointmentId != appointmentId 
+                        && (appointment.StudentId == studentId || appointment.TutorId == tutorId))
+                .ToList();
 
             foreach (var existing in possibleConflicts)
             {
                 DateTime existingStart = existing.AppointmentDate;
                 DateTime existingEnd = existing.EndDate;
 
+                //invalid time
                 if (existingEnd <= existingStart)
                 {
-                    var existingSchedule = dBContext.Schedule.Find(s => s.ScheduleId == existing.ScheduleId).FirstOrDefault();
+                    var existingSchedule = dBContext.Schedule
+                        .Find(schedule => schedule.ScheduleId == existing.ScheduleId).FirstOrDefault();
 
                     if (existingSchedule == null)
                     {
@@ -319,6 +388,7 @@ namespace TAMS.Controllers
                     existingEnd = existingSchedule.Date.Date.Add(existingSchedule.EndTime);
                 }
 
+                //prevent overlap
                 bool overlaps = newStart < existingEnd && newEnd > existingStart;
                 if (overlaps)
                 {
@@ -329,8 +399,11 @@ namespace TAMS.Controllers
                 }
             }
 
+            //verify slot is not booked
             var slotBooking = dBContext.Appointments
-                .Find(a => a.ScheduleId == scheduleId && a.Status == "Scheduled" && a.AppointmentId != appointmentId)
+                .Find(appointment => appointment.ScheduleId == scheduleId 
+                        && appointment.Status == "Scheduled" 
+                        && appointment.AppointmentId != appointmentId)
                 .FirstOrDefault();
 
             if (slotBooking != null)
@@ -339,29 +412,37 @@ namespace TAMS.Controllers
                 return RedirectToAction("Scheduler", new { tutorId, studentId, month = date.Month, year = date.Year, rescheduleAppointmentId = appointmentId });
             }
 
+            //determine if same tutor 
             bool sameTutor = oldTutorId == tutorId;
-            Tutor? previousTutor = null; //only needed for tutor change
+            Tutor? oldTutor = null; //only needed for tutor change
             if (!sameTutor)
             {
-                previousTutor = dBContext.Tutor.Find(t => t.TutorId == oldTutorId).FirstOrDefault();
-                if (previousTutor == null) { return NotFound(); }
+                oldTutor = dBContext.Tutor.Find(t => t.TutorId == oldTutorId).FirstOrDefault();
+                if (oldTutor == null) 
+                { 
+                    return NotFound(); 
+                }
             }
 
             if (sameTutor)
             {
+                //update existing appointment if same tutor
                 var update = Builders<Appointment>.Update
-                    .Set(a => a.ScheduleId, schedule.ScheduleId)
-                    .Set(a => a.TutorId, tutorId)
-                    .Set(a => a.StudentId, studentId)
-                    .Set(a => a.AppointmentDate, newStart)
-                    .Set(a => a.EndDate, newEnd)
-                    .Set(a => a.Status, "Scheduled")
-                    .Set(a => a.Reminder24HoursBeforeSent, false)
-                    .Set(a => a.Reminder1HourBeforeSent, false)
-                    .Set(a => a.StudentReminder24HoursAcknowledged, false)
-                    .Set(a => a.StudentReminder1HourAcknowledged, false);
+                    .Set(appointment => appointment.ScheduleId, schedule.ScheduleId)
+                    .Set(appointment => appointment.TutorId, tutorId)
+                    .Set(appointment => appointment.StudentId, studentId)
+                    .Set(appointment => appointment.AppointmentDate, newStart)
+                    .Set(appointment => appointment.EndDate, newEnd)
+                    .Set(appointment => appointment.Status, "Scheduled")
+                    .Set(appointment => appointment.Reminder24HoursBeforeSent, false)
+                    .Set(appointment => appointment.Reminder1HourBeforeSent, false)
+                    .Set(appointment => appointment.StudentReminder24HoursAcknowledged, false)
+                    .Set(appointment => appointment.StudentReminder1HourAcknowledged, false);
 
-                var updateResult = dBContext.Appointments.UpdateOne(a => a.AppointmentId == appointmentId && a.StudentId == studentId && a.Status == "Scheduled", update);
+                var updateResult = dBContext.Appointments
+                    .UpdateOne(appointment => appointment.AppointmentId == appointmentId 
+                        && appointment.StudentId == studentId 
+                        && appointment.Status == "Scheduled", update);
 
                 if (updateResult.MatchedCount != 1)
                 {
@@ -372,7 +453,11 @@ namespace TAMS.Controllers
             else
             {
                 // create a separate appointment with the newly selected tutor and original appointment is cancelled.
-                var lastAppointment = dBContext.Appointments.Find(_ => true).SortByDescending(a => a.AppointmentId).FirstOrDefault();
+                var lastAppointment = dBContext.Appointments
+                    .Find(appointment => true)
+                    .SortByDescending(appointment => appointment.AppointmentId)
+                    .FirstOrDefault();
+
                 var replacement = new Appointment
                 {
                     AppointmentId = lastAppointment == null ? 1 : lastAppointment.AppointmentId + 1,
@@ -385,13 +470,21 @@ namespace TAMS.Controllers
                 };
                 dBContext.Appointments.InsertOne(replacement);
 
-                var cancelResult = dBContext.Appointments.UpdateOne(a => a.AppointmentId == appointmentId && a.StudentId == studentId && a.Status == "Scheduled",
-                    Builders<Appointment>.Update.Set(a => a.Status, "Cancelled"));
+                //cancel orginal appointment
+                var cancelResult = dBContext.Appointments
+                    .UpdateOne(appointment => appointment.AppointmentId == appointmentId 
+                                && appointment.StudentId == studentId 
+                                && appointment.Status == "Scheduled",
+                            Builders<Appointment>.Update.Set(appointment => appointment.Status, "Cancelled")
+                    );
 
                 if (cancelResult.ModifiedCount != 1)
                 {
                     // if the original appointment could not be cancelled after inserting the replacement delete it
-                    dBContext.Appointments.DeleteOne( a => a.AppointmentId == replacement.AppointmentId && a.StudentId == studentId && a.Status == "Scheduled");
+                    dBContext.Appointments
+                        .DeleteOne(appointment => appointment.AppointmentId == replacement.AppointmentId 
+                                    && appointment.StudentId == studentId 
+                                    && appointment.Status == "Scheduled");
                     TempData["AppointmentError"] = "The original appointment changed while rescheduling. Please try again.";
                     return RedirectToAction("Scheduler", new { tutorId, studentId, month = date.Month, year = date.Year, rescheduleAppointmentId = appointmentId });
                 }
@@ -402,15 +495,13 @@ namespace TAMS.Controllers
 
             try
             {
-                if (sameTutor)
+                if (sameTutor) //notify student and tutor
                 {
-                    //if (!string.IsNullOrWhiteSpace(student.Email))
                     if (!student.DisableEmailNotifications && !string.IsNullOrWhiteSpace(student.Email))
                     {
                         await _emailService.SendStudentAppointmentRescheduledAsync(student.Email, studentName, newTutorName, newStart.AddHours(0));
                     }
 
-                    //if (!string.IsNullOrWhiteSpace(newTutor.Email))
                     if (!newTutor.DisableEmailNotifications && !string.IsNullOrWhiteSpace(newTutor.Email))
                     {
                         await _emailService.SendTutorAppointmentRescheduledAsync(newTutor.Email, newTutorName, studentName, newStart.AddHours(5));
@@ -424,14 +515,14 @@ namespace TAMS.Controllers
                         await _emailService.SendStudentAppointmentConfirmationAsync(student.Email, studentName, newTutorName, newStart.AddHours(5));
                     }
 
-                    // Notify the previous tutor about the cancelled appointment
-                    if (previousTutor != null && !previousTutor.DisableEmailNotifications &&
-                        !string.IsNullOrWhiteSpace(previousTutor.Email))
+                    // Notify the old tutor about the cancelled appointment
+                    if (oldTutor != null && !oldTutor.DisableEmailNotifications &&
+                        !string.IsNullOrWhiteSpace(oldTutor.Email))
                     {
-                        await _emailService.SendTutorAppointmentCancellationAsync(previousTutor.Email, $"{previousTutor.FName} {previousTutor.LName}", studentName, oldAppointmentDate.AddHours(5));
+                        await _emailService.SendTutorAppointmentCancellationAsync(oldTutor.Email, $"{oldTutor.FName} {oldTutor.LName}", studentName, oldAppointmentDate.AddHours(5));
                     }
 
-                    // Notify the newly selected tutor about the new appointment
+                    // Notify the new tutor
                     if (!newTutor.DisableEmailNotifications && !string.IsNullOrWhiteSpace(newTutor.Email))
                     {
                         await _emailService.SendTutorAppointmentNotificationAsync(newTutor.Email, newTutorName, studentName, newStart.AddHours(5));
@@ -460,10 +551,11 @@ namespace TAMS.Controllers
                 return RedirectToAction("Login", "Login");
             }
 
+            //get existing scheduled appointments
             var oldAppointment = dBContext.Appointments
-                .Find(a => a.AppointmentId == appointmentId
-                    && a.StudentId == studentId.Value
-                    && a.Status == "Scheduled")
+                .Find(appointment => appointment.AppointmentId == appointmentId
+                    && appointment.StudentId == studentId.Value
+                    && appointment.Status == "Scheduled")
                 .FirstOrDefault();
 
             if (oldAppointment == null)
@@ -472,7 +564,7 @@ namespace TAMS.Controllers
             }         
 
             var group = dBContext.GroupAppointments
-                .Find(g => g.GroupId == groupId)
+                .Find(group => group.GroupId == groupId)
                 .FirstOrDefault();
 
             if (group == null)
@@ -492,11 +584,11 @@ namespace TAMS.Controllers
             }
 
             var student = dBContext.Student
-                .Find(s => s.StudentId == studentId.Value)
+                .Find(student => student.StudentId == studentId.Value)
                 .FirstOrDefault();
 
             var newTutor = dBContext.Tutor
-                .Find(t => t.TutorId == group.TutorId)
+                .Find(tutor => tutor.TutorId == group.TutorId)
                 .FirstOrDefault();
 
             if (student == null || newTutor == null)
@@ -507,20 +599,25 @@ namespace TAMS.Controllers
             var groupStart = group.AppointmentDate.Date.Add(group.StartTime);
             var groupEnd = group.AppointmentDate.Date.Add(group.EndTime);
 
+            //verify group is open and has space
             if (group.Status != "Open" || group.StudentIds == null || group.StudentIds.Count >= group.Capacity)
             {
                 TempData["AppointmentError"] = "This group appointment is no longer available.";
                 return ReturnToScheduler();
             }
 
+            //ensure valid time
             if (groupStart <= DateTime.Now || groupEnd <= groupStart)
             {
                 TempData["AppointmentError"] = "Please select a valid future group appointment.";
                 return ReturnToScheduler();
             }
 
+            //group has a schedule
             var groupSchedule = dBContext.Schedule
-                .Find(s => s.IsGroup && s.GroupId == groupId && s.TutorId == group.TutorId)
+                .Find(schedule => schedule.IsGroup 
+                    && schedule.GroupId == groupId 
+                    && schedule.TutorId == group.TutorId)
                 .FirstOrDefault();
 
             if (groupSchedule == null)
@@ -529,15 +626,18 @@ namespace TAMS.Controllers
                 return ReturnToScheduler();
             }
 
+            //student can't join twice
             if (group.StudentIds.Contains(studentId.Value))
             {
                 TempData["AppointmentError"] = "You are already enrolled in this group.";
                 return ReturnToScheduler();
             }
 
+            //get individual appointments that may conflict with new group
             var conflicts = dBContext.Appointments
-                .Find(a => a.Status == "Scheduled" && a.AppointmentId != appointmentId &&
-                    (a.StudentId == studentId.Value || a.TutorId == group.TutorId))
+                .Find(appointment => appointment.Status == "Scheduled" 
+                    && appointment.AppointmentId != appointmentId 
+                    && (appointment.StudentId == studentId.Value || appointment.TutorId == group.TutorId))
                 .ToList();
 
             foreach (var appointment in conflicts)
@@ -545,10 +645,11 @@ namespace TAMS.Controllers
                 var start = appointment.AppointmentDate;
                 var end = appointment.EndDate;
 
+                //invalid time
                 if (end <= start)
                 {
                     var schedule = dBContext.Schedule
-                        .Find(s => s.ScheduleId == appointment.ScheduleId)
+                        .Find(scehdule => scehdule.ScheduleId == appointment.ScheduleId)
                         .FirstOrDefault();
 
                     if (schedule == null)
@@ -561,6 +662,7 @@ namespace TAMS.Controllers
                     end = schedule.Date.Date.Add(schedule.EndTime);
                 }
 
+                //prevent conflicts with the student's or tutor's individual appointments
                 if (groupStart < end && groupEnd > start)
                 {
                     TempData["AppointmentError"] =
@@ -572,11 +674,14 @@ namespace TAMS.Controllers
                 }
             }
 
+            //student's other groups
             var otherGroups = dBContext.GroupAppointments
-                .Find(g => g.GroupId != groupId &&
-                    (g.Status == "Open" || g.Status == "Full") && g.StudentIds.Contains(studentId.Value))
+                .Find(group => group.GroupId != groupId 
+                    && (group.Status == "Open" || group.Status == "Full") 
+                    && group.StudentIds.Contains(studentId.Value))
                 .ToList();
 
+            //check for overlap
             foreach (var existingGroup in otherGroups)
             {
                 var start = existingGroup.AppointmentDate.Date.Add(existingGroup.StartTime);
@@ -589,25 +694,17 @@ namespace TAMS.Controllers
                 }
             }
 
-            var capacityFilter = 
-                new BsonDocumentFilterDefinition<GroupAppointment>(
-                    new BsonDocument("$expr",
-                        new BsonDocument("$lt", new BsonArray
-                    {
-                            new BsonDocument("$size", "$StudentIds"), "$Capacity"
-                    }
-                        )));
-
-            var filter = Builders<GroupAppointment>.Filter.And(
-                Builders<GroupAppointment>.Filter.Eq(g => g.GroupId, groupId),
-                Builders<GroupAppointment>.Filter.Eq(g => g.Status, "Open"),
-                Builders<GroupAppointment>.Filter.Not(
-                Builders<GroupAppointment>.Filter.AnyEq(
-                    g => g.StudentIds, studentId.Value)), capacityFilter
+            //open group, space and not duplicate students
+            var filter = Builders<GroupAppointment>.Filter.Where(group =>
+                group.GroupId == groupId 
+                && group.Status == "Open" 
+                && !group.StudentIds.Contains(studentId.Value) 
+                && group.StudentIds.Count < group.Capacity
             );
 
+            //add student to group
             var enrollResult = dBContext.GroupAppointments.UpdateOne(filter,
-                Builders<GroupAppointment>.Update.AddToSet(g => g.StudentIds, studentId.Value));
+                Builders<GroupAppointment>.Update.AddToSet(group => group.StudentIds, studentId.Value));
 
             if (enrollResult.ModifiedCount != 1)
             {
@@ -615,46 +712,40 @@ namespace TAMS.Controllers
                 return ReturnToScheduler();
             }
 
-            var cancelResult = dBContext.Appointments.UpdateOne(a => a.AppointmentId == appointmentId &&
-                     a.StudentId == studentId.Value && a.Status == "Scheduled",
-                Builders<Appointment>.Update.Set(a => a.Status, "Cancelled"));
+            //cancel orginal individual appointment after joining group
+            var cancelResult = dBContext.Appointments
+                .UpdateOne(appointment => appointment.AppointmentId == appointmentId 
+                && appointment.StudentId == studentId.Value && appointment.Status == "Scheduled",
+                Builders<Appointment>.Update.Set(appointment => appointment.Status, "Cancelled"));
 
+            //remove student from group if cancellation fails
             if (cancelResult.ModifiedCount != 1)
             {
-                dBContext.GroupAppointments.UpdateOne(g => g.GroupId == groupId,
-                    Builders<GroupAppointment>.Update.Pull(g => g.StudentIds, studentId.Value));
+                dBContext.GroupAppointments.UpdateOne(group => group.GroupId == groupId,
+                    Builders<GroupAppointment>.Update.Pull(group => group.StudentIds, studentId.Value));
                 TempData["AppointmentError"] = "Rescheduling failed. Please try again.";
                 return ReturnToScheduler();
             }
 
-
-            var fullFilter = Builders<GroupAppointment>.Filter.And(
-                Builders<GroupAppointment>.Filter.Eq(g => g.GroupId, groupId),
-                Builders<GroupAppointment>.Filter.Eq(g => g.Status, "Open"),
-                new BsonDocumentFilterDefinition<GroupAppointment>(
-                    new BsonDocument(
-                        "$expr",
-                        new BsonDocument(
-                            "$gte",
-                            new BsonArray
-                            {
-                    new BsonDocument("$size", "$StudentIds"),
-                    "$Capacity"
-                            }
-                        )
-                    )
-                )
+            //group is full
+            var fullFilter = Builders<GroupAppointment>.Filter.Where(group =>
+                group.GroupId == groupId 
+                && group.Status == "Open" 
+                && group.StudentIds.Count >= group.Capacity
             );
 
-            dBContext.GroupAppointments.UpdateOne(fullFilter,
-                Builders<GroupAppointment>.Update.Set(g => g.Status, "Full"));
+            dBContext.GroupAppointments.UpdateOne(fullFilter, Builders<GroupAppointment>.Update
+                    .Set(group => group.Status, "Full")
+            );
 
+            //get orginal tutors
             var oldTutor = dBContext.Tutor
-                .Find(t => t.TutorId == oldAppointment.TutorId)
+                .Find(tutor => tutor.TutorId == oldAppointment.TutorId)
                 .FirstOrDefault();
 
             try
             {
+                //notify student
                 if (!student.DisableEmailNotifications && !string.IsNullOrWhiteSpace(student.Email))
                 {
                     await _emailService
@@ -667,6 +758,7 @@ namespace TAMS.Controllers
                             group.EndTime);
                 }
 
+                //notify new tutor
                 if (!newTutor.DisableEmailNotifications && !string.IsNullOrWhiteSpace(newTutor.Email))
                 {
                     await _emailService
@@ -679,6 +771,7 @@ namespace TAMS.Controllers
                             group.EndTime);
                 }
 
+                //notify old tutor
                 if (oldTutor != null && !oldTutor.DisableEmailNotifications && !string.IsNullOrWhiteSpace(oldTutor.Email))
                 {
                     await _emailService
@@ -699,37 +792,47 @@ namespace TAMS.Controllers
             return RedirectToAction("Dashboard", "Student", new { id = studentId.Value });
         }
 
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> JoinGroupAppointment(int groupId)
         {
             var studentId = HttpContext.Session.GetInt32("StudentId");
-            if (studentId == null) { return RedirectToAction("Login", "Login"); }
+            if (studentId == null) 
+            { 
+                return RedirectToAction("Login", "Login"); 
+            }
 
             var student = dBContext.Student
-                .Find(s => s.StudentId == studentId.Value)
+                .Find(student => student.StudentId == studentId.Value)
                 .FirstOrDefault();
 
-            if (student == null) { return NotFound(); }
+            if (student == null) 
+            { 
+                return NotFound(); 
+            }
 
+            //find group
             var group = dBContext.GroupAppointments
-                .Find(g => g.GroupId == groupId)
+                .Find(group => group.GroupId == groupId)
                 .FirstOrDefault();
 
-            if (group == null) { return NotFound(); }
+            if (group == null) 
+            { 
+                return NotFound(); 
+            }
 
-            IActionResult ReturnToScheduler()
+            IActionResult ReturnToScheduler() //return to tutor's schedule
             {
                 return RedirectToAction("Scheduler", new { tutorId = group.TutorId, studentId = studentId.Value, month = group.AppointmentDate.Month, year = group.AppointmentDate.Year });
             }
 
-            if (group.Status != "Open")
+            if (group.Status != "Open") //verify group is open
             {
                 TempData["AppointmentError"] = "This group is no longer available.";
                 return ReturnToScheduler();
             }
 
+            //group's appointment time
             var groupStart = group.AppointmentDate.Date.Add(group.StartTime);
             var groupEnd = group.AppointmentDate.Date.Add(group.EndTime);
 
@@ -739,8 +842,11 @@ namespace TAMS.Controllers
                 return ReturnToScheduler();
             }
 
+            //group schedule exists
             var groupSchedule = dBContext.Schedule
-                .Find(s => s.IsGroup && s.GroupId == groupId && s.TutorId == group.TutorId)
+                .Find(schedule => schedule.IsGroup 
+                    && schedule.GroupId == groupId 
+                    && schedule.TutorId == group.TutorId)
                 .FirstOrDefault();
 
             if (groupSchedule == null)
@@ -749,15 +855,17 @@ namespace TAMS.Controllers
                 return ReturnToScheduler();
             }
 
+            //not duplicate enrollment
             if (group.StudentIds != null && group.StudentIds.Contains(studentId.Value))
             {
                 TempData["AppointmentError"] = "You have already joined this group.";
                 return ReturnToScheduler();
             }
 
+            //get individual appointment to check if there is conflict
             var conflictingAppointments = dBContext.Appointments
-                .Find(a => a.Status == "Scheduled" &&
-                    (a.StudentId == studentId.Value || a.TutorId == group.TutorId))
+                .Find(appointment => appointment.Status == "Scheduled" 
+                    && (appointment.StudentId == studentId.Value || appointment.TutorId == group.TutorId))
                 .ToList();
 
             foreach (var appointment in conflictingAppointments)
@@ -765,10 +873,11 @@ namespace TAMS.Controllers
                 DateTime existingStart = appointment.AppointmentDate;
                 DateTime existingEnd = appointment.EndDate;
 
+                //get schedule times if appointment dates are invalid
                 if (existingEnd <= existingStart)
                 {
                     var existingSchedule = dBContext.Schedule
-                        .Find(s => s.ScheduleId == appointment.ScheduleId)
+                        .Find(schedule => schedule.ScheduleId == appointment.ScheduleId)
                         .FirstOrDefault();
 
                     if (existingSchedule == null)
@@ -797,14 +906,18 @@ namespace TAMS.Controllers
                 }
             }
 
+            //get other groups student is in
             var enrolledGroups = dBContext.GroupAppointments
-                .Find(g => g.GroupId != groupId && (g.Status == "Open" || g.Status == "Full") && g.StudentIds.Contains(studentId.Value))
+                .Find(group => group.GroupId != groupId 
+                    && (group.Status == "Open" || group.Status == "Full") 
+                    && group.StudentIds.Contains(studentId.Value))
                 .ToList();
 
-            bool groupConflict = enrolledGroups.Any(g =>
+            //check for overlay btw group appointments
+            bool groupConflict = enrolledGroups.Any(group =>
             {
-                var start = g.AppointmentDate.Date.Add(g.StartTime);
-                var end = g.AppointmentDate.Date.Add(g.EndTime);
+                var start = group.AppointmentDate.Date.Add(group.StartTime);
+                var end = group.AppointmentDate.Date.Add(group.EndTime);
                 return start < groupEnd && end > groupStart;
             });
 
@@ -814,26 +927,17 @@ namespace TAMS.Controllers
                 return ReturnToScheduler();
             }
 
-            var capacityFilter = new BsonDocument("$expr",
-                new BsonDocument("$lt", new BsonArray {
-                    new BsonDocument("$size", "$StudentIds"),
-                    "$Capacity"
-                }));
-
-            var studentNotEnrolledFilter =
-                new BsonDocumentFilterDefinition<GroupAppointment>(
-                    new BsonDocument("StudentIds",
-                        new BsonDocument("$ne", studentId.Value))
-                );
-
-            var filter = Builders<GroupAppointment>.Filter.And(
-                Builders<GroupAppointment>.Filter.Eq(g => g.GroupId, groupId),
-                Builders<GroupAppointment>.Filter.Eq(g => g.Status, "Open"),
-                studentNotEnrolledFilter,
-                new BsonDocumentFilterDefinition<GroupAppointment>(capacityFilter)
+            //filter open group with space
+            var filter = Builders<GroupAppointment>.Filter.Where(group =>
+                group.GroupId == groupId &&
+                group.Status == "Open" &&
+                !group.StudentIds.Contains(studentId.Value) &&
+                group.StudentIds.Count < group.Capacity
             );
 
-            var update = Builders<GroupAppointment>.Update.AddToSet(g => g.StudentIds, studentId.Value);
+            //add student without duplicates
+            var update = Builders<GroupAppointment>.Update.AddToSet(group => group.StudentIds, studentId.Value);
+
             var result = dBContext.GroupAppointments.UpdateOne(filter, update);
             if (result.ModifiedCount == 0)
             {
@@ -841,21 +945,19 @@ namespace TAMS.Controllers
                 return ReturnToScheduler();
             }
 
-            var fullFilter = Builders<GroupAppointment>.Filter.And(
-                Builders<GroupAppointment>.Filter.Eq(g => g.GroupId, groupId),
-                Builders<GroupAppointment>.Filter.Eq(g => g.Status, "Open"),
-                new BsonDocumentFilterDefinition<GroupAppointment>(
-                    new BsonDocument("$expr",
-                        new BsonDocument("$gte", new BsonArray
-                        {
-                            new BsonDocument("$size", "$StudentIds"), "$Capacity"
-                        })))
+            //group is full
+            var fullFilter = Builders<GroupAppointment>.Filter.Where(group =>
+                group.GroupId == groupId &&
+                group.Status == "Open" &&
+                group.StudentIds.Count >= group.Capacity
             );
 
-            dBContext.GroupAppointments.UpdateOne(fullFilter, Builders<GroupAppointment>.Update.Set(g => g.Status, "Full"));
+            dBContext.GroupAppointments.UpdateOne(fullFilter, Builders<GroupAppointment>.Update
+                    .Set(group => group.Status, "Full")
+            );
 
             var tutor = dBContext.Tutor
-            .Find(t => t.TutorId == group.TutorId)
+            .Find(tutor => tutor.TutorId == group.TutorId)
             .FirstOrDefault();
 
             if (tutor != null)
@@ -889,17 +991,24 @@ namespace TAMS.Controllers
         public async Task<IActionResult> CancelGroupAppointment(int groupId)
         {
             var studentId = HttpContext.Session.GetInt32("StudentId");
-            if (studentId == null) { return RedirectToAction("Login", "Login"); }
-
+            if (studentId == null) 
+            { 
+                return RedirectToAction("Login", "Login"); 
+            }
+            //get student and verify they exist
             var student = dBContext.Student
-                .Find(s => s.StudentId == studentId.Value)
+                .Find(student => student.StudentId == studentId.Value)
                 .FirstOrDefault();
+            
+            //student not found
+            if (student == null) 
+            { 
+                return NotFound(); 
+            }
 
-            if (student == null) { return NotFound(); }
-
-            // Find the group appointment.
+            // group appointment.
             var group = dBContext.GroupAppointments
-                .Find(g => g.GroupId == groupId)
+                .Find(group => group.GroupId == groupId)
                 .FirstOrDefault();
 
             if (group == null)
@@ -908,14 +1017,14 @@ namespace TAMS.Controllers
                 return RedirectToAction("Dashboard", "Student", new { id = studentId.Value });
             }
 
-            // Check that the student is enrolled
+            // student is enrolled?
             if (group.StudentIds == null || !group.StudentIds.Contains(studentId.Value))
             {
                 TempData["AppointmentError"] = "You are not enrolled in this group appointment.";
                 return RedirectToAction("Dashboard", "Student", new { id = studentId.Value });
             }
 
-            // Only allow cancellation for upcoming sessions
+            // only cancel before group starts
             var groupStart = group.AppointmentDate.Date.Add(group.StartTime);
 
             if (groupStart <= DateTime.Now)
@@ -924,48 +1033,51 @@ namespace TAMS.Controllers
                 return RedirectToAction("Dashboard", "Student", new { id = studentId.Value });
             }
 
-            var filter = Builders<GroupAppointment>.Filter.And(
-                Builders<GroupAppointment>.Filter.Eq(g => g.GroupId, groupId),
-                Builders<GroupAppointment>.Filter.In(g => g.Status, new[] { "Open", "Full" }),
-                Builders<GroupAppointment>.Filter.AnyEq(g => g.StudentIds, studentId.Value)
+            //get active group w/student
+            var filter = Builders<GroupAppointment>.Filter.Where(group =>
+                group.GroupId == groupId 
+                && (group.Status == "Open" || group.Status == "Full") 
+                && group.StudentIds.Contains(studentId.Value)
             );
 
-            var update = Builders<GroupAppointment>.Update.Pull(g => g.StudentIds, studentId.Value);
+            //remove student from group
+            var update = Builders<GroupAppointment>.Update.Pull(group => group.StudentIds, studentId.Value);
 
             var result = dBContext.GroupAppointments.UpdateOne(filter, update);
 
+            //cancel failure 
             if (result.ModifiedCount == 0)
             {
                 TempData["AppointmentError"] = "Unable to cancel your enrollment. " + "The group may have changed.";
                 return RedirectToAction("Dashboard", "Student", new { id = studentId.Value });
             }
 
-            var reopenFilter = Builders<GroupAppointment>.Filter.And(
-                Builders<GroupAppointment>.Filter.Eq(g => g.GroupId, groupId),
-                Builders<GroupAppointment>.Filter.Eq(g => g.Status, "Full"),
-                new BsonDocumentFilterDefinition<GroupAppointment>(
-                    new BsonDocument("$expr",
-                        new BsonDocument("$lt", new BsonArray
-                        {
-                            new BsonDocument("$size", "$StudentIds"), "$Capacity"
-                        }))
-            ));
+            //repoen group if there is an spot
+            var reopenFilter = Builders<GroupAppointment>.Filter.Where(group =>
+                group.GroupId == groupId &&
+                group.Status == "Full" &&
+                group.StudentIds.Count < group.Capacity
+            );
 
-            dBContext.GroupAppointments.UpdateOne(reopenFilter, Builders<GroupAppointment>.Update.Set(g => g.Status, "Open"));
+            dBContext.GroupAppointments.UpdateOne(reopenFilter, Builders<GroupAppointment>.Update
+                .Set(group => group.Status, "Open"));
 
+            // get tutor details
             var tutor = dBContext.Tutor
-            .Find(t => t.TutorId == group.TutorId)
+            .Find(tutor => tutor.TutorId == group.TutorId)
             .FirstOrDefault();
 
             if (tutor != null)
             {
                 try
                 {
+                    //notify student
                     if (!student.DisableEmailNotifications && !string.IsNullOrWhiteSpace(student.Email))
                     {
                         await _emailService.SendGroupAppointmentCancellationToStudentAsync(student.Email, student.FName, tutor.FName, group.AppointmentDate, group.StartTime, group.EndTime);
                     }
 
+                    //notify tutor
                     if (!tutor.DisableEmailNotifications && !string.IsNullOrWhiteSpace(tutor.Email))
                     {
                         await _emailService.SendGroupAppointmentCancellationToTutorAsync(tutor.Email, tutor.FName, student.FName, group.AppointmentDate, group.StartTime, group.EndTime);
@@ -986,26 +1098,31 @@ namespace TAMS.Controllers
         [AllowAnonymous]
         public IActionResult Groups()
         {
+            //get studentid
             int? studentId = HttpContext.Session.GetInt32("StudentId");
             var now = DateTime.Now;
 
+            //open groups with upcoming times
             var openGroups = dBContext.GroupAppointments
-                .Find(g => g.Status == "Open" && g.AppointmentDate >= now.Date)
+                .Find(group => group.Status == "Open" && group.AppointmentDate >= now.Date)
                 .ToList()
-                .Where(g => g.AppointmentDate.Date.Add(g.StartTime) > now)
-                .OrderBy(g => g.AppointmentDate)
-                .ThenBy(g => g.StartTime)
+                .Where(group => group.AppointmentDate.Date.Add(group.StartTime) > now)
+                .OrderBy(group => group.AppointmentDate)
+                .ThenBy(group => group.StartTime)
                 .ToList();
 
+            //get tutor id associated with the open groups
             var tutorIds = openGroups
-                .Select(g => g.TutorId)
+                .Select(group => group.TutorId)
                 .Distinct()
                 .ToList();
 
+            //tutor detail for groups
             var tutors = dBContext.Tutor
-                .Find(t => tutorIds.Contains(t.TutorId))
+                .Find(tutor => tutorIds.Contains(tutor.TutorId))
                 .ToList();
 
+            //pass tutor/student info to view
             ViewBag.Tutors = tutors;
             ViewBag.StudentId = studentId;
 
